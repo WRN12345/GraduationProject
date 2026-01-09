@@ -4,6 +4,7 @@
 @Des: 用户 Pydantic 模型 (Schemas)
 """
 from typing import Optional
+from datetime import datetime
 from pydantic import BaseModel, Field, EmailStr
 from tortoise.contrib.pydantic import pydantic_model_creator
 from backend.models.user import User
@@ -24,15 +25,39 @@ class UserUpdate(BaseModel):
     用于更新接口，所有字段均为选填 (Optional)
     用户可能只改昵称，不改密码
     """
-    password: Optional[str] = Field(None, description="新密码", min_length=6, max_length=30)
     nickname: Optional[str] = Field(None, description="昵称")
     email: Optional[EmailStr] = Field(None, description="邮箱")
-    
+    bio: Optional[str] = Field(None, description="个人简介")
 
-# --- 3. 响应模型 (Response Body) ---
+# --- 3. 公开用户资料 (Response Body) ---
+class UserProfile(BaseModel):
+    """公开用户资料"""
+    id: int
+    username: str
+    nickname: Optional[str]
+    bio: Optional[str]
+    karma: int
+    created_at: datetime
+    is_active: bool
+    post_count: int = 0
+    comment_count: int = 0
+
+    class Config:
+        from_attributes = True
+
+# --- 4. 用户活动 (Response Body) ---
+class UserActivity(BaseModel):
+    """用户活动汇总"""
+    posts: list = []
+    comments: list = []
+    total_posts: int
+    total_comments: int
+
+
+# --- 5. 通用响应模型 (Response Body) ---
 
 User_Pydantic = pydantic_model_creator(
-    User, 
+    User,
     name="UserReponse", # 给 Swagger 文档显示的名称
     exclude=["password"] # 绝对不能返回密码
 )

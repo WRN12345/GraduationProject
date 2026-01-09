@@ -35,19 +35,50 @@ def get_password_hash(password: str) -> str:
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
 
     to_encode = data.copy()
-    
+
     # 优先使用传入的时间，否则使用配置文件的默认时间
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+
     # 写入过期时间和 payload
-    to_encode.update({"exp": expire})
-    
+    to_encode.update({"exp": expire, "type": "access"})
+
     # 生成 Token
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
+
+def create_refresh_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    """创建刷新令牌"""
+    to_encode = data.copy()
+
+    # 优先使用传入的时间，否则使用配置文件的默认时间
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+
+    # 写入过期时间和 payload
+    to_encode.update({"exp": expire, "type": "refresh"})
+
+    # 生成 Token
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+def verify_refresh_token(token: str) -> dict:
+    """验证刷新令牌并返回 payload"""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("type") != "refresh":
+            raise JWTError("Not a refresh token")
+        return payload
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="无效的刷新令牌",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 # --- 依赖注入 ---
 

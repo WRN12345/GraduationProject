@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "default_secret_key_change_me"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7天
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30  # 30天
 
     # --- 数据库与 Redis---
     DB_URL: str = os.getenv("DB_URL")

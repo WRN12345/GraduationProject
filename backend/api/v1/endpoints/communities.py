@@ -10,9 +10,9 @@ from backend.models.community import Community
 from backend.models.user import User
 from backend.schemas.community import CommunityCreate, CommunityOut
 
-router = APIRouter()
+router = APIRouter(tags=["社区板块"])
 
-@router.get("/", response_model=List[CommunityOut])
+@router.get("/", response_model=List[CommunityOut],summary="获取社区列表")
 
 async def read_communities(
     skip: int = 0, 
@@ -23,7 +23,7 @@ async def read_communities(
     """
     return await Community.all().offset(skip).limit(limit)
 
-@router.post("/", response_model=CommunityOut, status_code=201)
+@router.post("/", response_model=CommunityOut, status_code=201,summary="创建新社区")
 
 async def create_community(
     community_in: CommunityCreate,
@@ -46,7 +46,7 @@ async def create_community(
     )
     return community
 
-@router.get("/{name}", response_model=CommunityOut)
+@router.get("/{name}", response_model=CommunityOut,summary="根据名字获取社区详情")
 async def read_community_by_name(name: str):
     """
     根据名字获取社区详情

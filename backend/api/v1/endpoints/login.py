@@ -9,14 +9,18 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from backend.models.user import User
 from backend.schemas import UserCreate 
-from backend.core.security import verify_password, get_password_hash, create_access_token
+from backend.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token, verify_refresh_token
 
 login = APIRouter(tags=["认证相关"])
 
 # ---  Token 响应 ---
 class Token(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
+
+class TokenRefresh(BaseModel):
+    refresh_token: str
 
 # --- 登录接口 ---
 @login.post("/login", summary="用户登录", response_model=Token)
@@ -34,8 +38,12 @@ async def user_login(form_data: OAuth2PasswordRequestForm = Depends()):
         )
 
     # 3. 生成并返回 Token
+    access_token = create_access_token(data={"sub": user.username, "id": user.id})
+    refresh_token = create_refresh_token(data={"sub": user.username, "id": user.id})
+
     return {
-        "access_token": create_access_token(data={"sub": user.username, "id": user.id}),
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer"
     }
 
@@ -65,3 +73,45 @@ async def user_create(user_in: UserCreate):
     
     # 4. 返回结果
     return {"code": 200, "msg": "用户创建成功"}
+
+# --- 刷新令牌接口 ---
+@login.post("/refresh", summary="刷新访问令牌", response_model=Token)
+
+async def refresh_token(refresh_request: TokenRefresh):
+    """使用刷新令牌获取新的访问令牌和刷新令牌（令牌轮换）"""
+    # 验证刷新令牌
+    payload = verify_refresh_token(refresh_request.refresh_token)
+
+    # 获取用户 ID
+    user_id = payload.get("id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="无效的刷新令牌",
+        )
+
+    # 验证用户是否存在
+    user = await User.get_or_none(id=user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="用户不存在",
+        )
+
+    # 生成新的访问令牌和刷新令牌（令牌轮换）
+    access_token = create_access_token(data={"sub": user.username, "id": user.id})
+    new_refresh_token = create_refresh_token(data={"sub": user.username, "id": user.id})
+
+    return {
+        "access_token": access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer"
+    }
+
+# --- 登出接口 ---
+@login.post("/logout", summary="用户登出")
+async def logout():
+    """登出接口（客户端应删除存储的令牌）"""
+    # 注意：由于 JWT 是无状态的，服务端无法直接使令牌失效
+    # 实际应用中可以使用 Redis 黑名单来实现服务端登出
+    return {"message": "登出成功，请删除客户端存储的令牌"}

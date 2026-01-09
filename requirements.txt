@@ -1,0 +1,38 @@
+# ================================================================
+# Reddit-like Forum System - Python 依赖
+# ================================================================
+# 安装方法：pip install -r requirements.txt
+# ================================================================
+
+# -------------- 核心框架 --------------
+fastapi>=0.104.0              # Web 框架
+uvicorn[standard]>=0.24.0     # ASGI 服务器（包含 httptools, uvloop, websockets 等加速组件）
+
+# -------------- 数据库相关 --------------
+tortoise-orm>=0.20.0          # 异步 ORM 框架
+asyncpg>=0.29.0               # PostgreSQL 异步驱动（高性能）
+
+# -------------- 缓存 --------------
+redis[hiredis]>=5.0.0         # Redis 客户端（hiredis 是 C 扩展，加速 Redis 操作）
+
+# -------------- 认证和安全 --------------
+python-jose[cryptography]>=3.3.0  # JWT Token 处理
+passlib[bcrypt]>=1.7.4            # 密码哈希（bcrypt 加密）
+python-multipart>=0.0.6            # 表单数据解析（登录表单需要）
+
+# -------------- 数据验证 --------------
+pydantic>=2.5.0                # 数据验证和序列化（FastAPI 核心依赖）
+pydantic-settings>=2.1.0       # 配置文件管理（读取 .env）
+
+# -------------- 其他工具 --------------
+email-validator>=2.1.0         # 邮箱地址验证
+python-dotenv>=1.0.0           # 从 .env 文件读取环境变量
+
+# ================================================================
+# 说明：
+# 1. 所有依赖都已稳定测试，兼容 Python 3.11+
+# 2. [standard] 和 [hiredis] 是可选的加速组件，推荐安装
+# 3. [cryptography] 和 [bcrypt] 是安全相关的必需组件
+# 4. 如果安装速度慢，可以使用国内镜像：
+#    pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+# ================================================================

@@ -15,15 +15,25 @@ class PostCreate(BaseModel):
     content: str
     community_id: int
 
+class PostUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+
 class PostOut(BaseModel):
     id: int
     title: str
-    content: str
+    content: Optional[str]
     score: int
+    hot_rank: float
     author_id: int
     community_id: int
+    upvotes: int
+    downvotes: int
+    is_edited: bool
+    deleted_at: Optional[datetime]
     created_at: datetime
+    updated_at: Optional[datetime]
 
-    
+
     class Config:
         from_attributes = True

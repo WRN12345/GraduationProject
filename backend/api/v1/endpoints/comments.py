@@ -6,14 +6,15 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
-from backend.models.user import User 
+from datetime import datetime, timezone
+from backend.models.user import User
 from backend.core.security import get_current_user
 from tortoise import connections
 from typing import List, Dict, Any
 from backend.schemas import comment as schemas
 from backend.models import post as models
 
-router = APIRouter()
+router = APIRouter(tags=["评论相关"])
 
 
 @router.post("/comments", response_model=schemas.CommentOut)
@@ -121,5 +122,69 @@ def build_tree(flat_data: List[Dict[str, Any]]) -> List[Dict[str, Any ]]:
             else:
                 # 孤儿节点处理 (理论上有了外键约束不会发生，但作为防御性编程)
                 roots.append(row)
-                
+
     return roots
+
+@router.put("/comments/{comment_id}", response_model=schemas.CommentOut, summary="编辑评论")
+async def update_comment(
+    comment_id: int,
+    comment_in: schemas.CommentUpdate,
+    current_user: User = Depends(get_current_user),
+):
+    """编辑评论（仅作者）"""
+    comment = await models.Comment.get_or_none(id=comment_id)
+
+    if not comment:
+        raise HTTPException(status_code=404, detail="评论不存在")
+
+    if comment.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="无权编辑此评论")
+
+    if comment.deleted_at:
+        raise HTTPException(status_code=400, detail="无法编辑已删除的评论")
+
+    await models.Comment.filter(id=comment_id).update(
+        content=comment_in.content,
+        is_edited=True
+    )
+    await comment.refresh_from_db()
+
+    return comment
+
+@router.delete("/comments/{comment_id}", summary="删除评论")
+async def delete_comment(
+    comment_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    """软删除评论（作者或管理员）"""
+    comment = await models.Comment.get_or_none(id=comment_id)
+
+    if not comment:
+        raise HTTPException(status_code=404, detail="评论不存在")
+
+    if comment.author_id != current_user.id and not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="无权删除此评论")
+
+    await models.Comment.filter(id=comment_id).update(
+        deleted_at=datetime.now(timezone.utc)
+    )
+
+    return {"message": "评论删除成功"}
+
+@router.post("/comments/{comment_id}/restore", summary="恢复评论")
+async def restore_comment(
+    comment_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    """恢复已删除的评论"""
+    comment = await models.Comment.get_or_none(id=comment_id)
+
+    if not comment:
+        raise HTTPException(status_code=404, detail="评论不存在")
+
+    if comment.author_id != current_user.id and not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="无权恢复此评论")
+
+    await models.Comment.filter(id=comment_id).update(deleted_at=None)
+
+    return {"message": "评论恢复成功"}
