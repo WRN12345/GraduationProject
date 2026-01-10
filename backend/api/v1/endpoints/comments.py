@@ -17,7 +17,7 @@ from backend.models import post as models
 router = APIRouter(tags=["评论相关"])
 
 
-@router.post("/comments", response_model=schemas.CommentOut)
+@router.post("/comments", response_model=schemas.CommentOut, summary="创建评论")
 
 async def create_comment(
     comment_in: schemas.CommentCreate,
@@ -34,7 +34,7 @@ async def create_comment(
     )
     return comment
 
-@router.get("/posts/{post_id}/comments", response_model=List[schemas.CommentOut])
+@router.get("/posts/{post_id}/comments", response_model=List[schemas.CommentOut],summary="获取帖子评论树")
 
 async def get_comments_tree(post_id: int):
     """
@@ -126,6 +126,7 @@ def build_tree(flat_data: List[Dict[str, Any]]) -> List[Dict[str, Any ]]:
     return roots
 
 @router.put("/comments/{comment_id}", response_model=schemas.CommentOut, summary="编辑评论")
+
 async def update_comment(
     comment_id: int,
     comment_in: schemas.CommentUpdate,
@@ -152,11 +153,12 @@ async def update_comment(
     return comment
 
 @router.delete("/comments/{comment_id}", summary="删除评论")
+
 async def delete_comment(
     comment_id: int,
     current_user: User = Depends(get_current_user),
 ):
-    """软删除评论（作者或管理员）"""
+    """软删除评论（作者或管理员）,不从数据库删除，更新deleted_at为当前时间，防止删除父评论子评论变成孤儿"""
     comment = await models.Comment.get_or_none(id=comment_id)
 
     if not comment:

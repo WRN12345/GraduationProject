@@ -41,12 +41,13 @@ async def create_community(
 
     # 2. 创建社区
     community = await Community.create(
-        **community_in.dict(),
+        **community_in.model_dump(),
         creator=current_user # 关联当前登录用户
     )
     return community
 
-@router.get("/{name}", response_model=CommunityOut,summary="根据名字获取社区详情")
+@router.get("/{name}", response_model=CommunityOut, summary="根据名字获取社区详情")
+
 async def read_community_by_name(name: str):
     """
     根据名字获取社区详情
