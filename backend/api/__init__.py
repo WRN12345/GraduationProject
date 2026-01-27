@@ -51,8 +51,26 @@ app.add_middleware(
 # ---  数据库注册 ---
 register_tortoise(
     app,
-    db_url=settings.DB_URL, 
+    db_url=settings.DB_URL,
     modules={"models": ["backend.models.user", "backend.models.movies", "backend.models.vote", "backend.models.comment", "backend.models.community", "backend.models.post"]},
-    generate_schemas=settings.DEBUG, 
+    generate_schemas=False,  # 使用 Aerich 管理迁移，不再自动生成 schemas
     add_exception_handlers=True,
 )
+
+# --- Tortoise ORM 配置导出（供 Aerich 使用）---
+TORTOISE_ORM = {
+    "connections": {"default": settings.DB_URL},
+    "apps": {
+        "models": {
+            "models": [
+                "backend.models.user",
+                "backend.models.movies",
+                "backend.models.vote",
+                "backend.models.comment",
+                "backend.models.community",
+                "backend.models.post",
+            ],
+            "default_connection": "default",
+        }
+    },
+}
