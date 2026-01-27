@@ -5,13 +5,24 @@
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from pydantic import BaseModel
 from backend.models.user import User
-from backend.schemas import UserCreate 
-from backend.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token, verify_refresh_token
+from backend.schemas import UserCreate
+from backend.core.security import (
+    verify_password,
+    get_password_hash,
+    create_access_token,
+    create_refresh_token,
+    verify_refresh_token,
+    get_current_user,
+    get_current_user_with_token
+)
 
 login = APIRouter(tags=["认证相关"])
+
+# OAuth2 密码模式（用于从 Header 获取 Token）
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/login")
 
 # ---  Token 响应 ---
 class Token(BaseModel):
@@ -139,8 +150,44 @@ async def refresh_token(refresh_request: TokenRefresh):
 
 # --- 登出接口 ---
 @login.post("/logout", summary="用户登出")
-async def logout():
-    """登出接口（客户端应删除存储的令牌）"""
-    # 注意：由于 JWT 是无状态的，服务端无法直接使令牌失效
-    # 实际应用中可以使用 Redis 黑名单来实现服务端登出
-    return {"message": "登出成功，请删除客户端存储的令牌"}
+async def logout(
+    current_user_token: tuple[User, str] = Depends(get_current_user_with_token)
+):
+    """
+    服务端登出接口（使用 Redis 黑名单）
+
+    只需从 Authorization Header 传入 Token，自动验证并添加到黑名单
+
+    ## 请求方式
+    - **Header**: `Authorization: Bearer <access_token>`
+    - **Body**: 无需请求体
+    """
+    from backend.core.cache import get_redis_direct
+    from backend.core.security import add_token_to_blacklist
+    import logging
+
+    # 解包：获取用户和原始 Token
+    current_user, access_token = current_user_token
+
+    try:
+        # 获取 Redis 客户端
+        redis = await get_redis_direct()
+
+        # 将 Token 添加到黑名单
+        await add_token_to_blacklist(access_token, redis)
+
+        # 关闭 Redis 连接
+        await redis.close()
+
+        logging.info(f"用户 {current_user.username} (ID: {current_user.id}) 已登出")
+
+    except Exception as e:
+        # Redis 操作失败，记录日志
+        logging.error(f"用户 {current_user.username} 登出时添加黑名单失败: {e}")
+        # 即使 Redis 失败，也返回成功（客户端删除令牌即可）
+
+    return {
+        "message": "登出成功",
+        "username": current_user.username,
+        "detail": "Token 已失效，请删除客户端存储的令牌"
+    }
