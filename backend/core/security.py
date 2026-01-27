@@ -33,7 +33,6 @@ def get_password_hash(password: str) -> str:
 # --- Token 处理 ---
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
-
     to_encode = data.copy()
 
     # 优先使用传入的时间，否则使用配置文件的默认时间
@@ -91,25 +90,45 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         detail="认证凭证无效或已过期",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
+
     try:
         # 解码 Token
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        
-        # 获取用户 ID 
+
+        # 获取用户 ID
         user_id: str = payload.get("id")
-        
+
         if user_id is None:
             raise credentials_exception
-            
+
     except JWTError:
         # Token 格式错误或签名不对
         raise credentials_exception
 
 
     user = await User.get_or_none(id=user_id)
-    
+
     if user is None:
         raise credentials_exception
-        
+
+    # 检查用户是否被激活/冻结
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="用户已被冻结，无法访问"
+        )
+
     return user
+
+
+async def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
+    """
+    依赖项：验证当前用户是否为管理员
+    用于需要管理员权限的接口
+    """
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="权限不足，仅管理员可访问"
+        )
+    return current_user
