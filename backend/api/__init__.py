@@ -41,7 +41,7 @@ app.include_router(v1, prefix="/api")
 # --- CORS 配置 ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS, 
+    allow_origins=settings.CORS_ORIGINS,  # 使用配置文件中的来源
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,7 +52,7 @@ app.add_middleware(
 register_tortoise(
     app,
     db_url=settings.DB_URL,
-    modules={"models": ["backend.models.user", "backend.models.movies", "backend.models.vote", "backend.models.comment", "backend.models.community", "backend.models.post"]},
+    modules={"models": ["backend.models.user", "backend.models.movies", "backend.models.vote", "backend.models.comment", "backend.models.community", "backend.models.post", "backend.models.membership", "backend.models.audit_log"]},
     generate_schemas=False,  # 使用 Aerich 管理迁移，不再自动生成 schemas
     add_exception_handlers=True,
 )
@@ -69,6 +69,8 @@ TORTOISE_ORM = {
                 "backend.models.comment",
                 "backend.models.community",
                 "backend.models.post",
+                "backend.models.membership",
+                "backend.models.audit_log",
             ],
             "default_connection": "default",
         }

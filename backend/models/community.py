@@ -13,6 +13,10 @@ class Community(models.Model):
     name = fields.CharField(max_length=50, unique=True, index=True)
     description = fields.TextField(null=True)
     creator = fields.ForeignKeyField('models.User', related_name='created_communities')
+
+    # 统计字段（冗余，提升查询性能）
+    member_count = fields.IntField(default=0, description="成员数量")
+
     created_at = fields.DatetimeField(auto_now_add=True)
 
     class Meta:

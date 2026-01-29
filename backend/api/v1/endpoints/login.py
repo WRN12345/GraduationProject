@@ -28,9 +28,12 @@ class TokenRefresh(BaseModel):
 @login.post("/login", summary="用户登录", response_model=Token)
 
 async def user_login(form_data: OAuth2PasswordRequestForm = Depends()):
-    # 1. 查询用户
-    user = await User.get_or_none(username=form_data.username)
-    
+    # 1. 查询用户（支持用户名或邮箱登录）
+    from tortoise.expressions import Q
+    user = await User.get_or_none(
+        Q(username=form_data.username) | Q(email=form_data.username)
+    )
+
     # 2. 统一处理认证失败 (防止用户名枚举攻击)
     if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(

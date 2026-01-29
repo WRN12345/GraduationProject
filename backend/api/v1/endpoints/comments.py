@@ -5,12 +5,14 @@
 """
 
 from fastapi import APIRouter, Depends, HTTPException
-from typing import List
+from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 from backend.models.user import User
 from backend.core.security import get_current_user
+from backend.core.permissions import can_comment_on_post, get_community_moderator
+from backend.core.audit import create_audit_log
+from backend.models.audit_log import ActionType, TargetType
 from tortoise import connections
-from typing import List, Dict, Any
 from backend.schemas import comment as schemas
 from backend.models import post as models
 
@@ -21,13 +23,11 @@ router = APIRouter(tags=["评论相关"])
 
 async def create_comment(
     comment_in: schemas.CommentCreate,
-    current_user: User = Depends(get_current_user),#当前用户
+    current_user: User = Depends(get_current_user),
 ):
-    post = await models.Post.get_or_none(id=comment_in.post_id)
+    # 验证帖子存在且用户可以评论
+    post = await can_comment_on_post(comment_in.post_id, current_user)
 
-    if not post:
-        raise HTTPException(404, "Post not found")
-        
     comment = await models.Comment.create(
         **comment_in.model_dump(),
         author=current_user
@@ -156,6 +156,7 @@ async def update_comment(
 
 async def delete_comment(
     comment_id: int,
+    reason: Optional[str] = None,
     current_user: User = Depends(get_current_user),
 ):
     """软删除评论（作者或管理员）,不从数据库删除，更新deleted_at为当前时间，防止删除父评论子评论变成孤儿"""
@@ -164,11 +165,34 @@ async def delete_comment(
     if not comment:
         raise HTTPException(status_code=404, detail="评论不存在")
 
-    if comment.author_id != current_user.id and not current_user.is_superuser:
+    # 权限检查
+    is_author = comment.author_id == current_user.id
+    is_moderator = False
+
+    if not is_author:
+        # 检查是否为版主
+        post = await models.Post.get(id=comment.post_id)
+        try:
+            await get_community_moderator(post.community_id, current_user)
+            is_moderator = True
+        except HTTPException:
+            pass
+
+    if not is_author and not is_moderator and not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="无权删除此评论")
 
     await models.Comment.filter(id=comment_id).update(
         deleted_at=datetime.now(timezone.utc)
+    )
+
+    # 记录审计日志
+    await create_audit_log(
+        actor=current_user,
+        target_type=TargetType.COMMENT,
+        target_id=comment_id,
+        action_type=ActionType.DELETE_COMMENT,
+        reason=reason,
+        metadata={"is_author": is_author, "is_moderator": is_moderator}
     )
 
     return {"message": "评论删除成功"}
