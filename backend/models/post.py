@@ -30,10 +30,18 @@ class Post(models.Model):
     deleted_at = fields.DatetimeField(null=True, description="软删除时间戳")
     is_edited = fields.BooleanField(default=False, description="是否被编辑过")
 
+    # 帖子状态管理
+    is_locked = fields.BooleanField(default=False, description="禁止新增评论")
+    is_highlighted = fields.BooleanField(default=False, description="精华内容")
+    is_pinned = fields.BooleanField(default=False, description="置顶帖子")
+    deleted_by_id = fields.IntField(null=True, description="谁删除了该帖子")
+
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
-    search_vector = TSVectorField()
+    # 全文搜索向量（需要特殊处理）
+    # 暂时禁用，因为这可能导致初始化问题
+    # search_vector = TSVectorField()
 
     class Meta:
         table = "posts"

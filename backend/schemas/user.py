@@ -54,7 +54,25 @@ class UserActivity(BaseModel):
     total_comments: int
 
 
-# --- 5. 通用响应模型 (Response Body) ---
+# --- 5. 当前用户信息 (Response Body) ---
+class UserInfo(BaseModel):
+    """当前登录用户的详细信息（用于 GET /users）"""
+    id: int
+    username: str
+    nickname: Optional[str] = None
+    email: Optional[str] = None
+    bio: Optional[str] = None
+    karma: int = 0
+    is_active: bool = True
+    is_superuser: bool = False
+    created_at: datetime
+    last_login: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# --- 6. 通用响应模型 (Response Body) ---
 
 User_Pydantic = pydantic_model_creator(
     User,

@@ -9,7 +9,7 @@ from backend.models.user import User
 from backend.models.post import Post
 from backend.models.comment import Comment
 from backend.schemas import UserUpdate, User_Pydantic
-from backend.schemas.user import UserProfile, UserActivity
+from backend.schemas.user import UserProfile, UserActivity, UserInfo
 from backend.core.security import get_current_user, get_password_hash
 
 # 鉴权
@@ -17,18 +17,29 @@ user = APIRouter(tags=["用户相关"], dependencies=[Depends(get_current_user)]
 
 
 # --- 获取当前用户 ---
-@user.get("/users", summary="获取当前用户信息", response_model=User_Pydantic)
+@user.get("/users", summary="获取当前用户信息", response_model=UserInfo)
 async def user_info(user_obj: User = Depends(get_current_user)):
     """
     获取当前登录用户的详细信息
     不需要额外参数，直接通过 Token 解析身份
+    返回用户的实际数据，包括昵称、邮箱、简介等
     """
-
-    return await User_Pydantic.from_tortoise_orm(user_obj)
+    return UserInfo(
+        id=user_obj.id,
+        username=user_obj.username,
+        nickname=user_obj.nickname,
+        email=user_obj.email,
+        bio=user_obj.bio,
+        karma=user_obj.karma,
+        is_active=user_obj.is_active,
+        is_superuser=user_obj.is_superuser,
+        created_at=user_obj.created_at,
+        last_login=user_obj.last_login
+    )
 
 
 # --- 更新当前用户 ---
-@user.put("/users", summary="更新当前用户信息", response_model=User_Pydantic)
+@user.put("/users", summary="更新当前用户信息", response_model=UserInfo)
 async def user_update(
     user_form: UserUpdate,
     user_obj: User = Depends(get_current_user)
@@ -37,6 +48,8 @@ async def user_update(
     更新个人信息
     可以更新昵称、邮箱、个人简介
     不允许修改用户名和密码（密码需要单独的接口）
+
+    注意：此接口仅更新提供的字段，未提供的字段保持不变
     """
     update_data = user_form.model_dump(exclude_unset=True)
 
@@ -48,7 +61,19 @@ async def user_update(
         await User.filter(id=user_obj.id).update(**update_data)
         await user_obj.refresh_from_db()
 
-    return await User_Pydantic.from_tortoise_orm(user_obj)
+    # 返回更新后的完整用户信息
+    return UserInfo(
+        id=user_obj.id,
+        username=user_obj.username,
+        nickname=user_obj.nickname,
+        email=user_obj.email,
+        bio=user_obj.bio,
+        karma=user_obj.karma,
+        is_active=user_obj.is_active,
+        is_superuser=user_obj.is_superuser,
+        created_at=user_obj.created_at,
+        last_login=user_obj.last_login
+    )
 
 
 # --- 公开用户资料（无需登录） ---

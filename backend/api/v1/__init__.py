@@ -4,7 +4,9 @@
 @Des: 导包
 """
 from fastapi import APIRouter
+from backend.api.v1.endpoints import memberships
 from .endpoints import *
+
 
 
 v1 = APIRouter(prefix="/v1")
@@ -18,3 +20,4 @@ v1.include_router(comments)
 v1.include_router(communities)
 v1.include_router(votes)
 v1.include_router(search)
+v1.include_router(memberships.router)
