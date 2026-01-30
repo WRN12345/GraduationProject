@@ -19,7 +19,7 @@ from backend.models import post as models
 router = APIRouter(tags=["帖子相关"])
 
 
-@router.get("/posts", summary="获取帖子列表")
+@router.get("/posts", response_model=List[schemas.PostOut], summary="获取帖子列表")
 
 async def list_posts(
     community_id: Optional[int] = None,
@@ -28,7 +28,6 @@ async def list_posts(
     include_deleted: bool = False,
 ):
     """获取帖子列表"""
-    # 构建查询
     query = models.Post.all().order_by("-created_at")
 
     # 过滤软删除的帖子
@@ -38,34 +37,9 @@ async def list_posts(
     if community_id:
         query = query.filter(community_id=community_id)
 
-    # 先应用分页，再转换为字典
-    posts = await query.offset(skip).limit(limit)
+    return await query.offset(skip).limit(limit)
 
-    # 手动转换为字典，避免关联查询
-    return [
-        {
-            "id": p.id,
-            "title": p.title,
-            "content": p.content,
-            "score": p.score,
-            "hot_rank": p.hot_rank,
-            "author_id": p.author_id,
-            "community_id": p.community_id,
-            "upvotes": p.upvotes,
-            "downvotes": p.downvotes,
-            "is_edited": p.is_edited,
-            "is_locked": p.is_locked,
-            "is_highlighted": p.is_highlighted,
-            "is_pinned": p.is_pinned,
-            "deleted_by_id": p.deleted_by_id,
-            "deleted_at": p.deleted_at,
-            "created_at": p.created_at,
-            "updated_at": p.updated_at,
-        }
-        for p in posts
-    ]
-
-@router.get("/posts/hot", summary="获取热门帖子列表")
+@router.get("/posts/hot", response_model=List[schemas.PostOut], summary="获取热门帖子列表")
 
 async def get_hot_posts(
     community_id: Optional[int] = None,
@@ -76,7 +50,6 @@ async def get_hot_posts(
     获取热门帖子列表
     按 hot_rank 排序，hot_rank 考虑了分数和时间衰减
     """
-    # 构建查询
     query = models.Post.all().order_by("-hot_rank")
 
     # 过滤软删除的帖子
@@ -85,32 +58,7 @@ async def get_hot_posts(
     if community_id:
         query = query.filter(community_id=community_id)
 
-    # 先应用分页，再转换为字典
-    posts = await query.offset(skip).limit(limit)
-
-    # 手动转换为字典，避免关联查询
-    return [
-        {
-            "id": p.id,
-            "title": p.title,
-            "content": p.content,
-            "score": p.score,
-            "hot_rank": p.hot_rank,
-            "author_id": p.author_id,
-            "community_id": p.community_id,
-            "upvotes": p.upvotes,
-            "downvotes": p.downvotes,
-            "is_edited": p.is_edited,
-            "is_locked": p.is_locked,
-            "is_highlighted": p.is_highlighted,
-            "is_pinned": p.is_pinned,
-            "deleted_by_id": p.deleted_by_id,
-            "deleted_at": p.deleted_at,
-            "created_at": p.created_at,
-            "updated_at": p.updated_at,
-        }
-        for p in posts
-    ]
+    return await query.offset(skip).limit(limit)
 
 @router.post("/posts", response_model=schemas.PostOut, summary="创建新帖子")
 
