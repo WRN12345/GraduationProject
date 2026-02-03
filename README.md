@@ -37,10 +37,11 @@
 - 发帖和评论历史
 
 ### 全文搜索
-- PostgreSQL 全文搜索
-- 相关性排序
-- 帖子、评论、用户搜索
-- GIN 索引加速
+- PostgreSQL 全文搜索 + GIN 倒排索引
+- 中文分词支持（zhcfg 配置）
+- 相关性排序（ts_rank）
+- 搜索关键词高亮显示（ts_headline）
+- 帖子、评论、用户混合搜索
 
 ## 技术栈
 
@@ -148,11 +149,12 @@ Swagger UI：  http://localhost:8000/docs
 - `GET /api/v1/users/{username}/comments` - 获取用户的评论
 - `GET /api/v1/users/{username}/activity` - 获取用户活动汇总
 
-### 搜索相关（4个）
-- `GET /api/v1/search/posts` - 全文搜索帖子
-- `GET /api/v1/search/comments` - 搜索评论
-- `GET /api/v1/search/users` - 搜索用户
-- `GET /api/v1/search` - 统一搜索接口
+### 搜索相关（5个）
+- `GET /api/v1/search/posts` - 全文搜索帖子（中文分词）
+- `GET /api/v1/search/comments` - 搜索评论（中文分词）
+- `GET /api/v1/search/users` - 搜索用户（用户名/昵称）
+- `GET /api/v1/search/all` - 统一搜索（帖子+评论+用户）
+- `GET /api/v1/search` - 搜索建议（快速预览）
 
 ### 社区相关（2个）
 - `GET /api/v1/communities` - 获取社区列表
@@ -228,7 +230,20 @@ curl -X GET "http://localhost:8000/api/v1/posts/hot"
 ### 7. 测试搜索
 
 ```bash
-curl -X GET "http://localhost:8000/api/v1/search/posts?q=测试"
+# 搜索帖子（中文全文搜索）
+curl -X GET "http://localhost:8000/api/v1/search/posts?q=Python教程"
+
+# 搜索评论
+curl -X GET "http://localhost:8000/api/v1/search/comments?q=数据库"
+
+# 搜索用户
+curl -X GET "http://localhost:8000/api/v1/search/users?q=alice"
+
+# 统一搜索（同时搜索帖子、评论、用户）
+curl -X GET "http://localhost:8000/api/v1/search/all?q=技术"
+
+# 搜索建议（快速预览）
+curl -X GET "http://localhost:8000/api/v1/search?q=FastAPI"
 ```
 
 ## 数据库迁移详解
