@@ -1,56 +1,56 @@
-# 🎯 Super Forum System - 仿 Reddit 社区论坛系统
+# Super Forum System - 仿 Reddit 社区论坛系统
 
 一个功能完整的 Reddit 风格社区论坛系统，基于 FastAPI + PostgreSQL + Redis 构建。
 
-## ✨ 核心功能
+## 核心功能
 
-### 🔐 用户认证系统
-- ✅ JWT 认证机制（Access Token + Refresh Token）
-- ✅ Token 刷新和轮换
-- ✅ 用户注册、登录、登出
-- ✅ 密码加密存储（bcrypt）
+### 用户认证系统
+- JWT 认证机制（Access Token + Refresh Token）
+- Token 刷新和轮换
+- 用户注册、登录、登出
+- 密码加密存储（bcrypt）
 
-### 📝 内容管理
-- ✅ 版块（Subreddit）创建与管理
-- ✅ Markdown 格式帖子发布
-- ✅ 帖子编辑和软删除
-- ✅ 评论编辑和软删除
-- ✅ 无限层级嵌套评论（楼中楼）
+### 内容管理
+- 版块（Subreddit）创建与管理
+- Markdown 格式帖子发布
+- 帖子编辑和软删除
+- 评论编辑和软删除
+- 无限层级嵌套评论（楼中楼）
 
-### 🗳️ 投票系统
-- ✅ 帖子点赞/踩（Upvote/Downvote）
-- ✅ 评论点赞/踩
-- ✅ 实时分数计算
-- ✅ 投票变更和取消
+### 投票系统
+- 帖子点赞/踩（Upvote/Downvote）
+- 评论点赞/踩
+- 实时分数计算
+- 投票变更和取消
 
-### 📈 热度排名
-- ✅ Reddit 经典热度算法
-- ✅ 时间衰减机制
-- ✅ 分数权重计算
-- ✅ 自动更新热度排名
+### 热度排名
+- Reddit 经典热度算法
+- 时间衰减机制
+- 分数权重计算
+- 自动更新热度排名
 
-### 👥 用户系统
-- ✅ 公开用户资料
-- ✅ 声望（Karma）系统
-- ✅ 个人简介
-- ✅ 用户活动追踪
-- ✅ 发帖和评论历史
+### 用户系统
+- 公开用户资料
+- 声望（Karma）系统
+- 个人简介
+- 用户活动追踪
+- 发帖和评论历史
 
-### 🔍 全文搜索
-- ✅ PostgreSQL 全文搜索
-- ✅ 相关性排序
-- ✅ 帖子、评论、用户搜索
-- ✅ GIN 索引加速
+### 全文搜索
+- PostgreSQL 全文搜索
+- 相关性排序
+- 帖子、评论、用户搜索
+- GIN 索引加速
 
-## 🛠️ 技术栈
+## 技术栈
 
 - **FastAPI 0.124+** - 现代、快速的 Python Web 框架
 - **PostgreSQL 14+** - 关系型数据库
 - **Tortoise ORM** - 异步 ORM
-- **Redis 7+** - 内存数据库（可选）
+- **Redis 7+** - 内存数据库（缓存和热度排行）
 - **JWT** - JSON Web Tokens 认证
 
-## 📦 快速开始
+## 快速开始
 
 ### 1. 安装依赖
 
@@ -82,23 +82,13 @@ PGPASSWORD=123456 psql -h 127.0.0.1 -U postgres -d super_db -f migrate_simple.sq
 ```
 
 **迁移说明：**
-- ✅ 使用你现有的 `super_db` 数据库，不会新建
-- ✅ 只添加新字段，不删除或修改现有数据
-- ✅ 使用 `IF NOT EXISTS`，安全可重复执行
+- 使用你现有的 `super_db` 数据库，不会新建
+- 只添加新字段，不删除或修改现有数据
+- 使用 `IF NOT EXISTS`，安全可重复执行
 
 ### 3. 配置环境变量
 
 `.env` 文件已配置好（使用现有数据库）：
-
-```env
-# 数据库：使用现有的 super_db
-DB_URL=postgres://postgres:123456@127.0.0.1:5432/super_db
-
-# Redis：本地 Redis（可选）
-REDIS_URL=redis://127.0.0.1:6379
-
-# 其他配置...
-```
 
 ### 4. 启动应用
 
@@ -118,7 +108,7 @@ API 文档：     http://localhost:8000/docs
 Swagger UI：  http://localhost:8000/docs
 ```
 
-## 📖 API 端点
+## API 端点
 
 ### 认证相关（4个）
 - `POST /api/v1/login` - 用户登录（返回 access + refresh token）
@@ -126,14 +116,18 @@ Swagger UI：  http://localhost:8000/docs
 - `POST /api/v1/logout` - 登出
 - `POST /api/v1/user` - 用户注册
 
-### 帖子相关（7个）
+### 帖子相关（10个）
 - `GET /api/v1/posts` - 获取帖子列表
 - `GET /api/v1/posts/hot` - 获取热门帖子（按热度排名）
 - `GET /api/v1/posts/{id}` - 获取帖子详情
 - `POST /api/v1/posts` - 创建帖子
 - `PUT /api/v1/posts/{id}` - 编辑帖子
+- `PATCH /api/v1/posts/{id}` - 部分编辑帖子
 - `DELETE /api/v1/posts/{id}` - 软删除帖子
 - `POST /api/v1/posts/{id}/restore` - 恢复已删除帖子
+- `PATCH /api/v1/posts/{id}/lock` - 锁定/解锁帖子
+- `PATCH /api/v1/posts/{id}/highlight` - 设为/取消精华
+- `PATCH /api/v1/posts/{id}/pin` - 置顶/取消置顶
 
 ### 评论相关（5个）
 - `GET /api/v1/posts/{post_id}/comments` - 获取嵌套评论树
@@ -164,7 +158,12 @@ Swagger UI：  http://localhost:8000/docs
 - `GET /api/v1/communities` - 获取社区列表
 - `POST /api/v1/communities` - 创建社区
 
-## 🧪 快速测试
+### 社区成员相关（3个）
+- `POST /api/v1/communities/{community_id}/join` - 加入社区
+- `POST /api/v1/communities/{community_id}/leave` - 退出社区
+- `GET /api/v1/communities/{community_id}/members` - 获取社区成员列表
+
+## 快速测试
 
 ### 1. 测试应用是否运行
 
@@ -232,7 +231,7 @@ curl -X GET "http://localhost:8000/api/v1/posts/hot"
 curl -X GET "http://localhost:8000/api/v1/search/posts?q=测试"
 ```
 
-## 🔧 数据库迁移详解
+## 数据库迁移详解
 
 ### 新增字段
 
@@ -245,6 +244,10 @@ curl -X GET "http://localhost:8000/api/v1/search/posts?q=测试"
 - `deleted_at` - 软删除时间戳
 - `is_edited` - 是否被编辑过
 - `updated_at` - 最后更新时间
+- `is_locked` - 是否禁止新增评论
+- `is_highlighted` - 是否精华内容
+- `is_pinned` - 是否置顶帖子
+- `deleted_by_id` - 删除者的用户ID
 
 **comments 表：**
 - `upvotes` - 点赞数
@@ -257,6 +260,15 @@ curl -X GET "http://localhost:8000/api/v1/search/posts?q=测试"
 **votes 表：**
 - `comment_id` - 支持评论投票（外键）
 
+**communities 表：**
+- `member_count` - 成员计数
+
+**memberships 表（新增）：**
+- `user_id` - 用户ID
+- `community_id` - 社区ID
+- `joined_at` - 加入时间
+- `role` - 角色（member/moderator/owner）
+
 ### 新增索引
 
 为提高查询性能，创建以下索引：
@@ -265,7 +277,7 @@ curl -X GET "http://localhost:8000/api/v1/search/posts?q=测试"
 - `idx_users_karma` - 用户声望索引
 - 等 10+ 个索引
 
-## 🎯 核心算法
+## 核心算法
 
 ### Reddit Hot Ranking
 
@@ -283,7 +295,72 @@ hot_score = log10(|score|) + (timestamp / 45000)
 karma = 帖子总点赞数 + 评论总点赞数
 ```
 
-## 🛠️ 项目结构
+## Redis 缓存架构
+
+### 数据结构设计
+
+```
+# 1. 热度排行榜 (Sorted Set)
+hot:posts:global          # 全局热门帖子 ZSET
+hot:posts:community:{id}  # 社区热门帖子 ZSET
+
+# 2. 帖子详情缓存 (Hash)
+post:detail:{id}          # 帖子完整详情 JSON (TTL: 10分钟)
+
+# 3. 交互计数器 (Hash)
+post:interactions:{id}    # 交互计数 (view_count, share_count, upvote_count, downvote_count)
+```
+
+### 热度更新流程
+
+```
+用户交互 (投票/浏览/分享)
+    ↓
+Redis: 更新计数器 + 重新计算 hot_rank + 更新 ZSET
+    ↓
+异步任务: 每分钟批量同步到 PostgreSQL
+```
+
+### 热门列表查询流程
+
+```
+GET /api/v1/posts/hot
+    ↓
+Redis: ZREVRANGE hot:posts:global 0 20 (取 top 20 post_ids)
+    ↓
+Redis: HMGET post:detail:{id} ... (批量取详情，如缓存未命中则查 PG)
+    ↓
+返回: PaginatedPostResponse
+```
+
+### 交互权重配置
+
+| 交互类型 | 权重 | 说明 |
+|---------|------|------|
+| 投票 | 10 | 权重最高，直接参与 score 计算 |
+| 分享 | 5 | 中等权重，反映内容传播度 |
+| 浏览 | 1 | 低权重，累计到热度 |
+
+### 热度算法（Redis 版本）
+
+```
+hot_score = log10(|score|) + (timestamp / 45000) + (interactions * 0.001)
+```
+
+- `score = upvotes - downvotes`
+- `45000` = 12.5 小时（时间衰减常数）
+- `interactions` 根据权重计算（投票*10 + 分享*5 + 浏览*1）
+
+### 缓存策略
+
+| 场景 | 策略 | TTL |
+|------|------|-----|
+| 热门列表 ZSET | 永久，实时更新 | 无 |
+| 帖子详情 Hash | 缓存失效自动删除 | 10 分钟 |
+| 交互计数器 | 永久，定时同步 | 无 |
+| 帖子编辑/删除 | 立即失效缓存 | 立即 |
+
+## 项目结构
 
 ```
 Super/
@@ -297,25 +374,33 @@ Super/
 │   │       │   ├── posts.py      # 帖子 CRUD、热度排名
 │   │       │   ├── comments.py   # 评论 CRUD、嵌套评论
 │   │       │   ├── communities.py# 版块管理
+│   │       │   ├── memberships.py# 成员管理
 │   │       │   ├── votes.py      # 投票系统
 │   │       │   └── search.py     # 全文搜索
 │   │       └── __init__.py       # 路由注册
 │   ├── core/
 │   │   ├── config.py            # 配置管理
 │   │   ├── security.py          # 认证和安全
-│   │   └── cache.py             # Redis 缓存
+│   │   ├── cache.py             # Redis 连接
+│   │   ├── redis_service.py     # Redis 服务封装（新增）
+│   │   ├── tasks.py             # 异步同步任务（新增）
+│   │   ├── permissions.py       # 权限控制
+│   │   └── audit.py             # 操作审计
 │   ├── models/                   # 数据库模型
 │   │   ├── user.py              # 用户模型 + Karma 计算
 │   │   ├── post.py              # 帖子模型 + Hot Rank 计算
 │   │   ├── comment.py           # 评论模型
 │   │   ├── vote.py              # 投票模型
-│   │   └── community.py         # 版块模型
+│   │   ├── community.py         # 版块模型
+│   │   ├── membership.py        # 成员模型
+│   │   └── audit_log.py         # 审计日志模型
 │   └── schemas/                  # Pydantic schemas
 │       ├── user.py              # 用户相关 schemas
 │       ├── post.py              # 帖子相关 schemas
 │       ├── comment.py           # 评论相关 schemas
 │       ├── vote.py              # 投票相关 schemas
-│       └── community.py         # 版块相关 schemas
+│       ├── community.py         # 版块相关 schemas
+│       └── membership.py        # 成员相关 schemas
 ├── frontend/                     # Vue.js 前端（待开发）
 ├── main.py                       # 应用入口
 ├── requirements.txt              # Python 依赖
@@ -324,127 +409,35 @@ Super/
 └── .env                         # 环境配置
 ```
 
-## 🔒 安全特性
+## 安全特性
 
-- ✅ JWT 认证（Access + Refresh Token）
-- ✅ Token 刷新和轮换
-- ✅ 密码 bcrypt 加密
-- ✅ SQL 注入防护（ORM）
-- ✅ XSS 防护
-- ✅ CORS 配置
-- ✅ 输入验证（Pydantic）
-- ✅ 权限控制（作者/管理员）
+- JWT 认证（Access + Refresh Token）
+- Token 刷新和轮换
+- 密码 bcrypt 加密
+- SQL 注入防护（ORM）
+- XSS 防护
+- CORS 配置
+- 输入验证（Pydantic）
+- 权限控制（作者/管理员）
+- 操作审计日志
 
-## 🛠️ 常见问题
+## 待开发功能
 
-### Q1: 数据库连接失败？
+- 前端界面（Vue.js 3）
+- 实时通知（WebSocket）
+- 图片上传
+- 私信功能
+- 版块管理功能
+- 内容审核
+- 单元测试和集成测试
 
-```bash
-# 检查 PostgreSQL 是否运行
-systemctl status postgresql
-
-# 检查数据库是否存在
-PGPASSWORD=123456 psql -U postgres -l | grep super_db
-
-# 如果数据库不存在，创建它
-PGPASSWORD=123456 psql -U postgres -c "CREATE DATABASE super_db;"
-```
-
-### Q2: 端口 8000 被占用？
-
-```bash
-# 查找占用进程
-lsof -i :8000
-
-# 杀死进程
-kill -9 <PID>
-
-# 或修改 main.py 使用其他端口
-# run("main:app", host="0.0.0.0", port=8001, reload=True)
-```
-
-### Q3: 需要域名和 Nginx 吗？
-
-**不需要！** 当前配置适合：
-- ✅ 本地开发
-- ✅ 局域网访问
-- ✅ 小型应用（< 1000 并发）
-
-Nginx 主要用于：
-- 域名和 HTTPS
-- 生产环境（> 1000 并发）
-- 需要负载均衡
-
-### Q4: 局域网其他设备如何访问？
-
-```bash
-# 查看本机 IP
-ip addr show | grep "inet " | grep -v 127.0.0.1
-
-# 其他设备访问
-http://你的IP:8000
-```
-
-### Q5: 如何停止应用？
-
-```bash
-# 按 Ctrl+C
-
-# 或查找进程并杀死
-ps aux | grep "python.*main.py"
-kill -9 <PID>
-```
-
-### Q6: 迁移脚本会删除数据吗？
-
-**不会！** 迁移脚本：
-- ✅ 只添加新字段
-- ✅ 使用 `IF NOT EXISTS`
-- ✅ 不删除或修改现有数据
-- ✅ 可以安全重复执行
-
-## 📝 Python 依赖说明
-
-`requirements.txt` 包含所有必需的包：
-
-```
-fastapi>=0.104.0              # Web 框架
-uvicorn[standard]>=0.24.0     # ASGI 服务器
-tortoise-orm>=0.20.0          # 异步 ORM
-asyncpg>=0.29.0               # PostgreSQL 驱动
-redis[hiredis]>=5.0.0         # Redis 客户端
-python-jose[cryptography]>=3.3.0  # JWT 处理
-passlib[bcrypt]>=1.7.4        # 密码加密
-python-multipart>=0.0.6       # 表单解析
-pydantic>=2.5.0               # 数据验证
-pydantic-settings>=2.1.0      # 配置管理
-email-validator>=2.1.0        # 邮箱验证
-python-dotenv>=1.0.0          # 环境变量
-```
-
-## 🚧 待开发功能
-
-- [ ] 前端界面（Vue.js 3）
-- [ ] 实时通知（WebSocket）
-- [ ] 图片上传
-- [ ] 私信功能
-- [ ] 版块管理功能
-- [ ] 内容审核
-- [ ] 单元测试和集成测试
-
-## 🎯 下一步建议
+## 下一步建议
 
 1. **测试功能** - 使用 Swagger UI (http://localhost:8000/docs) 测试所有 API
 2. **开发前端** - 使用 Vue.js 3 连接后端 API
 3. **添加测试** - 编写单元测试和集成测试
 4. **部署生产** - 如需公网访问，考虑配置 Nginx + HTTPS
 
-## 📄 许可证
+## 许可证
 
 本项目仅供学习和参考使用。
-
----
-
-**Made with ❤️ using FastAPI + PostgreSQL**
-
-**祝使用愉快！** 🎉
