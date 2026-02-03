@@ -16,21 +16,28 @@ class Settings(BaseSettings):
     VERSION: str = "v1.0.0"
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "True"
 
-    # --- JWT 安全配置（从 .env 读取，不暴露密钥）---
+    # --- JWT 安全配置---
     SECRET_KEY: str = os.getenv("SECRET_KEY", "")  # 必须在 .env 中配置
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "10080"))  # 默认 7 天
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "30"))  # 默认 30 天
 
-    # --- 管理员配置（从 .env 读取，不暴露密钥）---
+    # --- 管理员配置---
     ADMIN_REGISTER_KEY: str = os.getenv("ADMIN_REGISTER_KEY", "")  # 必须在 .env 中配置
 
-    # --- 数据库与 Redis（从 .env 读取，不暴露密码）---
+    # --- 数据库与 Redis---
     DB_URL: str = os.getenv("DB_URL", "")
     REDIS_URL: str = os.getenv("REDIS_URL", "")
 
     # --- 跨域配置 ---
     CORS_ORIGINS: List[str] = ["*"]
+
+    # --- Redis 缓存配置 ---
+    REDIS_POST_DETAIL_TTL: int = int(os.getenv("REDIS_POST_DETAIL_TTL", "600"))  # 帖子详情缓存 TTL (10分钟)
+    REDIS_SYNC_INTERVAL: int = int(os.getenv("REDIS_SYNC_INTERVAL", "60"))  # PG 同步间隔 (秒)
+    HOT_VIEW_WEIGHT: int = int(os.getenv("HOT_VIEW_WEIGHT", "1"))  # 浏览权重
+    HOT_SHARE_WEIGHT: int = int(os.getenv("HOT_SHARE_WEIGHT", "5"))  # 分享权重
+    HOT_VOTE_WEIGHT: int = int(os.getenv("HOT_VOTE_WEIGHT", "10"))  # 投票权重
 
     # --- 配置加载规则 ---
     model_config = SettingsConfigDict(
