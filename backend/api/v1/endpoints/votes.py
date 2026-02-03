@@ -88,7 +88,18 @@ async def vote(
 
     # Redis 更新 (仅帖子需要更新热度)
     if target_type == "post" and score_delta != 0:
-        await redis.zincrby("global:hot_posts", score_delta, str(target.id))
+        from backend.core.redis_service import hot_rank_service
+
+        # 确定投票类型
+        vote_type = 'upvote' if score_delta > 0 else 'downvote'
+
+        # 更新 Redis 交互计数和热度
+        await hot_rank_service.increment_interaction(
+            redis=redis,
+            post_id=target.id,
+            interaction_type=vote_type,
+            created_at=target.created_at
+        )
 
     return {
         "message": "投票成功",

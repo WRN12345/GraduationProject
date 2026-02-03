@@ -14,13 +14,17 @@ async def lifespan(app: FastAPI):
 
     # 初始化 Redis 连接池
     app.state.redis = await redis.from_url(
-        settings.REDIS_URL, 
+        settings.REDIS_URL,
         decode_responses=True
     )
     print("Redis 连接成功")
-    
+
+    # 启动后台同步任务
+    from backend.core.tasks import start_background_tasks
+    await start_background_tasks()
+
     yield # 应用运行期间
-    
+
     # [关闭时执行]
     await app.state.redis.close()
     print("Redis 连接关闭")

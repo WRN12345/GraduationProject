@@ -32,6 +32,13 @@ class Settings(BaseSettings):
     # --- 跨域配置 ---
     CORS_ORIGINS: List[str] = ["*"]
 
+    # --- Redis 缓存配置 ---
+    REDIS_POST_DETAIL_TTL: int = int(os.getenv("REDIS_POST_DETAIL_TTL", "600"))  # 帖子详情缓存 TTL (10分钟)
+    REDIS_SYNC_INTERVAL: int = int(os.getenv("REDIS_SYNC_INTERVAL", "60"))  # PG 同步间隔 (秒)
+    HOT_VIEW_WEIGHT: int = int(os.getenv("HOT_VIEW_WEIGHT", "1"))  # 浏览权重
+    HOT_SHARE_WEIGHT: int = int(os.getenv("HOT_SHARE_WEIGHT", "5"))  # 分享权重
+    HOT_VOTE_WEIGHT: int = int(os.getenv("HOT_VOTE_WEIGHT", "10"))  # 投票权重
+
     # --- 配置加载规则 ---
     model_config = SettingsConfigDict(
         env_file=".env",

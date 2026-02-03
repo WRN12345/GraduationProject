@@ -5,7 +5,7 @@
 """
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
 from tortoise.contrib.pydantic import pydantic_model_creator
 from backend.models.user import User
 
@@ -29,7 +29,16 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = Field(None, description="邮箱")
     bio: Optional[str] = Field(None, description="个人简介")
 
-# --- 3. 公开用户资料 (Response Body) ---
+# --- 3. 用户简要信息（用于帖子列表等场景） ---
+class UserOut(BaseModel):
+    """用户简要信息"""
+    id: int
+    username: str
+    nickname: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+# --- 4. 公开用户资料 (Response Body) ---
 class UserProfile(BaseModel):
     """公开用户资料"""
     id: int
@@ -42,10 +51,9 @@ class UserProfile(BaseModel):
     post_count: int = 0
     comment_count: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
-# --- 4. 用户活动 (Response Body) ---
+# --- 5. 用户活动 (Response Body) ---
 class UserActivity(BaseModel):
     """用户活动汇总"""
     posts: list = []
@@ -54,7 +62,7 @@ class UserActivity(BaseModel):
     total_comments: int
 
 
-# --- 5. 当前用户信息 (Response Body) ---
+# --- 6. 当前用户信息 (Response Body) ---
 class UserInfo(BaseModel):
     """当前登录用户的详细信息（用于 GET /users）"""
     id: int
@@ -68,11 +76,10 @@ class UserInfo(BaseModel):
     created_at: datetime
     last_login: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
-# --- 6. 通用响应模型 (Response Body) ---
+# --- 7. 通用响应模型 (Response Body) ---
 
 User_Pydantic = pydantic_model_creator(
     User,

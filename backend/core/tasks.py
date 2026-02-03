@@ -1,10 +1,181 @@
-# import asyncio
-# from backend.core.cache import get_redis
-# from backend.models.post import Post
+"""
+@Created on : 2025/12/8
+@Author: wrn
+@Des: Redis 与 PostgreSQL 数据同步任务
+"""
+import asyncio
+import logging
+from typing import Optional
+logger = logging.getLogger(__name__)
+from backend.core.cache import get_redis
+from backend.core.redis_service import hot_rank_service
+from backend.models.post import Post
+from backend.core.config import settings
 
-# async def sync_scores_to_db():
-#     """
-#     每隔一段时间，把 Redis 里的热度同步回 PostgreSQL
-#     """
-#     redis = await get_redis() 
-#     pass
+
+async def sync_post_stats_to_db():
+    """
+    定时任务：将 Redis 交互计数同步到 PostgreSQL
+
+    频率：每分钟执行一次
+    同步内容：
+    - upvotes/downvotes 计数
+    - 重新计算并更新 hot_rank
+    """
+    redis = await get_redis().__anext__()
+
+    try:
+        # 获取所有有交互的帖子 key
+        pattern = "post:interactions:*"
+        keys = []
+        async for key in redis.scan_iter(match=pattern):
+            keys.append(key)
+
+        if not keys:
+            return
+
+        logger.info(f"开始同步 {len(keys)} 个帖子的交互数据到 PostgreSQL")
+
+        # 批量获取交互数据
+        pipe = redis.pipeline()
+        for key in keys:
+            pipe.hgetall(key)
+        interactions_list = await pipe.execute()
+
+        # 同步到数据库
+        synced_count = 0
+        for key, interactions in zip(keys, interactions_list):
+            if not interactions:
+                continue
+
+            # 提取 post_id
+            post_id = int(key.split(":")[-1])
+
+            try:
+                post = await Post.get_or_none(id=post_id)
+                if not post:
+                    # 帖子不存在，清理 Redis 数据
+                    await redis.delete(key)
+                    continue
+
+                # 解析交互数据
+                upvote_count = int(interactions.get('upvote_count', 0))
+                downvote_count = int(interactions.get('downvote_count', 0))
+
+                vote_weight = getattr(settings, 'HOT_VOTE_WEIGHT', 10)
+                upvotes = upvote_count // vote_weight
+                downvotes = downvote_count // vote_weight
+
+                # 更新数据库
+                await Post.filter(id=post_id).update(
+                    upvotes=upvotes,
+                    downvotes=downvotes,
+                    score=upvotes - downvotes
+                )
+
+                # 重新计算热度
+                await post.update_hot_rank()
+
+                synced_count += 1
+
+            except Exception as e:
+                logger.error(f"同步帖子 {post_id} 失败: {e}")
+
+        logger.info(f"成功同步 {synced_count} 个帖子到 PostgreSQL")
+
+    except Exception as e:
+        logger.error(f"同步任务执行失败: {e}")
+    finally:
+        await redis.close()
+
+
+async def update_hot_ranks():
+    """
+    定时任务：批量重新计算并更新热门帖子热度
+
+    用于处理以下场景：
+    - 帖子创建后初始化热度
+    - 时间衰减导致热度变化
+    - 数据修正后重新计算
+    """
+    redis = await get_redis().__anext__()
+
+    try:
+        # 获取所有帖子（只取最近的，避免全表扫描）
+        posts = await Post.filter(
+            deleted_at__isnull=True
+        ).limit(1000).order_by("-created_at")
+
+        logger.info(f"开始更新 {len(posts)} 个帖子的热度")
+
+        for post in posts:
+            try:
+                # 从数据库同步到 Redis
+                await hot_rank_service.sync_post_rank_from_db(
+                    redis=redis,
+                    post_id=post.id,
+                    upvotes=post.upvotes,
+                    downvotes=post.downvotes,
+                    created_at=post.created_at,
+                    community_id=post.community_id
+                )
+            except Exception as e:
+                logger.error(f"更新帖子 {post.id} 热度失败: {e}")
+
+        logger.info("热度更新完成")
+
+    except Exception as e:
+        logger.error(f"热度更新任务执行失败: {e}")
+    finally:
+        await redis.close()
+
+
+async def start_background_tasks():
+    """
+    启动后台定时任务
+
+    在应用启动时调用，启动两个定时任务：
+    1. sync_post_stats_to_db - 每分钟执行
+    2. update_hot_ranks - 每5分钟执行
+    """
+    sync_interval = getattr(settings, 'REDIS_SYNC_INTERVAL', 60)
+
+    async def sync_loop():
+        """同步循环"""
+        while True:
+            try:
+                await sync_post_stats_to_db()
+            except Exception as e:
+                logger.error(f"同步循环异常: {e}")
+            await asyncio.sleep(sync_interval)
+
+    async def hot_rank_loop():
+        """热度更新循环"""
+        while True:
+            try:
+                await update_hot_ranks()
+            except Exception as e:
+                logger.error(f"热度更新循环异常: {e}")
+            await asyncio.sleep(300)  # 5分钟
+
+    # 启动两个任务
+    logger.info("启动 Redis 同步后台任务...")
+    asyncio.create_task(sync_loop())
+    asyncio.create_task(hot_rank_loop())
+    logger.info("后台任务启动完成")
+
+
+# 保留旧的接口（兼容性）
+async def sync_scores_to_db():
+    """
+    @Deprecated: 使用 sync_post_stats_to_db 替代
+    """
+    await sync_post_stats_to_db()
+
+
+__all__ = [
+    "sync_post_stats_to_db",
+    "update_hot_ranks",
+    "start_background_tasks",
+    "sync_scores_to_db",
+]
