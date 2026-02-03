@@ -16,16 +16,16 @@ class Settings(BaseSettings):
     VERSION: str = "v1.0.0"
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "True"
 
-    # --- JWT 安全配置（从 .env 读取，不暴露密钥）---
+    # --- JWT 安全配置---
     SECRET_KEY: str = os.getenv("SECRET_KEY", "")  # 必须在 .env 中配置
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "10080"))  # 默认 7 天
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "30"))  # 默认 30 天
 
-    # --- 管理员配置（从 .env 读取，不暴露密钥）---
+    # --- 管理员配置---
     ADMIN_REGISTER_KEY: str = os.getenv("ADMIN_REGISTER_KEY", "")  # 必须在 .env 中配置
 
-    # --- 数据库与 Redis（从 .env 读取，不暴露密码）---
+    # --- 数据库与 Redis---
     DB_URL: str = os.getenv("DB_URL", "")
     REDIS_URL: str = os.getenv("REDIS_URL", "")
 
