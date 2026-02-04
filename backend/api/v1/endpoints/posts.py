@@ -38,8 +38,8 @@ async def _get_paginated_posts(
         limit: 返回条数
         include_deleted: 是否包含已删除帖子
     """
-    # 构建查询
-    query = models.Post.all().order_by(order_by)
+    # 构建查询（使用从库）
+    query = models.Post.all().using_db('replica').order_by(order_by)
 
     # 预加载关联对象，避免 N+1 查询问题
     query = query.select_related('author', 'community')
@@ -130,12 +130,12 @@ async def get_hot_posts(
     # 3. 找出缓存未命中的帖子
     missing_ids = [pid for pid in post_ids if pid not in cached_posts]
 
-    # 4. 从数据库获取未缓存的帖子
+    # 4. 从数据库获取未缓存的帖子（使用从库）
     if missing_ids:
         db_posts = await models.Post.filter(
             id__in=missing_ids,
             deleted_at__isnull=True
-        ).select_related('author', 'community')
+        ).using_db('replica').select_related('author', 'community')
 
         # 转换为字典并回填缓存
         for post in db_posts:
@@ -193,6 +193,7 @@ async def get_hot_posts(
 async def create_post(
     post_in: schemas.PostCreate,
     current_user: User = Depends(get_current_user),
+    redis: Redis = Depends(get_redis),
 ):
     """发布新帖"""
     # 校验板块是否存在
@@ -208,6 +209,10 @@ async def create_post(
     )
     # 重新获取帖子以预加载关联对象
     post = await models.Post.get(id=post.id).select_related('author', 'community')
+
+    # 设置 5 秒内读主库的标记
+    await redis.setex(f"post:read_master:{post.id}", 5, "1")
+
     return post
 
 @router.get("/posts/{post_id}", response_model=schemas.PostOut,summary="获取帖子详情")
@@ -216,10 +221,15 @@ async def get_post(
     post_id: int,
     redis: Redis = Depends(get_redis),
 ):
-    """获取单个帖子详情"""
+    """获取单个帖子详情（动态分流）"""
     from backend.core.redis_service import hot_rank_service
 
-    post = await models.Post.get_or_none(id=post_id).select_related('author', 'community')
+    # 检查是否需要读主库（刚发布/编辑/投票）
+    read_master = await redis.exists(f"post:read_master:{post_id}")
+    conn = "master" if read_master else "replica"
+
+    # 从对应数据库查询
+    post = await models.Post.get_or_none(id=post_id).using_db(conn).select_related('author', 'community')
     if not post:
         raise HTTPException(status_code=404, detail="帖子不存在")
 
@@ -239,8 +249,11 @@ async def update_post(
     post_id: int,
     post_in: schemas.PostUpdate,
     current_user: User = Depends(get_current_user),
+    redis: Redis = Depends(get_redis),
 ):
     """编辑帖子（仅作者）"""
+    from backend.core.redis_service import post_cache_service
+
     post = await models.Post.get_or_none(id=post_id)
 
     if not post:
@@ -261,6 +274,14 @@ async def update_post(
             **update_data,
             is_edited=True
         )
+
+        # 设置 5 秒内读主库的标记
+        await redis.setex(f"post:read_master:{post_id}", 5, "1")
+
+        # 失效缓存
+        await post_cache_service.invalidate_post(redis, post_id)
+        await redis.delete(f"post:list:{post_id}")
+
         # 重新获取帖子，预加载关联对象
         post = await models.Post.get(id=post_id).select_related('author', 'community')
 

@@ -83,15 +83,15 @@ user_public = APIRouter(tags=["用户资料（公开）"])
 
 @user_public.get("/users/{username}", response_model=UserProfile)
 async def get_user_profile(username: str):
-    """获取公开用户资料"""
-    user = await User.get_or_none(username=username)
+    """获取公开用户资料（使用主库）"""
+    user = await User.get_or_none(username=username).using_db('master')
 
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")
 
-    # 计算统计数据
-    post_count = await Post.filter(author=user, deleted_at__isnull=True).count()
-    comment_count = await Comment.filter(author=user, deleted_at__isnull=True).count()
+    # 计算统计数据（使用主库）
+    post_count = await Post.filter(author=user, deleted_at__isnull=True).using_db('master').count()
+    comment_count = await Comment.filter(author=user, deleted_at__isnull=True).using_db('master').count()
 
     # 如果 karma 为 0，触发计算
     if user.karma == 0:
@@ -116,15 +116,15 @@ async def get_user_posts(
     skip: int = 0,
     limit: int = 20,
 ):
-    """获取用户发布的帖子"""
-    user = await User.get_or_none(username=username)
+    """获取用户发布的帖子（使用主库）"""
+    user = await User.get_or_none(username=username).using_db('master')
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")
 
     posts = await Post.filter(
         author=user,
         deleted_at__isnull=True
-    ).order_by("-created_at").offset(skip).limit(limit)
+    ).using_db('master').order_by("-created_at").offset(skip).limit(limit)
 
     return posts
 
@@ -134,40 +134,40 @@ async def get_user_comments(
     skip: int = 0,
     limit: int = 50,
 ):
-    """获取用户发表的评论"""
-    user = await User.get_or_none(username=username)
+    """获取用户发表的评论（使用主库）"""
+    user = await User.get_or_none(username=username).using_db('master')
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")
 
     comments = await Comment.filter(
         author=user,
         deleted_at__isnull=True
-    ).order_by("-created_at").offset(skip).limit(limit)
+    ).using_db('master').order_by("-created_at").offset(skip).limit(limit)
 
     return comments
 
 @user_public.get("/users/{username}/activity", response_model=UserActivity, summary="获取用户的活动汇总")
 async def get_user_activity(username: str):
-    """获取用户的活动汇总（帖子和评论）"""
-    user = await User.get_or_none(username=username)
+    """获取用户的活动汇总（帖子和评论，使用主库）"""
+    user = await User.get_or_none(username=username).using_db('master')
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")
 
-    # 获取最近的帖子
+    # 获取最近的帖子（使用主库）
     posts = await Post.filter(
         author=user,
         deleted_at__isnull=True
-    ).order_by("-created_at").limit(10)
+    ).using_db('master').order_by("-created_at").limit(10)
 
-    # 获取最近的评论
+    # 获取最近的评论（使用主库）
     comments = await Comment.filter(
         author=user,
         deleted_at__isnull=True
-    ).order_by("-created_at").limit(10)
+    ).using_db('master').order_by("-created_at").limit(10)
 
-    # 获取总数
-    total_posts = await Post.filter(author=user).count()
-    total_comments = await Comment.filter(author=user).count()
+    # 获取总数（使用主库）
+    total_posts = await Post.filter(author=user).using_db('master').count()
+    total_comments = await Comment.filter(author=user).using_db('master').count()
 
     return {
         "posts": posts,
