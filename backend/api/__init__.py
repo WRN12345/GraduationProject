@@ -52,10 +52,10 @@ app.add_middleware(
 )
 
 
-# ---  数据库注册 ---
+# ---  数据库注册 (主从配置) ---
 register_tortoise(
     app,
-    db_url=settings.DB_URL,
+    db_url=settings.DB_MASTER_URL,  # 默认连接（主库）
     modules={"models": ["backend.models.user", "backend.models.movies", "backend.models.vote", "backend.models.comment", "backend.models.community", "backend.models.post", "backend.models.membership", "backend.models.audit_log"]},
     generate_schemas=False,  # 使用 Aerich 管理迁移，不再自动生成 schemas
     add_exception_handlers=True,
@@ -63,7 +63,11 @@ register_tortoise(
 
 # --- Tortoise ORM 配置导出（供 Aerich 使用）---
 TORTOISE_ORM = {
-    "connections": {"default": settings.DB_URL},
+    "connections": {
+        "master": settings.DB_MASTER_URL,      # 主库连接
+        "replica": settings.DB_REPLICA_URL,    # 从库连接
+        "default": settings.DB_MASTER_URL,     # 默认连接（兼容性）
+    },
     "apps": {
         "models": {
             "models": [
@@ -76,7 +80,9 @@ TORTOISE_ORM = {
                 "backend.models.membership",
                 "backend.models.audit_log",
             ],
-            "default_connection": "default",
+            "default_connection": "master",  # 模型默认使用主库
         }
     },
+    "use_tz": True,
+    "timezone": "UTC",
 }

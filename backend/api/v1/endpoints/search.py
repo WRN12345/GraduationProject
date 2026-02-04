@@ -11,7 +11,7 @@ from backend.models.post import Post
 from backend.models.user import User
 from backend.models.comment import Comment
 from backend.schemas import search as search_schemas
-from tortoise import connections
+from backend.core.db import db_service
 
 router = APIRouter(tags=["搜索"])
 
@@ -88,11 +88,9 @@ async def search_posts(
     if community_id:
         count_sql += " AND p.community_id = $2"
 
-    conn = connections.get("default")
-
-    # 执行搜索和计数
-    results = await conn.execute_query_dict(sql, params)
-    count_result = await conn.execute_query_dict(count_sql, params[:2] if community_id else params[:1])
+    # 执行搜索和计数（使用从库）
+    results = await db_service.execute_read_query(sql, params)
+    count_result = await db_service.execute_read_query(count_sql, params[:2] if community_id else params[:1])
     total = count_result[0]['total'] if count_result else 0
 
     return {
@@ -254,11 +252,9 @@ async def search_comments(
         AND c.deleted_at IS NULL
     """
 
-    conn = connections.get("default")
-
-    # 执行搜索和计数
-    results = await conn.execute_query_dict(sql, [q.strip(), limit, skip])
-    count_result = await conn.execute_query_dict(count_sql, [q.strip()])
+    # 执行搜索和计数（使用从库）
+    results = await db_service.execute_read_query(sql, [q.strip(), limit, skip])
+    count_result = await db_service.execute_read_query(count_sql, [q.strip()])
     total = count_result[0]['total'] if count_result else 0
 
     return {
@@ -354,9 +350,9 @@ async def _fetch_posts_search(q: str, skip: int, limit: int):
         AND p.deleted_at IS NULL
     """
 
-    conn = connections.get("default")
-    results = await conn.execute_query_dict(sql, [q, limit, skip])
-    count_result = await conn.execute_query_dict(count_sql, [q])
+    # 使用从库查询
+    results = await db_service.execute_read_query(sql, [q, limit, skip])
+    count_result = await db_service.execute_read_query(count_sql, [q])
 
     return {
         "results": results,
@@ -393,9 +389,9 @@ async def _fetch_comments_search(q: str, skip: int, limit: int):
         AND c.deleted_at IS NULL
     """
 
-    conn = connections.get("default")
-    results = await conn.execute_query_dict(sql, [q, limit, skip])
-    count_result = await conn.execute_query_dict(count_sql, [q])
+    # 使用从库查询
+    results = await db_service.execute_read_query(sql, [q, limit, skip])
+    count_result = await db_service.execute_read_query(count_sql, [q])
 
     return {
         "results": results,

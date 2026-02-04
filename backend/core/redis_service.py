@@ -200,7 +200,19 @@ class PostCacheService:
     """帖子详情缓存服务"""
 
     POST_DETAIL_PREFIX = "post:detail"
+    POST_LIST_PREFIX = "post:list"
     DEFAULT_TTL = getattr(settings, 'REDIS_POST_DETAIL_TTL', 600)  # 默认 10 分钟
+    LIST_TTL = getattr(settings, 'REDIS_POST_LIST_TTL', 300)  # 列表缓存 5 分钟
+
+    @staticmethod
+    def _get_post_detail_key(post_id: int) -> str:
+        """获取帖子详情缓存 key"""
+        return f"{PostCacheService.POST_DETAIL_PREFIX}:{post_id}"
+
+    @staticmethod
+    def _get_post_list_key(post_id: int) -> str:
+        """获取帖子列表缓存 key"""
+        return f"{PostCacheService.POST_LIST_PREFIX}:{post_id}"
 
     @staticmethod
     def _get_post_detail_key(post_id: int) -> str:
@@ -296,10 +308,114 @@ class PostCacheService:
 
         return result
 
+    # --- 列表缓存方法 ---
+
+    async def cache_post_list(
+        self,
+        redis: Redis,
+        post_id: int,
+        list_data: dict,
+        ttl: Optional[int] = None
+    ):
+        """
+        缓存帖子列表信息（不含完整内容）
+
+        Args:
+            redis: Redis 客户端
+            post_id: 帖子 ID
+            list_data: 列表数据 (id, title, author, score, created_at)
+            ttl: 过期时间（秒）
+        """
+        key = self._get_post_list_key(post_id)
+        await redis.setex(
+            key,
+            ttl or self.LIST_TTL,
+            json.dumps(list_data, default=str)
+        )
+
+    async def get_cached_post_list(
+        self,
+        redis: Redis,
+        post_id: int
+    ) -> Optional[dict]:
+        """
+        获取缓存的列表信息
+
+        Returns:
+            列表数据字典，未命中返回 None
+        """
+        key = self._get_post_list_key(post_id)
+        data = await redis.get(key)
+
+        if data:
+            return json.loads(data)
+        return None
+
+    async def cache_posts_list_batch(
+        self,
+        redis: Redis,
+        posts: List[dict],
+        ttl: Optional[int] = None
+    ):
+        """
+        批量缓存列表信息
+
+        Args:
+            redis: Redis 客户端
+            posts: 帖子数据列表
+            ttl: 过期时间（秒）
+        """
+        pipe = redis.pipeline()
+        for post in posts:
+            key = self._get_post_list_key(post['id'])
+            # 只缓存列表所需字段
+            list_data = {
+                "id": post['id'],
+                "title": post['title'],
+                "score": post['score'],
+                "hot_rank": post.get('hot_rank', 0),
+                "author_id": post['author_id'],
+                "author": post.get('author'),
+                "community_id": post.get('community_id'),
+                "community": post.get('community'),
+                "created_at": post['created_at'],
+            }
+            pipe.setex(
+                key,
+                ttl or self.LIST_TTL,
+                json.dumps(list_data, default=str)
+            )
+        await pipe.execute()
+
+    async def get_cached_posts_list_batch(
+        self,
+        redis: Redis,
+        post_ids: List[int]
+    ) -> dict:
+        """
+        批量获取列表缓存
+
+        Returns:
+            dict: {post_id: list_data} 未命中的不在结果中
+        """
+        if not post_ids:
+            return {}
+
+        keys = [self._get_post_list_key(pid) for pid in post_ids]
+        values = await redis.mget(keys)
+
+        result = {}
+        for pid, value in zip(post_ids, values):
+            if value:
+                result[pid] = json.loads(value)
+
+        return result
+
     async def invalidate_post(self, redis: Redis, post_id: int):
         """失效帖子缓存（编辑、删除时调用）"""
-        key = self._get_post_detail_key(post_id)
-        await redis.delete(key)
+        detail_key = self._get_post_detail_key(post_id)
+        list_key = self._get_post_list_key(post_id)
+        await redis.delete(detail_key, list_key)
 
 
 # 导出服务实例
