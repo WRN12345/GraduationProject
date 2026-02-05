@@ -11,7 +11,7 @@ from backend.models.post import Post
 from backend.models.user import User
 from backend.models.comment import Comment
 from backend.schemas import search as search_schemas
-from backend.core.db import db_service
+from tortoise import connections
 
 router = APIRouter(tags=["搜索"])
 
@@ -89,8 +89,8 @@ async def search_posts(
         count_sql += " AND p.community_id = $2"
 
     # 执行搜索和计数（使用从库）
-    results = await db_service.execute_read_query(sql, params)
-    count_result = await db_service.execute_read_query(count_sql, params[:2] if community_id else params[:1])
+    results = await connections.get("default").execute_query_dict(sql, params)
+    count_result = await connections.get("default").execute_query_dict(count_sql, params[:2] if community_id else params[:1])
     total = count_result[0]['total'] if count_result else 0
 
     return {
@@ -253,8 +253,8 @@ async def search_comments(
     """
 
     # 执行搜索和计数（使用从库）
-    results = await db_service.execute_read_query(sql, [q.strip(), limit, skip])
-    count_result = await db_service.execute_read_query(count_sql, [q.strip()])
+    results = await connections.get("default").execute_query_dict(sql, [q.strip(), limit, skip])
+    count_result = await connections.get("default").execute_query_dict(count_sql, [q.strip()])
     total = count_result[0]['total'] if count_result else 0
 
     return {
@@ -351,8 +351,8 @@ async def _fetch_posts_search(q: str, skip: int, limit: int):
     """
 
     # 使用从库查询
-    results = await db_service.execute_read_query(sql, [q, limit, skip])
-    count_result = await db_service.execute_read_query(count_sql, [q])
+    results = await connections.get("default").execute_query_dict(sql, [q, limit, skip])
+    count_result = await connections.get("default").execute_query_dict(count_sql, [q])
 
     return {
         "results": results,
@@ -390,8 +390,8 @@ async def _fetch_comments_search(q: str, skip: int, limit: int):
     """
 
     # 使用从库查询
-    results = await db_service.execute_read_query(sql, [q, limit, skip])
-    count_result = await db_service.execute_read_query(count_sql, [q])
+    results = await connections.get("default").execute_query_dict(sql, [q, limit, skip])
+    count_result = await connections.get("default").execute_query_dict(count_sql, [q])
 
     return {
         "results": results,

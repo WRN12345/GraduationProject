@@ -101,12 +101,6 @@ async def vote(
             created_at=target.created_at
         )
 
-        # 设置 5 秒内读主库的标记
-        await redis.setex(f"post:read_master:{target.id}", 5, "1")
-    elif target_type == "comment" and score_delta != 0:
-        # 评论投票后也设置标记
-        await redis.setex(f"comment:read_master:{target.id}", 5, "1")
-
     return {
         "message": "投票成功",
         "target_type": target_type,
@@ -117,21 +111,16 @@ async def vote(
 async def get_comment_vote_status(
     comment_id: int,
     current_user: User = Depends(get_current_user),
-    redis: Redis = Depends(get_redis),
 ):
-    """获取用户对某评论的投票状态（动态分流）"""
-    # 检查是否需要读主库（刚投票）
-    read_master = await redis.exists(f"comment:read_master:{comment_id}")
-    conn = "master" if read_master else "replica"
-
-    comment = await Comment.get_or_none(id=comment_id).using_db(conn)
+    """获取用户对某评论的投票状态"""
+    comment = await Comment.get_or_none(id=comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail="评论不存在")
 
     vote = await models.Vote.filter(
         user=current_user,
         comment=comment
-    ).using_db(conn).first()
+    ).first()
 
     return {
         "comment_id": comment_id,
