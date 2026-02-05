@@ -34,8 +34,7 @@ async def create_comment(
     )
     return comment
 
-@router.get("/posts/{post_id}/comments", response_model=List[schemas.CommentOut],summary="获取帖子评论树")
-
+@router.get("/posts/{post_id}/comments", summary="获取帖子评论树")
 async def get_comments_tree(post_id: int):
     """
     使用 PostgreSQL Recursive CTE (递归公用表表达式)

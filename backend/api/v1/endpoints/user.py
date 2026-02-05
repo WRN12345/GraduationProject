@@ -4,6 +4,7 @@
 @Des: 用户相关路由
 """
 
+from gc import get_count
 from fastapi import APIRouter, Depends, HTTPException
 from backend.models.user import User
 from backend.models.post import Post
@@ -81,14 +82,15 @@ from fastapi import APIRouter
 
 user_public = APIRouter(tags=["用户资料（公开）"])
 
-@user_public.get("/users/{username}", response_model=UserProfile)
+@user_public.get("/users/{username}", response_model=UserProfile,summary="获取公开用户资料")
 async def get_user_profile(username: str):
     """获取公开用户资料"""
     user = await User.get_or_none(username=username)
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")
 
-    # 计算统计数据    post_count = await Post.filter(author=user, deleted_at__isnull=True).count()
+    # 计算统计数据   
+    post_count = await Post.filter(author=user, deleted_at__isnull=True).count()
     comment_count = await Comment.filter(author=user, deleted_at__isnull=True).count()
 
     # 如果 karma 为 0，触发计算
@@ -146,29 +148,30 @@ async def get_user_comments(
 
 @user_public.get("/users/{username}/activity", response_model=UserActivity, summary="获取用户的活动汇总")
 async def get_user_activity(username: str):
-    """获取用户的活动汇总（帖子和评论，使用主库）"""
-    user = await User.get_or_none(username=username)    
+    """获取用户的活动汇总（帖子和评论）"""
+    user = await User.get_or_none(username=username)
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")
 
-    # 获取最近的帖子    
+    # 获取最近的帖子
     posts = await Post.filter(
         author=user,
         deleted_at__isnull=True
-    ).order_by("-created_at").limit(10)
+    ).order_by("-created_at").limit(10).values()
 
-    # 获取最近的评论    
+    # 获取最近的评论
     comments = await Comment.filter(
         author=user,
         deleted_at__isnull=True
-    ).order_by("-created_at").limit(10)
+    ).order_by("-created_at").limit(10).values()
 
-    # 获取总数    total_posts = await Post.filter(author=user).count()
+    # 获取总数
+    total_posts = await Post.filter(author=user).count()
     total_comments = await Comment.filter(author=user).count()
 
     return {
-        "posts": posts,
-        "comments": comments,
+        "posts": list(posts),
+        "comments": list(comments),
         "total_posts": total_posts,
         "total_comments": total_comments,
     }
