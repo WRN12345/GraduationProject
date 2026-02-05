@@ -12,7 +12,7 @@ from backend.core.security import get_current_user
 from backend.core.permissions import can_comment_on_post, get_community_moderator
 from backend.core.audit import create_audit_log
 from backend.models.audit_log import ActionType, TargetType
-from backend.core.db import db_service
+from tortoise import connections
 from backend.schemas import comment as schemas
 from backend.models import post as models
 
@@ -39,10 +39,10 @@ async def create_comment(
 async def get_comments_tree(post_id: int):
     """
     使用 PostgreSQL Recursive CTE (递归公用表表达式)
-    一次性获取完整的无限层级评论树（使用从库）
+    一次性获取完整的无限层级评论树
     """
-    # 使用从库连接
-    conn = db_service.get_read_connection()
+    # 使用默认连接（Pgpool 自动路由）
+    conn = connections.get("default")
     
     # --- 核心 SQL 逻辑 ---
     # 1. Anchor Member: 选出根评论 (parent_id IS NULL)

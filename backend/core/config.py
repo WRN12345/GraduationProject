@@ -27,9 +27,6 @@ class Settings(BaseSettings):
 
     # --- 数据库与 Redis---
     DB_URL: str = os.getenv("DB_URL", "")
-    DB_MASTER_URL: str = os.getenv("DB_MASTER_URL", "")
-    DB_REPLICA_URL: str = os.getenv("DB_REPLICA_URL", "")
-    DB_READ_FROM_MASTER: bool = os.getenv("DB_READ_FROM_MASTER", "False").lower() == "True"
     REDIS_URL: str = os.getenv("REDIS_URL", "")
 
     # --- 跨域配置 ---
@@ -67,12 +64,6 @@ def validate_settings():
 
     if not settings.DB_URL:
         errors.append("DB_URL 未在 .env 中配置")
-
-    if not settings.DB_MASTER_URL:
-        errors.append("DB_MASTER_URL 未在 .env 中配置")
-
-    if not settings.DB_REPLICA_URL:
-        errors.append("DB_REPLICA_URL 未在 .env 中配置")
 
     if not settings.REDIS_URL:
         errors.append("REDIS_URL 未在 .env 中配置")

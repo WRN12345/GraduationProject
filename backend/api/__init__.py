@@ -52,10 +52,10 @@ app.add_middleware(
 )
 
 
-# ---  数据库注册 (主从配置) ---
+# ---  数据库注册 (Pgpool 中间件) ---
 register_tortoise(
     app,
-    db_url=settings.DB_MASTER_URL,  # 默认连接（主库）
+    db_url=settings.DB_URL,  # Pgpool 连接
     modules={"models": ["backend.models.user", "backend.models.movies", "backend.models.vote", "backend.models.comment", "backend.models.community", "backend.models.post", "backend.models.membership", "backend.models.audit_log"]},
     generate_schemas=False,  # 使用 Aerich 管理迁移，不再自动生成 schemas
     add_exception_handlers=True,
@@ -64,9 +64,7 @@ register_tortoise(
 # --- Tortoise ORM 配置导出（供 Aerich 使用）---
 TORTOISE_ORM = {
     "connections": {
-        "master": settings.DB_MASTER_URL,      # 主库连接
-        "replica": settings.DB_REPLICA_URL,    # 从库连接
-        "default": settings.DB_MASTER_URL,     # 默认连接（兼容性）
+        "default": settings.DB_URL,
     },
     "apps": {
         "models": {
@@ -80,7 +78,7 @@ TORTOISE_ORM = {
                 "backend.models.membership",
                 "backend.models.audit_log",
             ],
-            "default_connection": "master",  # 模型默认使用主库
+            "default_connection": "default",
         }
     },
     "use_tz": True,
