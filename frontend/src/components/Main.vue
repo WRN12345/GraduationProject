@@ -1,5 +1,13 @@
 <script setup>
 import { ref } from 'vue'
+import {
+  ThumbsUp,
+  ThumbsDown,
+  MessageCircle,
+  Bookmark,
+  Share2,
+  Send
+} from 'lucide-vue-next'
 
 // 模拟帖子数据
 const posts = ref([
@@ -10,7 +18,7 @@ const posts = ref([
     time: '15小时前',
     title: 'Shit level 垃圾水平',
     type: 'image',
-    content: '/assets/image/1.jpg', // 这里需要对应你本地的图片路径
+    content: '/assets/image/1.jpg',
     votes: 300,
     comments: 274
   },
@@ -20,26 +28,22 @@ const posts = ref([
     user: 'u/czs250',
     time: '1天前',
     title: 'Cybersecurity quiz 网络安全测验',
-    type: 'quiz', // 模拟不同类型的帖子样式
+    type: 'quiz',
     content: 'What is the most vulnerable OSI model layer?',
     votes: 120,
     comments: 45
   }
 ])
+
+// 评论输入
+const commentInputs = ref({})
 </script>
 
 <template>
-  <!-- 中间 Feed 流 -->
+  <!-- Feed 流 -->
   <div class="feed-container">
     <!-- 帖子循环 -->
     <div class="post-card" v-for="post in posts" :key="post.id">
-      <!-- 投票侧边 -->
-      <div class="vote-section">
-        <button class="vote-btn">⬆</button>
-        <span class="vote-count">{{ post.votes }}</span>
-        <button class="vote-btn">⬇</button>
-      </div>
-
       <!-- 帖子内容 -->
       <div class="post-content">
         <div class="post-header">
@@ -47,14 +51,12 @@ const posts = ref([
           <span class="subreddit-name">{{ post.subreddit }}</span>
           <span class="meta-info">· 由 {{ post.user }} 发布 · {{ post.time }}</span>
         </div>
-        
+
         <h3 class="post-title">{{ post.title }}</h3>
 
         <!-- 根据类型显示图片或文本 -->
         <div class="post-media" v-if="post.type === 'image'">
-          <!-- 这里使用 img 标签，实际项目可能需要动态引入 -->
           <div class="image-placeholder">
-             <!-- 这里的 img src 需要处理，为了演示用背景色代替 -->
              <div class="mock-image">GAME SCREENSHOT ({{post.id}})</div>
           </div>
         </div>
@@ -69,50 +71,49 @@ const posts = ref([
            </div>
         </div>
 
+        <!-- 底部操作区 -->
         <div class="post-footer">
-          <button class="action-btn">💬 {{ post.comments }} 条评论</button>
-          <button class="action-btn">↪ 共享</button>
-          <button class="action-btn">🔖 收藏</button>
+          <!-- 左侧：点赞点踩 -->
+          <div class="footer-left">
+            <button class="vote-action-btn">
+              <ThumbsUp :size="18" />
+              <span>{{ post.votes }}</span>
+            </button>
+            <button class="vote-action-btn">
+              <ThumbsDown :size="18" />
+            </button>
+          </div>
+
+          <!-- 右侧：评论收藏转发 -->
+          <div class="footer-right">
+            <button class="action-btn" title="评论">
+              <MessageCircle :size="18" />
+              <span>{{ post.comments }}</span>
+            </button>
+            <button class="action-btn" title="收藏">
+              <Bookmark :size="18" />
+            </button>
+            <button class="action-btn" title="转发">
+              <Share2 :size="18" />
+            </button>
+          </div>
+        </div>
+
+        <!-- 评论输入框 -->
+        <div class="comment-input-wrapper">
+          <div class="comment-input">
+            <input
+              type="text"
+              v-model="commentInputs[post.id]"
+              placeholder="善语结善缘，恶语伤人心"
+              class="comment-field"
+            />
+            <button class="send-btn" title="发送">
+              <Send :size="16" />
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- 右侧边栏 -->
-  <div class="right-sidebar">
-    <div class="sidebar-card">
-      <div class="card-header">
-        <h4>近期帖子</h4>
-        <span class="clear-btn">清除</span>
-      </div>
-      <ul class="recent-list">
-        <li>
-          <div class="recent-item">
-            <span class="item-icon">R</span>
-            <div class="item-text">
-              <div class="item-title">Yep 50 是的 50</div>
-              <div class="item-meta">37 个点赞 · 51 条评论</div>
-            </div>
-          </div>
-        </li>
-        <li>
-          <div class="recent-item">
-            <span class="item-icon">N</span>
-            <div class="item-text">
-              <div class="item-title">法官下令释放...</div>
-              <div class="item-meta">4万 个点赞 · 967 条评论</div>
-            </div>
-            <div class="item-img-small"></div>
-          </div>
-        </li>
-      </ul>
-    </div>
-
-    <div class="sidebar-card policy-card">
-      <div class="policy-links">
-        Reddit 规则 · 隐私政策 · 用户协议
-      </div>
-      <div class="copyright">Reddit, Inc. © 2025。保留所有权利。</div>
     </div>
   </div>
 </template>
@@ -120,48 +121,26 @@ const posts = ref([
 <style scoped>
 /* Feed 样式 */
 .feed-container {
-  flex: 1; /* 占据剩余空间 */
-  min-width: 0; /* 防止flex子项溢出 */
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
 }
 
 .post-card {
   background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin-bottom: 10px;
-  display: flex;
+  border: 1px solid #edeff1;
+  border-radius: 8px;
+  margin-bottom: 16px;
   cursor: pointer;
-}
-.post-card:hover {
-  border-color: #898989;
+  transition: border-color 0.2s;
 }
 
-.vote-section {
-  width: 40px;
-  background: #f8f9fa;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 8px;
-  border-right: 1px solid transparent; /* 视觉对齐 */
-}
-.vote-btn {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: #878a8c;
-}
-.vote-btn:hover { color: #cc3700; background: #e9e9e9; border-radius: 4px; }
-.vote-count {
-  font-weight: bold;
-  font-size: 12px;
-  margin: 4px 0;
+.post-card:hover {
+  border-color: #0079d3;
 }
 
 .post-content {
-  padding: 8px;
-  flex: 1;
+  padding: 12px 16px;
 }
 
 .post-header {
@@ -170,18 +149,24 @@ const posts = ref([
   margin-bottom: 8px;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
+
 .subreddit-name {
-  font-weight: bold;
+  font-weight: 600;
   color: #1c1c1c;
 }
-.subreddit-name:hover { text-decoration: underline; }
+
+.subreddit-name:hover {
+  text-decoration: underline;
+}
 
 .post-title {
   font-size: 18px;
-  margin: 0 0 10px 0;
-  font-weight: 500;
+  margin: 0 0 12px 0;
+  font-weight: 600;
+  color: #1c1c1c;
+  line-height: 1.4;
 }
 
 .mock-image {
@@ -192,13 +177,16 @@ const posts = ref([
   align-items: center;
   justify-content: center;
   font-family: monospace;
+  border-radius: 8px;
 }
+
 .quiz-style {
   background: #1a1a1b;
   color: white;
   padding: 20px;
   border-radius: 8px;
 }
+
 .quiz-options button {
   display: block;
   width: 100%;
@@ -207,80 +195,221 @@ const posts = ref([
   border-radius: 20px;
   border: none;
   cursor: pointer;
+  background: #fff;
+  color: #1a1a1b;
+  font-weight: 600;
+  transition: background 0.2s;
 }
 
+.quiz-options button:hover {
+  background: #f0f0f0;
+}
+
+/* 底部操作区 */
 .post-footer {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #edeff1;
 }
-.action-btn {
+
+.footer-left {
+  display: flex;
+  gap: 4px;
+}
+
+.footer-right {
+  display: flex;
+  gap: 4px;
+}
+
+.vote-action-btn {
   background: none;
   border: none;
-  padding: 6px 10px;
+  padding: 6px 12px;
   color: #878a8c;
-  font-size: 12px;
-  font-weight: 700;
-  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
-}
-.action-btn:hover { background: #e8e8e8; }
-
-/* 右侧栏样式 */
-.right-sidebar {
-  width: 310px;
-  display: none;
+  gap: 6px;
+  transition: all 0.2s;
 }
 
-@media (min-width: 960px) {
-  .right-sidebar {
-    display: block;
-  }
+.vote-action-btn:hover {
+  background: #f6f7f8;
+  color: #1c1c1c;
 }
 
-.sidebar-card {
+.action-btn {
+  background: none;
+  border: none;
+  padding: 6px 12px;
+  color: #878a8c;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #f6f7f8;
+  color: #1c1c1c;
+}
+
+/* 评论输入框 */
+.comment-input-wrapper {
+  margin-top: 12px;
+}
+
+.comment-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f6f7f8;
+  border: 1px solid transparent;
+  border-radius: 24px;
+  padding: 8px 16px;
+  transition: all 0.2s;
+}
+
+.comment-input:focus-within {
   background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin-bottom: 15px;
-  padding: 12px;
+  border-color: #0079d3;
+  box-shadow: 0 0 0 2px rgba(0, 121, 211, 0.1);
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
+.comment-field {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: #1c1c1c;
 }
-.card-header h4 { margin: 0; font-size: 14px; text-transform: uppercase; color: #787c7e; }
-.clear-btn { font-size: 12px; color: #0079d3; cursor: pointer; }
 
-.recent-list {
-  list-style: none;
+.comment-field::placeholder {
+  color: #878a8c;
+  font-style: italic;
 }
-.recent-item {
-  display: flex;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-.item-icon {
-  width: 20px;
-  height: 20px;
-  background: #0079d3;
+
+.send-btn {
+  background: none;
+  border: none;
+  color: #0079d3;
+  cursor: pointer;
+  padding: 6px;
   border-radius: 50%;
-  color: white;
-  font-size: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.2s;
 }
-.item-text { flex: 1; }
-.item-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
-.item-meta { font-size: 12px; color: #787c7e; }
-.item-img-small { width: 60px; height: 45px; background: #333; border-radius: 4px; }
 
-.policy-links { font-size: 12px; color: #787c7e; margin-bottom: 5px; }
-.copyright { font-size: 12px; color: #787c7e; }
+.send-btn:hover {
+  background: rgba(0, 121, 211, 0.1);
+}
+
+.send-btn:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+/* === 响应式优化 === */
+
+/* 小窗口 (< 640px) */
+@media (max-width: 639px) {
+  .feed-container {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .post-card {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    margin-bottom: 0;
+  }
+
+  .post-card:first-child {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
+  .post-content {
+    padding: 12px;
+  }
+
+  .post-title {
+    font-size: 16px;
+  }
+
+  .post-footer {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .footer-left,
+  .footer-right {
+    gap: 2px;
+  }
+
+  .vote-action-btn,
+  .action-btn {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  .comment-input {
+    padding: 6px 12px;
+  }
+}
+
+/* 中小窗口 (640px - 767px) */
+@media (min-width: 640px) and (max-width: 767px) {
+  .feed-container {
+    max-width: 100%;
+  }
+
+  .post-content {
+    padding: 14px 16px;
+  }
+
+  .post-title {
+    font-size: 17px;
+  }
+}
+
+/* 中等窗口 (768px - 959px) */
+@media (min-width: 768px) and (max-width: 959px) {
+  .feed-container {
+    max-width: 100%;
+  }
+
+  .post-content {
+    padding: 14px 16px;
+  }
+}
+
+/* 大窗口 (960px - 1279px) */
+@media (min-width: 960px) and (max-width: 1279px) {
+  .feed-container {
+    max-width: 980px;
+  }
+}
+
+/* 超大窗口 (>= 1280px) */
+@media (min-width: 1280px) {
+  .feed-container {
+    max-width: 980px;
+  }
+}
 </style>

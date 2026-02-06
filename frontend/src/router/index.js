@@ -7,19 +7,12 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login, // 登录页独立，不包裹在 Layout 中
-    meta: { title: '登录' } 
+    meta: { title: '登录' }
   },
   {
     path: '/',
-    component: Layout, // 主应用包裹在 Layout 中
-    children: [
-      {
-        path: '',
-        name: 'Home',
-        component: () => import('../components/Layout.vue') // 主页面
-      },
-      // 其他页面...
-    ]
+    name: 'Home',
+    component: Layout // Layout 组件已经包含了 Main，不需要嵌套路由
   }
 ]
 
