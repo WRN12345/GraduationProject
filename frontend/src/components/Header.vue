@@ -21,6 +21,7 @@ import {
   ChevronDown,
   Menu
 } from 'lucide-vue-next'
+import { useUserStore } from '@/stores/user'
 
 // 定义 emit
 const emit = defineEmits(['open-mobile-sidebar'])
@@ -50,6 +51,19 @@ const toggleProfile = () => {
   isProfileOpen.value = !isProfileOpen.value
   // 如果打开了个人菜单，关闭搜索下拉
   if (isProfileOpen.value) isSearchFocused.value = false
+}
+
+// 用户认证相关
+const userStore = useUserStore()
+
+const handleLogout = async () => {
+  // 关闭个人菜单
+  isProfileOpen.value = false
+
+  // 调用登出方法
+  await userStore.logout()
+
+  // 登出成功后会自动跳转到登录页（通过路由守卫）
 }
 
 // 获取图标组件
@@ -188,10 +202,6 @@ const getIcon = (iconName) => {
                 <div class="toggle-circle"></div>
               </div>
             </div>
-            <div class="menu-item">
-              <LogOut :size="20" class="menu-icon" />
-              <span class="menu-text">注销</span>
-            </div>
           </div>
 
           <div class="divider-line"></div>
@@ -219,6 +229,16 @@ const getIcon = (iconName) => {
               <span class="menu-text">设置</span>
             </div>
            </div>
+
+          <div class="divider-line"></div>
+
+          <!-- 退出登录 -->
+          <div class="menu-section">
+            <div class="menu-item" @click="handleLogout">
+              <LogOut :size="20" class="menu-icon" />
+              <span class="menu-text">退出登录</span>
+            </div>
+          </div>
 
         </div>
       </div>
