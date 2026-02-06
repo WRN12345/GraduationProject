@@ -63,9 +63,12 @@ async def user_create(user_in: UserCreate, admin_key: str = None):
     - 普通用户注册：无需提供 admin_key
     - 管理员注册：必须提供正确的 admin_key（在 .env 中配置）
     """
+    print(f"[DEBUG] 收到注册请求: username={user_in.username}, nickname={user_in.nickname}, email={user_in.email}")
+
     # 1. 检查用户是否已存在
     exist_user = await User.get_or_none(username=user_in.username)
     if exist_user:
+        print(f"[DEBUG] 用户名已存在: {user_in.username}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="用户名已存在"
@@ -93,8 +96,11 @@ async def user_create(user_in: UserCreate, admin_key: str = None):
         is_superuser=is_superuser  # 设置管理员权限
     )
 
+    print(f"[DEBUG] 用户对象创建完成: {user_obj}")
+
     # 4. 保存到数据库
     await user_obj.save()
+    print(f"[DEBUG] 用户保存成功，ID={user_obj.id}")
 
     # 5. 返回结果
     return {
