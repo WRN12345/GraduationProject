@@ -1,13 +1,37 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
+import {
+  Search,
+  MessageCircle,
+  Plus,
+  Bell,
+  X,
+  TrendingUp,
+  Shirt,
+  FileText,
+  Trophy,
+  DollarSign,
+  Shield,
+  Star,
+  Moon,
+  LogOut,
+  Megaphone,
+  Clock,
+  Settings,
+  ChevronDown,
+  Menu
+} from 'lucide-vue-next'
+
+// 定义 emit
+const emit = defineEmits(['open-mobile-sidebar'])
 
 // --- 搜索相关逻辑 (保留之前的) ---
 const searchText = ref('')
 const isSearchFocused = ref(false)
 const trendingList = ref([
-  { id: 1, title: 'TGA 2025 Winners', desc: '年度游戏大奖公布', icon: '🏆' },
-  { id: 2, title: 'Vue.js 3.5 Release', desc: '前端框架新版本', icon: '🟢' },
-  { id: 3, title: 'GTA VI Leak', desc: '侠盗猎车手6最新泄露', icon: '🎮' },
+  { id: 1, title: 'TGA 2025 Winners', desc: '年度游戏大奖公布', icon: 'Trophy' },
+  { id: 2, title: 'Vue.js 3.5 Release', desc: '前端框架新版本', icon: 'TrendingUp' },
+  { id: 3, title: 'GTA VI Leak', desc: '侠盗猎车手6最新泄露', icon: 'Gamepad2' },
 ])
 
 const handleSearchBlur = () => {
@@ -28,17 +52,24 @@ const toggleProfile = () => {
   if (isProfileOpen.value) isSearchFocused.value = false
 }
 
-// 点击外部关闭菜单 (简单的实现)
-const closeProfile = (e) => {
-  // 这里简单处理，实际项目中通常使用 vueuse 的 onClickOutside
-  // 为了不破坏组件内点击，这里暂时依靠 toggle，
-  // 生产环境建议添加 window 监听器判断点击目标是否在菜单外
+// 获取图标组件
+const getIcon = (iconName) => {
+  const icons = {
+    Trophy,
+    TrendingUp,
+    Gamepad2: Trophy, // Fallback to Trophy
+  }
+  return icons[iconName] || Trophy
 }
-
 </script>
 
 <template>
   <header class="header-container">
+    <!-- 汉堡菜单按钮（移动端） -->
+    <button class="mobile-menu-btn" @click="emit('open-mobile-sidebar')" title="打开菜单">
+      <Menu :size="24" />
+    </button>
+
     <!-- 1. Logo 区域 -->
     <div class="logo-section">
       <img src="@/assets/image/wrn.png" alt="Logo" class="logo-img" />
@@ -49,22 +80,25 @@ const closeProfile = (e) => {
     <div class="search-section">
       <div class="search-wrapper" :class="{ 'is-active': isSearchFocused }">
         <div class="search-bar">
-          <span class="search-icon">🔍</span>
-          <input 
-            type="text" 
-            placeholder="查找所需一切信息" 
+          <Search :size="18" class="search-icon" />
+          <input
+            type="text"
+            placeholder="查找所需一切信息"
             v-model="searchText"
             @focus="isSearchFocused = true"
             @blur="handleSearchBlur"
           />
-          <span v-if="searchText" class="clear-icon" @click="searchText = ''">✕</span>
+          <X v-if="searchText" :size="16" class="clear-icon" @click="searchText = ''" />
         </div>
         <!-- 搜索下拉 (保留之前的代码) -->
         <div class="search-dropdown" v-if="isSearchFocused">
-          <div class="dropdown-header"><span>🔥 热门趋势</span></div>
+          <div class="dropdown-header">
+            <TrendingUp :size="14" />
+            <span>热门趋势</span>
+          </div>
           <ul class="trending-list">
             <li v-for="item in trendingList" :key="item.id" class="trending-item" @click="handleSearchResultSelect(item)">
-              <div class="trend-icon">{{ item.icon }}</div>
+              <component :is="getIcon(item.icon)" :size="20" class="trend-icon" />
               <div class="trend-info">
                 <div class="trend-title">{{ item.title }}</div>
                 <div class="trend-desc">{{ item.desc }}</div>
@@ -77,10 +111,10 @@ const closeProfile = (e) => {
 
     <!-- 3. 右侧功能区 -->
     <div class="actions-section">
-      <button class="btn-icon">💬</button>
-      <button class="btn-icon">➕ 创建</button>
-      <button class="btn-icon">🔔</button>
-      
+      <button class="btn-icon" title="消息"><MessageCircle :size="20" /></button>
+      <button class="btn-icon" title="创建"><Plus :size="20" /><span>创建</span></button>
+      <button class="btn-icon" title="通知"><Bell :size="20" /></button>
+
       <!-- 个人头像容器 (Dropdown Trigger) -->
       <div class="user-menu-container">
         <div class="avatar-trigger" @click="toggleProfile">
@@ -91,12 +125,12 @@ const closeProfile = (e) => {
                <div class="status-dot"></div>
              </div>
           </div>
-          <span class="dropdown-arrow">▼</span>
+          <ChevronDown :size="12" class="dropdown-arrow" />
         </div>
 
         <!-- 个人下拉菜单 (核心新增部分) -->
         <div class="profile-dropdown" v-if="isProfileOpen">
-          
+
           <!-- 第一部分：用户信息 -->
           <div class="menu-section user-info-section">
             <div class="menu-item-user">
@@ -114,22 +148,22 @@ const closeProfile = (e) => {
           <!-- 第二部分：通用操作 -->
           <div class="menu-section">
             <div class="menu-item">
-              <span class="menu-icon">👕</span>
+              <Shirt :size="20" class="menu-icon" />
               <span class="menu-text">编辑头像</span>
             </div>
             <div class="menu-item">
-              <span class="menu-icon">📄</span>
+              <FileText :size="20" class="menu-icon" />
               <span class="menu-text">草稿</span>
             </div>
             <div class="menu-item">
-              <span class="menu-icon">🏆</span>
+              <Trophy :size="20" class="menu-icon" />
               <div class="menu-text-group">
                 <span class="menu-text">成就</span>
                 <span class="sub-text blue-text">已解锁 5 个</span>
               </div>
             </div>
             <div class="menu-item">
-              <span class="menu-icon">💲</span>
+              <DollarSign :size="20" class="menu-icon" />
               <div class="menu-text-group">
                 <span class="menu-text">创收</span>
                 <span class="sub-text">在 Reddit 上赚取现金</span>
@@ -140,13 +174,13 @@ const closeProfile = (e) => {
           <!-- 第三部分：Premium 与设置 -->
           <div class="menu-section">
              <div class="menu-item">
-              <span class="menu-icon">🛡️</span>
+              <Shield :size="20" class="menu-icon" />
               <span class="menu-text">Premium</span>
-              <span class="badge-icon">🦄</span>
+              <Star :size="16" class="badge-icon" />
             </div>
             <div class="menu-item toggle-item" @click.stop="isDarkMode = !isDarkMode">
               <div class="left-content">
-                <span class="menu-icon">🌙</span>
+                <Moon :size="20" class="menu-icon" />
                 <span class="menu-text">深色模式</span>
               </div>
               <!-- 模拟开关 Switch -->
@@ -155,21 +189,21 @@ const closeProfile = (e) => {
               </div>
             </div>
             <div class="menu-item">
-              <span class="menu-icon">🚪</span>
+              <LogOut :size="20" class="menu-icon" />
               <span class="menu-text">注销</span>
             </div>
           </div>
-          
+
           <div class="divider-line"></div>
 
           <!-- 第四部分：底部链接 -->
           <div class="menu-section">
              <div class="menu-item">
-              <span class="menu-icon">📢</span>
+              <Megaphone :size="20" class="menu-icon" />
               <span class="menu-text">在 Reddit 上投放广告</span>
             </div>
              <div class="menu-item">
-              <span class="menu-icon">🕒</span>
+              <Clock :size="20" class="menu-icon" />
               <div class="menu-text-group">
                 <span class="menu-text">试用 Reddit Pro</span>
                 <span class="sub-text orange-text">测试版</span>
@@ -181,7 +215,7 @@ const closeProfile = (e) => {
 
            <div class="menu-section">
              <div class="menu-item">
-              <span class="menu-icon">⚙️</span>
+              <Settings :size="20" class="menu-icon" />
               <span class="menu-text">设置</span>
             </div>
            </div>
@@ -195,78 +229,283 @@ const closeProfile = (e) => {
 <style scoped>
 /* --- 全局容器样式 --- */
 .header-container {
-  height: 48px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 24px;
   background: #fff;
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 2000;
+  border-bottom: 1px solid #edeff1;
+  gap: 12px;
 }
 
-/* --- Logo & Search (保持原样) --- */
-.logo-section { display: flex; align-items: center; gap: 8px; width: 260px; }
-.logo-img { width: 32px; height: 32px; border-radius: 50%; }
-.logo-text { font-size: 20px; font-weight: bold; }
+/* --- 汉堡菜单按钮 --- */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  color: #1c1c1c;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
 
-.search-section { flex: 1; max-width: 600px; position: relative; }
+.mobile-menu-btn:hover {
+  background: #f6f7f8;
+}
+
+/* --- Logo & Search --- */
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.logo-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1c1c1c;
+  letter-spacing: -0.5px;
+}
+
+.search-section {
+  flex: 1;
+  max-width: 640px;
+  margin: 0 24px;
+  position: relative;
+}
+
 .search-wrapper { position: relative; }
-.search-wrapper.is-active .search-bar { border-bottom-left-radius: 0; border-bottom-right-radius: 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-color: #0079d3; background: #fff; }
-.search-bar { background: #f6f7f8; border-radius: 20px; padding: 0 15px; height: 40px; display: flex; align-items: center; border: 1px solid transparent; position: relative; z-index: 1002; transition: all 0.2s; }
-.search-bar:hover { background: #fff; border: 1px solid #0079d3; }
-.search-bar input { border: none; background: transparent; width: 100%; margin-left: 10px; outline: none; }
-.search-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #edeff1; border-top: none; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 1001; padding-bottom: 10px; }
-.dropdown-header { padding: 12px 16px 8px; font-size: 12px; font-weight: 700; color: #878a8c; }
-.trending-item { display: flex; align-items: center; padding: 8px 16px; gap: 12px; cursor: pointer; }
-.trending-item:hover { background-color: #f6f7f8; }
-.trend-icon { width: 32px; height: 32px; background: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; } 
-.trend-title { font-size: 14px; font-weight: 500; } .trend-desc { font-size: 12px; color: #787c7e; }
+.search-wrapper.is-active .search-bar {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: #0079d3;
+  background: #fff;
+}
+
+.search-bar {
+  background: #f6f7f8;
+  border-radius: 24px;
+  padding: 0 16px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  border: 1px solid transparent;
+  position: relative;
+  z-index: 1002;
+  transition: all 0.2s ease;
+}
+
+.search-bar:hover {
+  background: #fff;
+  border-color: #0079d3;
+}
+
+.search-icon {
+  color: #878a8c;
+  flex-shrink: 0;
+}
+
+.search-bar input {
+  border: none;
+  background: transparent;
+  width: 100%;
+  margin: 0 10px;
+  outline: none;
+  font-size: 14px;
+}
+
+.clear-icon {
+  color: #878a8c;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.clear-icon:hover {
+  color: #1c1c1c;
+  background: #f6f7f8;
+}
+
+.search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #edeff1;
+  border-top: none;
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  z-index: 1001;
+  padding-bottom: 12px;
+}
+
+.dropdown-header {
+  padding: 12px 20px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #878a8c;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.trending-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  gap: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.trending-item:hover {
+  background-color: #f6f7f8;
+}
+
+.trend-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.trend-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1c1c1c;
+}
+
+.trend-desc {
+  font-size: 12px;
+  color: #787c7e;
+  margin-top: 2px;
+}
 
 /* --- 右侧功能区 & 头像菜单 --- */
-.actions-section { display: flex; align-items: center; gap: 15px; width: 260px; justify-content: flex-end; }
-.btn-icon { background: none; border: none; cursor: pointer; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+.actions-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #1c1c1c;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  min-width: 40px;
+  height: 40px;
+}
+
+.btn-icon:hover {
+  background: #f6f7f8;
+}
 
 /* 头像触发器 */
-.user-menu-container { position: relative; }
+.user-menu-container {
+  position: relative;
+}
+
 .avatar-trigger {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   cursor: pointer;
-  padding: 2px;
-  border-radius: 4px;
+  padding: 4px;
+  border-radius: 8px;
+  transition: background 0.2s;
 }
-.avatar-trigger:hover { background: #f6f7f8; }
 
-.avatar-box { position: relative; width: 30px; height: 30px; }
-.avatar-img-wrapper { position: relative; width: 100%; height: 100%; }
-.user-avatar-img { width: 100%; height: 100%; border-radius: 4px; object-fit: cover; background: #ddd; }
+.avatar-trigger:hover {
+  background: #f6f7f8;
+}
+
+.avatar-box {
+  position: relative;
+  width: 32px;
+  height: 32px;
+}
+
+.avatar-img-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.user-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #ddd;
+}
+
 .status-dot {
   position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 8px;
-  height: 8px;
-  background: #46d160; /* 在线绿 */
+  bottom: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  background: #46d160;
   border: 2px solid #fff;
   border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
-.dropdown-arrow { font-size: 10px; color: #878a8c; }
+
+.dropdown-arrow {
+  color: #878a8c;
+  display: flex;
+  align-items: center;
+}
 
 /* --- 个人下拉菜单样式核心 --- */
 .profile-dropdown {
   position: absolute;
-  top: 45px;
+  top: calc(100% + 8px);
   right: 0;
-  width: 280px;
+  width: 320px;
   background: #fff;
   border: 1px solid #edeff1;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  max-height: calc(100vh - 60px);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  max-height: calc(100vh - 80px);
   overflow-y: auto;
-  padding: 8px 0;
+  padding: 8px;
   display: flex;
   flex-direction: column;
 }
@@ -281,61 +520,138 @@ const closeProfile = (e) => {
 .menu-item-user {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
+  padding: 12px 16px;
   gap: 12px;
   cursor: pointer;
   color: #1c1c1c;
+  border-radius: 8px;
+  transition: background 0.15s;
 }
-.menu-item-user:hover { background: #f6f7f8; }
-.user-avatar-large { position: relative; width: 40px; height: 40px; }
-.user-avatar-large img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #ddd; }
-.status-dot.large { width: 10px; height: 10px; right: 0; bottom: 0; border: 2px solid #fff; }
 
-.user-text-info { display: flex; flex-direction: column; }
-.user-display-name { font-size: 14px; font-weight: 500; color: #1c1c1c; }
-.user-handle { font-size: 12px; color: #787c7e; }
+.menu-item-user:hover {
+  background: #f6f7f8;
+}
+
+.user-avatar-large {
+  position: relative;
+  width: 48px;
+  height: 48px;
+}
+
+.user-avatar-large img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #ddd;
+}
+
+.status-dot.large {
+  width: 12px;
+  height: 12px;
+  right: 0;
+  bottom: 0;
+  border: 2.5px solid #fff;
+}
+
+.user-text-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.user-display-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1c1c1c;
+}
+
+.user-handle {
+  font-size: 13px;
+  color: #787c7e;
+  margin-top: 2px;
+}
 
 /* 通用列表项样式 */
 .menu-item {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
+  padding: 10px 12px;
   cursor: pointer;
   gap: 12px;
   color: #1c1c1c;
+  border-radius: 8px;
+  transition: background 0.15s;
+  margin: 0 4px;
 }
-.menu-item:hover { background: #f6f7f8; }
+
+.menu-item:hover {
+  background: #f6f7f8;
+}
 
 .menu-icon {
   width: 20px;
   height: 20px;
-  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #1c1c1c;
+  flex-shrink: 0;
 }
 
-.menu-text-group { display: flex; flex-direction: column; }
-.menu-text { font-size: 14px; font-weight: 500; }
+.menu-text-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
 
-.sub-text { font-size: 12px; color: #787c7e; margin-top: 2px; }
-.sub-text.blue-text { color: #24a0ed; }
-.sub-text.orange-text { color: #ff4500; font-weight: bold; }
+.menu-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sub-text {
+  font-size: 12px;
+  color: #787c7e;
+  margin-top: 2px;
+}
+
+.sub-text.blue-text {
+  color: #24a0ed;
+}
+
+.sub-text.orange-text {
+  color: #ff4500;
+  font-weight: 600;
+}
 
 /* 开关样式 */
-.toggle-item { justify-content: space-between; }
-.left-content { display: flex; align-items: center; gap: 12px; }
+.toggle-item {
+  justify-content: space-between;
+}
+
+.left-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
 
 .toggle-switch {
-  width: 40px;
+  width: 44px;
   height: 24px;
   background: #edeff1;
   border-radius: 12px;
   position: relative;
   transition: background 0.3s;
+  cursor: pointer;
+  flex-shrink: 0;
 }
-.toggle-switch.active { background: #0079d3; }
+
+.toggle-switch.active {
+  background: #0079d3;
+}
+
 .toggle-circle {
   width: 20px;
   height: 20px;
@@ -347,7 +663,10 @@ const closeProfile = (e) => {
   transition: transform 0.3s;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
-.toggle-switch.active .toggle-circle { transform: translateX(16px); }
+
+.toggle-switch.active .toggle-circle {
+  transform: translateX(20px);
+}
 
 /* 分割线 */
 .divider-line {
@@ -357,5 +676,129 @@ const closeProfile = (e) => {
   width: 100%;
 }
 
-.badge-icon { margin-left: auto; font-size: 14px; }
+.badge-icon {
+  margin-left: auto;
+  color: #ff4500;
+  display: flex;
+  align-items: center;
+}
+
+/* === 响应式断点 === */
+
+/* 小窗口 (< 640px) */
+@media (max-width: 639px) {
+  .header-container {
+    padding: 0 16px;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-text {
+    display: none;
+  }
+
+  .search-section {
+    margin: 0 8px;
+    max-width: none;
+  }
+
+  .search-bar input {
+    font-size: 14px;
+  }
+
+  .btn-icon {
+    min-width: 36px;
+    height: 36px;
+    padding: 6px;
+  }
+
+  .btn-icon span {
+    display: none;
+  }
+
+  .profile-dropdown {
+    width: calc(100vw - 32px);
+    right: -8px;
+  }
+}
+
+/* 中小窗口 (640px - 767px) */
+@media (min-width: 640px) and (max-width: 767px) {
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-text {
+    display: none;
+  }
+
+  .search-section {
+    margin: 0 12px;
+    max-width: 300px;
+  }
+
+  .btn-icon span {
+    display: none;
+  }
+}
+
+/* 中等窗口 (768px - 959px) */
+@media (min-width: 768px) and (max-width: 959px) {
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-text {
+    display: block;
+  }
+
+  .search-section {
+    max-width: 400px;
+  }
+
+  .btn-icon span {
+    display: none;
+  }
+}
+
+/* 大窗口 (960px - 1023px) */
+@media (min-width: 960px) and (max-width: 1023px) {
+  .logo-text {
+    display: none;
+  }
+
+  .search-section {
+    max-width: 400px;
+  }
+}
+
+/* 大窗口及以上 (>= 1024px) */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .logo-text {
+    display: block;
+  }
+
+  .search-section {
+    max-width: 500px;
+  }
+}
+
+/* 超大窗口 (>= 1280px) */
+@media (min-width: 1280px) {
+  .logo-text {
+    display: block;
+  }
+
+  .search-section {
+    max-width: 640px;
+  }
+}
 </style>
