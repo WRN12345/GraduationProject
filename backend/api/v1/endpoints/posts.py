@@ -8,15 +8,15 @@ from typing import Optional
 from datetime import datetime, timezone
 from pydantic import BaseModel
 from redis.asyncio import Redis
-from backend.models.user import User
-from backend.models.community import Community
-from backend.core.security import get_current_user
-from backend.core.permissions import can_post_in_community, can_moderate_post, require_superuser, get_community_moderator
-from backend.core.audit import create_audit_log
-from backend.core.cache import get_redis
-from backend.models.audit_log import ActionType, TargetType
-from backend.schemas import post as schemas
-from backend.models import post as models
+from models.user import User
+from models.community import Community
+from core.security import get_current_user
+from core.permissions import can_post_in_community, can_moderate_post, require_superuser, get_community_moderator
+from core.audit import create_audit_log
+from core.cache import get_redis
+from models.audit_log import ActionType, TargetType
+from schemas import post as schemas
+from models import post as models
 
 router = APIRouter(tags=["帖子相关"])
 
@@ -104,7 +104,7 @@ async def get_hot_posts(
 
     使用 Redis ZSET 缓存热门帖子，避免频繁查询数据库
     """
-    from backend.core.redis_service import hot_rank_service, post_cache_service
+    from core.redis_service import hot_rank_service, post_cache_service
 
     # 1. 从 Redis ZSET 获取热门 post_ids
     post_ids = await hot_rank_service.get_hot_post_ids(
@@ -218,7 +218,7 @@ async def get_post(
     redis: Redis = Depends(get_redis),
 ):
     """获取单个帖子详情（Pgpool 自动路由）"""
-    from backend.core.redis_service import hot_rank_service
+    from core.redis_service import hot_rank_service
 
     # Pgpool 自动路由，无需应用层判断
     post = await models.Post.get_or_none(id=post_id).select_related('author', 'community')
@@ -244,7 +244,7 @@ async def update_post(
     redis: Redis = Depends(get_redis),
 ):
     """编辑帖子（仅作者）"""
-    from backend.core.redis_service import post_cache_service
+    from core.redis_service import post_cache_service
 
     post = await models.Post.get_or_none(id=post_id)
 
@@ -336,7 +336,7 @@ async def delete_post(
         )
 
     # 从 Redis 热门榜中移除（异步执行，不阻塞响应）
-    from backend.core.redis_service import hot_rank_service, post_cache_service
+    from core.redis_service import hot_rank_service, post_cache_service
     redis_dep = get_redis()
     redis = await redis_dep.__anext__()
     try:

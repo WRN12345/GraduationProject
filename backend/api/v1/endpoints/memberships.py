@@ -6,13 +6,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from tortoise.transactions import in_transaction
 from tortoise.expressions import F
-from backend.models.user import User
-from backend.models.community import Community
-from backend.models.membership import CommunityMembership, MembershipRole
-from backend.models.audit_log import AuditLog, ActionType, TargetType
-from backend.core.security import get_current_user
-from backend.core.permissions import get_community_moderator, get_community_owner, get_current_member
-from backend.core.audit import create_audit_log
+from models.user import User
+from models.community import Community
+from models.membership import CommunityMembership, MembershipRole
+from models.audit_log import AuditLog, ActionType, TargetType
+from core.security import get_current_user
+from core.permissions import get_community_moderator, get_community_owner, get_current_member
+from core.audit import create_audit_log
 
 router = APIRouter(tags=["社区成员管理"])
 
@@ -342,7 +342,7 @@ async def get_my_feed(
         return []
 
     # 查询这些社区的帖子
-    from backend.models.post import Post
+    from models.post import Post
     posts = await Post.filter(
         community_id__in=memberships,
         deleted_at__isnull=True

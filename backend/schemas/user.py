@@ -7,7 +7,7 @@ from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, EmailStr
 from tortoise.contrib.pydantic import pydantic_model_creator
-from backend.models.user import User
+from models.user import User
 
 # --- 1. 注册/创建用户模型 (Request Body) ---
 class UserCreate(BaseModel):

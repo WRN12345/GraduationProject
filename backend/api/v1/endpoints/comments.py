@@ -7,14 +7,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
-from backend.models.user import User
-from backend.core.security import get_current_user
-from backend.core.permissions import can_comment_on_post, get_community_moderator
-from backend.core.audit import create_audit_log
-from backend.models.audit_log import ActionType, TargetType
+from models.user import User
+from core.security import get_current_user
+from core.permissions import can_comment_on_post, get_community_moderator
+from core.audit import create_audit_log
+from models.audit_log import ActionType, TargetType
 from tortoise import connections
-from backend.schemas import comment as schemas
-from backend.models import post as models
+from schemas import comment as schemas
+from models import post as models
 
 router = APIRouter(tags=["评论相关"])
 

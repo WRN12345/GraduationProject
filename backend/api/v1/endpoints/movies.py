@@ -6,9 +6,9 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from tortoise.exceptions import IntegrityError
-from backend.models.movies import Movie
-from backend.schemas import MovieCreate, MovieUpdate, Movie_Pydantic
-from backend.core.security import get_current_user
+from models.movies import Movie
+from schemas import MovieCreate, MovieUpdate, Movie_Pydantic
+from core.security import get_current_user
 
 
 

@@ -7,9 +7,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
-from backend.models.user import User
-from backend.schemas import UserCreate 
-from backend.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token, verify_refresh_token
+from models.user import User
+from schemas import UserCreate 
+from core.security import verify_password, get_password_hash, create_access_token, create_refresh_token, verify_refresh_token
 
 login = APIRouter(tags=["认证相关"])
 
@@ -75,7 +75,7 @@ async def user_create(user_in: UserCreate, admin_key: str = None):
     is_superuser = False
     if admin_key:
         # 验证管理员注册密钥（从环境变量读取）
-        from backend.core.config import settings
+        from core.config import settings
         if hasattr(settings, 'ADMIN_REGISTER_KEY') and admin_key == settings.ADMIN_REGISTER_KEY:
             is_superuser = True
         else:

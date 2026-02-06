@@ -8,7 +8,7 @@ import math
 from typing import Optional, List
 from datetime import datetime, timezone
 from redis.asyncio import Redis
-from backend.core.config import settings
+from core.config import settings
 
 
 class HotRankService:

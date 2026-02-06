@@ -11,8 +11,8 @@ from datetime import datetime
 
 # 避免循环导入
 if TYPE_CHECKING:
-    from backend.schemas.user import UserOut
-    from backend.schemas.community import CommunityOut
+    from schemas.user import UserOut
+    from schemas.community import CommunityOut
 
 # --- Post ---
 class PostCreate(BaseModel):

@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from tortoise.contrib.fastapi import register_tortoise
 import redis.asyncio as redis 
-from backend.core.config import settings
+from core.config import settings
 from .v1 import v1
 
 # --- 定义生命周期---
@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
     print("Redis 连接成功")
 
     # 启动后台同步任务
-    from backend.core.tasks import start_background_tasks
+    from core.tasks import start_background_tasks
     await start_background_tasks()
 
     yield # 应用运行期间
@@ -56,7 +56,7 @@ app.add_middleware(
 register_tortoise(
     app,
     db_url=settings.DB_URL,  # Pgpool 连接
-    modules={"models": ["backend.models.user", "backend.models.movies", "backend.models.vote", "backend.models.comment", "backend.models.community", "backend.models.post", "backend.models.membership", "backend.models.audit_log"]},
+    modules={"models": ["models.user", "models.movies", "models.vote", "models.comment", "models.community", "models.post", "models.membership", "models.audit_log"]},
     generate_schemas=False,  # 使用 Aerich 管理迁移，不再自动生成 schemas
     add_exception_handlers=True,
 )
@@ -69,14 +69,14 @@ TORTOISE_ORM = {
     "apps": {
         "models": {
             "models": [
-                "backend.models.user",
-                "backend.models.movies",
-                "backend.models.vote",
-                "backend.models.comment",
-                "backend.models.community",
-                "backend.models.post",
-                "backend.models.membership",
-                "backend.models.audit_log",
+                "models.user",
+                "models.movies",
+                "models.vote",
+                "models.comment",
+                "models.community",
+                "models.post",
+                "models.membership",
+                "models.audit_log",
             ],
             "default_connection": "default",
         }

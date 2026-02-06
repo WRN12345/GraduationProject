@@ -1,8 +1,8 @@
 import asyncio
 import sys
 from uvicorn import run
-from backend.api import app
-from backend.core.config import settings
+from api import app
+from core.config import settings
 
 # 导出 app 供 uvicorn 使用
 __all__ = ["app"]
