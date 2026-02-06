@@ -7,10 +7,10 @@ import asyncio
 import logging
 from typing import Optional
 logger = logging.getLogger(__name__)
-from backend.core.cache import get_redis
-from backend.core.redis_service import hot_rank_service
-from backend.models.post import Post
-from backend.core.config import settings
+from core.cache import get_redis
+from core.redis_service import hot_rank_service
+from models.post import Post
+from core.config import settings
 
 
 async def sync_post_stats_to_db():

@@ -4,7 +4,7 @@
 @Des: 导包
 """
 from fastapi import APIRouter
-from backend.api.v1.endpoints import memberships
+from .endpoints import memberships
 from .endpoints import *
 
 

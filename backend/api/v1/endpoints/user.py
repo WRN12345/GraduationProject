@@ -6,12 +6,12 @@
 
 from gc import get_count
 from fastapi import APIRouter, Depends, HTTPException
-from backend.models.user import User
-from backend.models.post import Post
-from backend.models.comment import Comment
-from backend.schemas import UserUpdate, User_Pydantic
-from backend.schemas.user import UserProfile, UserActivity, UserInfo
-from backend.core.security import get_current_user, get_password_hash
+from models.user import User
+from models.post import Post
+from models.comment import Comment
+from schemas import UserUpdate, User_Pydantic
+from schemas.user import UserProfile, UserActivity, UserInfo
+from core.security import get_current_user, get_password_hash
 
 # 鉴权
 user = APIRouter(tags=["用户相关"], dependencies=[Depends(get_current_user)])

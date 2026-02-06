@@ -7,10 +7,10 @@
 from fastapi import APIRouter, Query
 from typing import Optional
 import asyncio
-from backend.models.post import Post
-from backend.models.user import User
-from backend.models.comment import Comment
-from backend.schemas import search as search_schemas
+from models.post import Post
+from models.user import User
+from models.comment import Comment
+from schemas import search as search_schemas
 from tortoise import connections
 
 router = APIRouter(tags=["搜索"])

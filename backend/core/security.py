@@ -9,8 +9,8 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from tortoise.exceptions import DoesNotExist
-from backend.core.config import settings
-from backend.models.user import User 
+from core.config import settings
+from models.user import User 
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")

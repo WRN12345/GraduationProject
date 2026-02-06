@@ -8,12 +8,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from redis.asyncio import Redis
 from tortoise.transactions import in_transaction
 from tortoise.expressions import F
-from backend.models.user import User 
-from backend.core.cache import get_redis
-from backend.core.security import get_current_user
-from backend.schemas import vote as schemas
-from backend.models import post as models
-from backend.models.comment import Comment
+from models.user import User 
+from core.cache import get_redis
+from core.security import get_current_user
+from schemas import vote as schemas
+from models import post as models
+from models.comment import Comment
 
 router = APIRouter(tags=["投票点赞"])
 
@@ -88,7 +88,7 @@ async def vote(
 
     # Redis 更新 (仅帖子需要更新热度)
     if target_type == "post" and score_delta != 0:
-        from backend.core.redis_service import hot_rank_service
+        from core.redis_service import hot_rank_service
 
         # 确定投票类型
         vote_type = 'upvote' if score_delta > 0 else 'downvote'

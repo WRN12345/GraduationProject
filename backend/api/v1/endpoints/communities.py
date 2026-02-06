@@ -6,10 +6,10 @@
 from typing import List
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
-from backend.core.security import get_current_user
-from backend.models.community import Community
-from backend.models.user import User
-from backend.schemas.community import CommunityCreate, CommunityOut, CommunityRecommendation
+from core.security import get_current_user
+from models.community import Community
+from models.user import User
+from schemas.community import CommunityCreate, CommunityOut, CommunityRecommendation
 
 router = APIRouter(tags=["社区板块"])
 

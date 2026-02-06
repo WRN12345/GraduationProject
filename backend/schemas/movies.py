@@ -7,7 +7,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 from tortoise.contrib.pydantic import pydantic_model_creator
-from backend.models.movies import Movie 
+from models.movies import Movie 
 
 # --- 新增电影 ---
 class MovieCreate(BaseModel):

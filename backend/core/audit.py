@@ -4,8 +4,8 @@
 @Des: 审计日志辅助函数
 """
 from typing import Optional, Dict, Any
-from backend.models.audit_log import AuditLog, ActionType, TargetType
-from backend.models.user import User
+from models.audit_log import AuditLog, ActionType, TargetType
+from models.user import User
 
 
 async def create_audit_log(

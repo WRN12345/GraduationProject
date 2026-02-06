@@ -34,8 +34,8 @@ class User(models.Model):
         声望 = 帖子获得的点赞数 + 评论获得的点赞数
         """
         from tortoise.functions import Sum
-        from backend.models.post import Post
-        from backend.models.comment import Comment
+        from models.post import Post
+        from models.comment import Comment
 
         # 计算帖子的总点赞数
         post_result = await Post.filter(author=self).annotate(

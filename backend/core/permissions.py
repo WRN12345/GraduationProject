@@ -4,12 +4,12 @@
 @Des: 权限依赖函数 - 社区和帖子级别的权限检查
 """
 from fastapi import Depends, HTTPException, status
-from backend.models.user import User
-from backend.models.community import Community
-from backend.models.membership import CommunityMembership, MembershipRole
-from backend.models.post import Post
-from backend.models.comment import Comment
-from backend.core.security import get_current_user
+from models.user import User
+from models.community import Community
+from models.membership import CommunityMembership, MembershipRole
+from models.post import Post
+from models.comment import Comment
+from core.security import get_current_user
 
 
 async def get_current_member(
