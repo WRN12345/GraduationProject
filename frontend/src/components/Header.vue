@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Search,
@@ -20,7 +20,8 @@ import {
   Clock,
   Settings,
   ChevronDown,
-  Menu
+  Menu,
+  Building2
 } from 'lucide-vue-next'
 import { useUserStore } from '@/stores/user'
 
@@ -51,11 +52,49 @@ const handleSearchResultSelect = (item) => {
 const isProfileOpen = ref(false)
 const isDarkMode = ref(false) // 模拟暗黑模式状态
 
+// --- 创建菜单相关逻辑 ---
+const isCreateMenuOpen = ref(false)
+
 const toggleProfile = () => {
   isProfileOpen.value = !isProfileOpen.value
-  // 如果打开了个人菜单，关闭搜索下拉
-  if (isProfileOpen.value) isSearchFocused.value = false
+  // 如果打开了个人菜单，关闭搜索下拉和创建菜单
+  if (isProfileOpen.value) {
+    isSearchFocused.value = false
+    isCreateMenuOpen.value = false
+  }
 }
+
+const toggleCreateMenu = () => {
+  isCreateMenuOpen.value = !isCreateMenuOpen.value
+  // 如果打开了创建菜单，关闭搜索下拉和个人菜单
+  if (isCreateMenuOpen.value) {
+    isSearchFocused.value = false
+    isProfileOpen.value = false
+  }
+}
+
+// 点击外部关闭下拉菜单
+const handleClickOutside = (event) => {
+  // 如果点击的不是下拉菜单内部的元素，则关闭所有菜单
+  if (isCreateMenuOpen.value || isProfileOpen.value) {
+    // 检查点击是否在 create-menu-container 或 user-menu-container 内部
+    const createMenu = event.target.closest('.create-menu-container')
+    const profileMenu = event.target.closest('.user-menu-container')
+
+    if (!createMenu && !profileMenu) {
+      isCreateMenuOpen.value = false
+      isProfileOpen.value = false
+    }
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 
 // 用户认证相关
 const userStore = useUserStore()
@@ -72,7 +111,14 @@ const handleLogout = async () => {
 
 // 创建帖子
 const goToCreatePost = () => {
+  isCreateMenuOpen.value = false
   router.push('/create-post')
+}
+
+// 创建社区
+const goToCreateCommunity = () => {
+  isCreateMenuOpen.value = false
+  router.push('/create-community')
 }
 
 // 返回主页
@@ -140,7 +186,28 @@ const getIcon = (iconName) => {
     <!-- 3. 右侧功能区 -->
     <div class="actions-section">
       <button class="btn-icon" title="消息"><MessageCircle :size="20" /></button>
-      <button class="btn-icon" title="创建" @click="goToCreatePost"><Plus :size="20" /><span>创建</span></button>
+      <div class="create-menu-container">
+        <button
+          class="btn-icon"
+          :class="{ active: isCreateMenuOpen }"
+          title="创建"
+          @click="toggleCreateMenu"
+        >
+          <Plus :size="20" /><span>创建</span>
+        </button>
+
+        <!-- 创建下拉菜单 -->
+        <div class="create-dropdown" v-if="isCreateMenuOpen">
+          <div class="create-menu-item" @click="goToCreatePost">
+            <FileText :size="20" class="menu-icon" />
+            <span class="menu-text">创建帖子</span>
+          </div>
+          <div class="create-menu-item" @click="goToCreateCommunity">
+            <Building2 :size="20" class="menu-icon" />
+            <span class="menu-text">创建社区</span>
+          </div>
+        </div>
+      </div>
       <button class="btn-icon" title="通知"><Bell :size="20" /></button>
 
       <!-- 个人头像容器 (Dropdown Trigger) -->
@@ -479,6 +546,62 @@ const getIcon = (iconName) => {
 
 .btn-icon:hover {
   background: #f6f7f8;
+}
+
+.btn-icon.active {
+  background: #f6f7f8;
+}
+
+/* 创建菜单容器 */
+.create-menu-container {
+  position: relative;
+}
+
+/* 创建下拉菜单样式 */
+.create-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 200px;
+  background: #fff;
+  border: 1px solid #edeff1;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 1003;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.create-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  gap: 12px;
+  color: #1c1c1c;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.create-menu-item:hover {
+  background: #f6f7f8;
+}
+
+.create-menu-item .menu-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1c1c1c;
+  flex-shrink: 0;
+}
+
+.create-menu-item .menu-text {
+  font-size: 14px;
+  font-weight: 500;
 }
 
 /* 头像触发器 */

@@ -32,6 +32,18 @@ const routes = [
         meta: { title: '创建帖子' }
       },
       {
+        path: 'create-community',
+        name: 'CreateCommunity',
+        component: () => import('../views/CreateCommunity.vue'),
+        meta: { title: '创建社区' }
+      },
+      {
+        path: 'all-communities',
+        name: 'AllCommunities',
+        component: () => import('../views/AllCommunities.vue'),
+        meta: { title: '全部社区' }
+      },
+      {
         path: 'post/:id',
         name: 'PostDetail',
         component: () => import('../views/PostDetail.vue'),
