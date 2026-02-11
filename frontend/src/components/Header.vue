@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   Search,
   MessageCircle,
@@ -25,6 +26,9 @@ import { useUserStore } from '@/stores/user'
 
 // 定义 emit
 const emit = defineEmits(['open-mobile-sidebar'])
+
+// 路由
+const router = useRouter()
 
 // --- 搜索相关逻辑 (保留之前的) ---
 const searchText = ref('')
@@ -66,6 +70,16 @@ const handleLogout = async () => {
   // 登出成功后会自动跳转到登录页（通过路由守卫）
 }
 
+// 创建帖子
+const goToCreatePost = () => {
+  router.push('/create-post')
+}
+
+// 返回主页
+const goToHome = () => {
+  router.push('/')
+}
+
 // 获取图标组件
 const getIcon = (iconName) => {
   const icons = {
@@ -85,7 +99,7 @@ const getIcon = (iconName) => {
     </button>
 
     <!-- 1. Logo 区域 -->
-    <div class="logo-section">
+    <div class="logo-section" @click="goToHome" title="返回主页">
       <img src="@/assets/image/wrn.png" alt="Logo" class="logo-img" />
       <span class="logo-text">Super Dev</span>
     </div>
@@ -126,7 +140,7 @@ const getIcon = (iconName) => {
     <!-- 3. 右侧功能区 -->
     <div class="actions-section">
       <button class="btn-icon" title="消息"><MessageCircle :size="20" /></button>
-      <button class="btn-icon" title="创建"><Plus :size="20" /><span>创建</span></button>
+      <button class="btn-icon" title="创建" @click="goToCreatePost"><Plus :size="20" /><span>创建</span></button>
       <button class="btn-icon" title="通知"><Bell :size="20" /></button>
 
       <!-- 个人头像容器 (Dropdown Trigger) -->
@@ -285,12 +299,23 @@ const getIcon = (iconName) => {
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.logo-section:hover {
+  opacity: 0.8;
 }
 
 .logo-img {
   width: 36px;
   height: 36px;
   border-radius: 8px;
+  transition: transform 0.2s;
+}
+
+.logo-section:hover .logo-img {
+  transform: scale(1.05);
 }
 
 .logo-text {

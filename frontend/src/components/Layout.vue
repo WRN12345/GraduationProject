@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import Header from './Header.vue'
 import Aside from './Aside.vue'
-import Main from './Main.vue'
 
 const isSidebarCollapsed = ref(false)
 const isMobileSidebarOpen = ref(false)
@@ -62,7 +61,7 @@ const closeMobileSidebar = () => {
       </button>
 
       <div class="layout-main">
-        <Main />
+        <router-view />
       </div>
     </div>
   </div>

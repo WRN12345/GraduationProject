@@ -14,7 +14,7 @@ from core.security import get_current_user
 from core.permissions import get_community_moderator, get_community_owner, get_current_member
 from core.audit import create_audit_log
 
-router = APIRouter(tags=["社区成员管理"])
+router = APIRouter(prefix="/memberships", tags=["社区成员管理"])
 
 
 @router.post("/communities/{community_id}/join", summary="加入社区")
@@ -349,6 +349,47 @@ async def get_my_feed(
     ).order_by("-created_at").offset(skip).limit(limit).prefetch_related('author', 'community')
 
     return posts
+
+
+@router.get("/my-communities", summary="获取用户加入的社区列表")
+async def get_my_communities(
+    skip: int = 0,
+    limit: int = 50,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    获取当前用户加入的所有社区
+    返回社区信息 + 用户在社区中的角色 + 加入时间 + 帖子数量
+    """
+    from models.post import Post
+
+    # 获取用户的所有成员关系（排除黑名单）
+    memberships = await CommunityMembership.filter(
+        user=current_user,
+        role__gte=MembershipRole.MEMBER.value  # 排除 BANNED (-1)
+    ).select_related('community').offset(skip).limit(limit)
+
+    # 构建响应数据
+    result = []
+    for m in memberships:
+        # 获取社区帖子数量
+        post_count = await Post.filter(
+            community_id=m.community.id,
+            deleted_at__isnull=True
+        ).count()
+
+        result.append({
+            "id": m.community.id,
+            "name": m.community.name,
+            "description": m.community.description,
+            "member_count": m.community.member_count,
+            "post_count": post_count,
+            "role": m.role,
+            "role_display": m.get_role_display(),
+            "joined_at": m.joined_at.isoformat()
+        })
+
+    return result
 
 
 __all__ = ["router"]

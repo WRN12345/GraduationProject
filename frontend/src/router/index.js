@@ -11,9 +11,45 @@ const routes = [
   },
   {
     path: '/',
-    name: 'Home',
-    component: Layout, // Layout 组件已经包含了 Main，不需要嵌套路由
-    meta: { requiresAuth: true }
+    component: Layout, // 主布局包裹所有需要认证的页面
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'Home',
+        component: () => import('../components/Main.vue')
+      },
+      {
+        path: 'communities',
+        name: 'CommunityManage',
+        component: () => import('../views/CommunityManage.vue'),
+        meta: { title: '社区管理' }
+      },
+      {
+        path: 'create-post',
+        name: 'CreatePost',
+        component: () => import('../views/CreatePost.vue'),
+        meta: { title: '创建帖子' }
+      },
+      {
+        path: 'post/:id',
+        name: 'PostDetail',
+        component: () => import('../views/PostDetail.vue'),
+        meta: { title: '帖子详情' }
+      },
+      {
+        path: 'my-communities',
+        name: 'MyCommunities',
+        component: () => import('../views/MyCommunities.vue'),
+        meta: { title: '我的社区' }
+      },
+      {
+        path: 'community/:id',
+        name: 'CommunityDetail',
+        component: () => import('../views/CommunityDetail.vue'),
+        meta: { title: '社区详情' }
+      }
+    ]
   }
 ]
 
