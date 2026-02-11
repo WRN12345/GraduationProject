@@ -75,6 +75,11 @@ const goToCreatePost = () => {
   router.push('/create-post')
 }
 
+// 返回主页
+const goToHome = () => {
+  router.push('/')
+}
+
 // 获取图标组件
 const getIcon = (iconName) => {
   const icons = {
@@ -94,7 +99,7 @@ const getIcon = (iconName) => {
     </button>
 
     <!-- 1. Logo 区域 -->
-    <div class="logo-section">
+    <div class="logo-section" @click="goToHome" title="返回主页">
       <img src="@/assets/image/wrn.png" alt="Logo" class="logo-img" />
       <span class="logo-text">Super Dev</span>
     </div>
@@ -294,12 +299,23 @@ const getIcon = (iconName) => {
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.logo-section:hover {
+  opacity: 0.8;
 }
 
 .logo-img {
   width: 36px;
   height: 36px;
   border-radius: 8px;
+  transition: transform 0.2s;
+}
+
+.logo-section:hover .logo-img {
+  transform: scale(1.05);
 }
 
 .logo-text {

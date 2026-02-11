@@ -36,7 +36,16 @@ const goBack = () => {
 }
 
 const handleSubmit = (postId) => {
-  console.log('[CreatePost] 发布成功，帖子 ID:', postId)
+  console.log('[CreatePost] 发布成功，帖子 ID:', postId, '类型:', typeof postId)
+
+  // 验证 ID 是否有效
+  if (!postId || postId === 'undefined' || postId === 'null') {
+    console.error('[CreatePost] 无效的帖子 ID:', postId)
+    alert('发布成功但无法跳转到详情页，请手动刷新查看')
+    router.push('/')
+    return
+  }
+
   // 跳转到帖子详情页
   router.push(`/post/${postId}`)
 }

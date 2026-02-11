@@ -162,7 +162,7 @@ const onSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    const response = await client.POST('/v1/communities', {
+    const response = await client.POST('/v1/communities/', {
       body: {
         name: form.name.trim(),
         description: form.description.trim()

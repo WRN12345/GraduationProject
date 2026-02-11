@@ -51,18 +51,8 @@ const createInterceptor = (): Middleware => {
               // 刷新成功，通知所有等待的请求
               onRefreshed(userStore.token);
 
-              // 重试当前请求
-              const newHeaders = new Headers();
-              response.headers.forEach((value, key) => {
-                newHeaders.set(key, value);
-              });
-              newHeaders.set("Authorization", `Bearer ${userStore.token}`);
-
-              const newRequest = new Request(response.url, {
-                headers: newHeaders,
-              });
-
-              return fetch(newRequest);
+              // 返回原始 401 响应，让应用层处理重试
+              return response;
             } else {
               // 刷新失败，清除认证并跳转登录
               userStore.clearAuth();

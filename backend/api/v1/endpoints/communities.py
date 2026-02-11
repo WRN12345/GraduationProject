@@ -9,9 +9,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from core.security import get_current_user
 from models.community import Community
 from models.user import User
+from models.membership import CommunityMembership, MembershipRole
 from schemas.community import CommunityCreate, CommunityOut, CommunityRecommendation
 
-router = APIRouter(tags=["社区板块"])
+router = APIRouter(prefix="/communities", tags=["社区板块"])
 
 @router.get("/", response_model=List[CommunityOut],summary="获取社区列表")
 
@@ -61,7 +62,45 @@ async def create_community(
         **community_in.model_dump(),
         creator=current_user # 关联当前登录用户
     )
+
+    # 4. 自动将创建者加入为群主
+    await CommunityMembership.create(
+        user=current_user,
+        community=community,
+        role=MembershipRole.OWNER.value
+    )
+
     return community
+
+@router.post("/{community_id}/join", summary="加入社区")
+async def join_community(
+    community_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    加入指定社区
+    """
+    # 检查社区是否存在
+    community = await Community.get_or_none(id=community_id)
+    if not community:
+        raise HTTPException(status_code=404, detail="社区不存在")
+
+    # 检查是否已经是成员
+    existing = await CommunityMembership.get_or_none(
+        user=current_user,
+        community_id=community_id
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="您已经是该社区成员")
+
+    # 创建成员记录
+    await CommunityMembership.create(
+        user=current_user,
+        community_id=community_id,
+        role=MembershipRole.MEMBER.value
+    )
+
+    return {"message": "成功加入社区"}
 
 @router.get("/recommend", response_model=List[CommunityRecommendation], summary="根据帖子内容推荐社区")
 async def recommend_communities(

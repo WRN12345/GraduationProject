@@ -49,7 +49,7 @@ const navigateTo = (path) => {
     </button>
 
     <nav class="nav-group">
-      <div class="nav-item active">
+      <div class="nav-item active" @click="navigateTo('/')">
         <Home :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">主页</span>
       </div>
@@ -77,9 +77,9 @@ const navigateTo = (path) => {
     <nav class="nav-group">
       <div class="nav-item" @click="navigateTo('/communities')">
         <Building2 :size="20" class="icon" />
-        <span v-if="!isCollapsed" class="text">管理社区</span>
+        <span v-if="!isCollapsed" class="text">创建社区</span>
       </div>
-      <div class="nav-item">
+      <div class="nav-item" @click="navigateTo('/my-communities')">
         <Users :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">我的社区</span>
       </div>

@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     Aside: typeof import('./src/components/Aside.vue')['default']
     CommunityForm: typeof import('./src/components/community/CommunityForm.vue')['default']
+    CommunityInfoCard: typeof import('./src/components/community/CommunityInfoCard.vue')['default']
     CommunitySelector: typeof import('./src/components/post/CommunitySelector.vue')['default']
     Footer: typeof import('./src/components/Footer.vue')['default']
     Header: typeof import('./src/components/Header.vue')['default']
@@ -20,6 +21,7 @@ declare module 'vue' {
     Main: typeof import('./src/components/Main.vue')['default']
     MarkdownEditor: typeof import('./src/components/post/MarkdownEditor.vue')['default']
     PostForm: typeof import('./src/components/post/PostForm.vue')['default']
+    PostList: typeof import('./src/components/PostList.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
   }

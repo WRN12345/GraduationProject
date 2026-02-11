@@ -6,14 +6,6 @@
     </div>
 
     <div v-else-if="post" class="post-detail-card">
-      <!-- 头部操作栏 -->
-      <div class="detail-header">
-        <button class="back-btn" @click="goBack">
-          <ArrowLeft :size="20" />
-          <span>返回</span>
-        </button>
-      </div>
-
       <!-- 帖子内容 -->
       <div class="post-content">
         <!-- 社区信息 -->
@@ -54,20 +46,17 @@
 
     <div v-else class="error-state">
       <p>帖子不存在或已被删除</p>
-      <button class="back-btn" @click="goBack">返回首页</button>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft } from 'lucide-vue-next'
+import { useRoute } from 'vue-router'
 import { client } from '@/api/client'
 import { marked } from 'marked'
 
 const route = useRoute()
-const router = useRouter()
 
 const post = ref(null)
 const loading = ref(true)
@@ -107,13 +96,21 @@ const formatTime = (dateString) => {
 // 加载帖子详情
 const loadPost = async () => {
   const postId = route.params.id
-  console.log('[PostDetail] 加载帖子, ID:', postId)
+  console.log('[PostDetail] 加载帖子, ID:', postId, '类型:', typeof postId)
+
+  // 验证 ID 是否有效
+  const parsedId = parseInt(postId)
+  if (isNaN(parsedId)) {
+    console.error('[PostDetail] 无效的帖子 ID:', postId)
+    loading.value = false
+    return
+  }
 
   loading.value = true
   try {
     const response = await client.GET('/v1/posts/{post_id}', {
       params: {
-        path: { post_id: parseInt(postId) }
+        path: { post_id: parsedId }
       }
     })
 
@@ -127,14 +124,6 @@ const loadPost = async () => {
     console.error('[PostDetail] 加载失败:', error)
   } finally {
     loading.value = false
-  }
-}
-
-const goBack = () => {
-  if (window.history.length > 1) {
-    router.back()
-  } else {
-    router.push('/')
   }
 }
 
@@ -180,30 +169,6 @@ onMounted(() => {
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-}
-
-.detail-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid #edeff1;
-}
-
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: #f6f7f8;
-  color: #1c1c1c;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.back-btn:hover {
-  background: #edeff1;
 }
 
 .post-content {

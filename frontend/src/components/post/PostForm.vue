@@ -92,7 +92,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { Users, FileText, AlignLeft, Info, Send } from 'lucide-vue-next'
 import { client } from '@/api/client'
 import { useDraft } from '@/composables/useDraft'
@@ -106,6 +106,25 @@ const form = reactive({
   community_id: null,
   title: '',
   content: ''
+})
+
+// 监听社区选择变化，自动加入社区
+watch(() => form.community_id, async (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    console.log('[表单] 选择社区:', newId)
+    // 尝试加入社区（如果已经是成员，后端会返回 400）
+    try {
+      await client.POST('/v1/communities/{community_id}/join', {
+        params: {
+          path: { community_id: newId }
+        }
+      })
+      console.log('[表单] 已加入社区')
+    } catch (error) {
+      // 忽略"已经是成员"错误
+      console.log('[表单] 加入社区结果:', error?.message || '已加入或已是成员')
+    }
+  }
 })
 
 // 状态
@@ -172,7 +191,7 @@ const validateCommunity = () => {
 const loadCommunities = async () => {
   loadingCommunities.value = true
   try {
-    const response = await client.GET('/v1/communities', {
+    const response = await client.GET('/v1/communities/', {
       params: {
         query: {
           skip: 0,
@@ -225,6 +244,7 @@ const onSubmit = async () => {
   isSubmitting.value = true
 
   try {
+    // 发布帖子（用户选择社区时已自动加入）
     const response = await client.POST('/v1/posts', {
       body: {
         title: form.title.trim(),
@@ -234,15 +254,18 @@ const onSubmit = async () => {
     })
 
     if (response.data) {
-      console.log('[表单] 发布成功, ID:', response.data.id)
+      console.log('[表单] 发布成功, ID:', response.data.id, '完整数据:', response.data)
       // 清除草稿
       clearDraft()
       // 通知父组件
       emit('submit', response.data.id)
+    } else {
+      console.error('[表单] 发布失败，没有返回数据')
+      alert('发布失败，请重试')
     }
   } catch (error) {
     console.error('[表单] 发布失败:', error)
-    // 错误已由 API 拦截器处理
+    alert('发布失败：' + (error?.message || '未知错误'))
   } finally {
     isSubmitting.value = false
   }

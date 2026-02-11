@@ -1,150 +1,5 @@
-<script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import {
-  ThumbsUp,
-  ThumbsDown,
-  MessageCircle,
-  Bookmark,
-  Share2,
-  Send,
-  ArrowBigUp
-} from 'lucide-vue-next'
-import { client } from '@/api/client'
-import { marked } from 'marked'
-
-const router = useRouter()
-
-// 状态
-const posts = ref([])
-const loading = ref(false)
-const error = ref(null)
-
-// 分页
-const currentPage = ref(0)
-const pageSize = 20
-const hasMore = ref(true)
-
-// 评论输入
-const commentInputs = ref({})
-
-// 配置 marked
-marked.setOptions({
-  breaks: true,
-  gfm: true,
-})
-
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '未知时间'
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = (now - date) / 1000 // 秒
-
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
-
-  return date.toLocaleDateString('zh-CN')
-}
-
-// 渲染 Markdown（预览，只显示前200个字符）
-const renderPreview = (content) => {
-  if (!content) return ''
-  try {
-    const html = marked(content)
-    // 移除 HTML 标签获取纯文本，然后截取前 200 个字符
-    const text = html.replace(/<[^>]*>/g, '')
-    return text.length > 200 ? text.substring(0, 200) + '...' : text
-  } catch (error) {
-    console.error('Markdown 渲染错误:', error)
-    return content?.substring(0, 200) || ''
-  }
-}
-
-// 加载帖子列表
-const loadPosts = async (reset = false) => {
-  if (loading.value) return
-  if (reset) {
-    currentPage.value = 0
-    posts.value = []
-    hasMore.value = true
-  }
-
-  if (!hasMore.value) return
-
-  loading.value = true
-  error.value = null
-
-  try {
-    const response = await client.GET('/v1/posts', {
-      params: {
-        query: {
-          skip: currentPage.value * pageSize,
-          limit: pageSize
-        }
-      }
-    })
-
-    if (response.data) {
-      console.log('[主页] 加载成功，帖子数量:', response.data.items?.length || 0)
-
-      if (response.data.items) {
-        // 分页格式
-        posts.value = reset ? response.data.items : [...posts.value, ...response.data.items]
-        hasMore.value = response.data.has_more ?? (response.data.items.length >= pageSize)
-        currentPage.value++
-      } else {
-        // 直接数组格式
-        posts.value = reset ? response.data : [...posts.value, ...response.data]
-        hasMore.value = response.data.length >= pageSize
-        currentPage.value++
-      }
-    }
-  } catch (err) {
-    console.error('[主页] 加载失败:', err)
-    error.value = '加载失败，请稍后重试'
-  } finally {
-    loading.value = false
-  }
-}
-
-// 点击帖子跳转到详情
-const goToPost = (postId) => {
-  console.log('[主页] 点击帖子，ID:', postId, '类型:', typeof postId)
-  if (!postId || isNaN(parseInt(postId))) {
-    console.error('[主页] 无效的帖子 ID:', postId)
-    return
-  }
-  console.log('[主页] 跳转到帖子详情')
-  router.push(`/post/${postId}`)
-}
-
-// 点击社区跳转
-const goToCommunity = (communityId) => {
-  // TODO: 实现社区详情页
-  console.log('点击社区:', communityId)
-}
-
-// 加载更多
-const loadMore = () => {
-  loadPosts(false)
-}
-
-// 初始化
-onMounted(() => {
-  console.log('[主页] 组件挂载')
-  loadPosts(true)
-})
-
-// 计算属性
-const displayPosts = computed(() => posts.value)
-</script>
-
 <template>
-  <!-- Feed 流 -->
-  <div class="feed-container">
+  <div class="post-list">
     <!-- 加载状态 -->
     <div v-if="loading && posts.length === 0" class="loading-state">
       <div class="spinner"></div>
@@ -160,8 +15,8 @@ const displayPosts = computed(() => posts.value)
     <!-- 空状态 -->
     <div v-else-if="posts.length === 0" class="empty-state">
       <ArrowBigUp :size="64" />
-      <h3>还没有帖子</h3>
-      <p>成为第一个发布内容的人吧！</p>
+      <h3>{{ emptyTitle }}</h3>
+      <p>{{ emptyMessage }}</p>
     </div>
 
     <!-- 帖子列表 -->
@@ -253,14 +108,170 @@ const displayPosts = computed(() => posts.value)
   </div>
 </template>
 
-<style scoped>
-/* Feed 样式 */
-.feed-container {
-  width: 100%;
-  max-width: 980px;
-  margin: 0 auto;
+<script setup>
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import {
+  ThumbsUp,
+  ThumbsDown,
+  MessageCircle,
+  Bookmark,
+  Share2,
+  Send,
+  ArrowBigUp
+} from 'lucide-vue-next'
+import { client } from '@/api/client'
+import { marked } from 'marked'
+
+const props = defineProps({
+  communityId: {
+    type: Number,
+    default: null  // null 表示获取所有帖子
+  },
+  emptyTitle: {
+    type: String,
+    default: '还没有帖子'
+  },
+  emptyMessage: {
+    type: String,
+    default: '成为第一个发布内容的人吧！'
+  }
+})
+
+const router = useRouter()
+
+// 状态
+const posts = ref([])
+const loading = ref(false)
+const error = ref(null)
+
+// 分页
+const currentPage = ref(0)
+const pageSize = 20
+const hasMore = ref(true)
+
+// 评论输入
+const commentInputs = ref({})
+
+// 配置 marked
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+})
+
+// 格式化时间
+const formatTime = (dateString) => {
+  if (!dateString) return '未知时间'
+  const date = new Date(dateString)
+  const now = new Date()
+  const diff = (now - date) / 1000 // 秒
+
+  if (diff < 60) return '刚刚'
+  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
+  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
+  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
+
+  return date.toLocaleDateString('zh-CN')
 }
 
+// 渲染 Markdown（预览，只显示前200个字符）
+const renderPreview = (content) => {
+  if (!content) return ''
+  try {
+    const html = marked(content)
+    // 移除 HTML 标签获取纯文本，然后截取前 200 个字符
+    const text = html.replace(/<[^>]*>/g, '')
+    return text.length > 200 ? text.substring(0, 200) + '...' : text
+  } catch (error) {
+    console.error('[PostList] Markdown 渲染错误:', error)
+    return content?.substring(0, 200) || ''
+  }
+}
+
+// 加载帖子列表
+const loadPosts = async (reset = false) => {
+  if (loading.value) return
+  if (reset) {
+    currentPage.value = 0
+    posts.value = []
+    hasMore.value = true
+  }
+
+  if (!hasMore.value) return
+
+  loading.value = true
+  error.value = null
+
+  try {
+    const params = {
+      query: {
+        skip: currentPage.value * pageSize,
+        limit: pageSize
+      }
+    }
+
+    if (props.communityId) {
+      params.query.community_id = props.communityId
+    }
+
+    const response = await client.GET('/v1/posts', { params })
+
+    if (response.data) {
+      console.log('[PostList] 加载成功，帖子数量:', response.data.items?.length || 0)
+
+      if (response.data.items) {
+        // 分页格式
+        posts.value = reset ? response.data.items : [...posts.value, ...response.data.items]
+        hasMore.value = response.data.has_more ?? (response.data.items.length >= pageSize)
+        currentPage.value++
+      } else {
+        // 直接数组格式
+        posts.value = reset ? response.data : [...posts.value, ...response.data]
+        hasMore.value = response.data.length >= pageSize
+        currentPage.value++
+      }
+    }
+  } catch (err) {
+    console.error('[PostList] 加载失败:', err)
+    error.value = '加载失败，请稍后重试'
+  } finally {
+    loading.value = false
+  }
+}
+
+// 点击帖子跳转到详情
+const goToPost = (postId) => {
+  router.push(`/post/${postId}`)
+}
+
+// 点击社区跳转
+const goToCommunity = (communityId) => {
+  // 跳转到社区详情页
+  router.push(`/community/${communityId}`)
+}
+
+// 加载更多
+const loadMore = () => {
+  loadPosts(false)
+}
+
+// 初始化
+onMounted(() => {
+  console.log('[PostList] 组件挂载，communityId:', props.communityId)
+  loadPosts(true)
+})
+
+// 计算属性
+const displayPosts = computed(() => posts.value)
+
+// 暴露方法供父组件调用
+defineExpose({
+  loadPosts,
+  refresh: () => loadPosts(true)
+})
+</script>
+
+<style scoped>
 /* 加载状态 */
 .loading-state,
 .error-state,
@@ -534,11 +545,6 @@ const displayPosts = computed(() => posts.value)
 
 /* 小窗口 (< 640px) */
 @media (max-width: 639px) {
-  .feed-container {
-    max-width: 100%;
-    padding: 0;
-  }
-
   .post-card {
     border-radius: 0;
     border-left: none;
@@ -577,46 +583,6 @@ const displayPosts = computed(() => posts.value)
 
   .comment-input {
     padding: 6px 12px;
-  }
-}
-
-/* 中小窗口 (640px - 767px) */
-@media (min-width: 640px) and (max-width: 767px) {
-  .feed-container {
-    max-width: 100%;
-  }
-
-  .post-content {
-    padding: 14px 16px;
-  }
-
-  .post-title {
-    font-size: 17px;
-  }
-}
-
-/* 中等窗口 (768px - 959px) */
-@media (min-width: 768px) and (max-width: 959px) {
-  .feed-container {
-    max-width: 100%;
-  }
-
-  .post-content {
-    padding: 14px 16px;
-  }
-}
-
-/* 大窗口 (960px - 1279px) */
-@media (min-width: 960px) and (max-width: 1279px) {
-  .feed-container {
-    max-width: 980px;
-  }
-}
-
-/* 超大窗口 (>= 1280px) */
-@media (min-width: 1280px) {
-  .feed-container {
-    max-width: 980px;
   }
 }
 </style>

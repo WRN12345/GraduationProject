@@ -1,16 +1,6 @@
 <template>
   <div class="community-manage-container">
-    <div class="manage-header">
-      <button class="back-btn" @click="goBack">
-        <ArrowLeft :size="20" />
-        <span>返回</span>
-      </button>
-      <div class="header-content">
-        <h1 class="title">社区管理</h1>
-        <p class="subtitle">创建和管理你的兴趣社区</p>
-      </div>
-    </div>
-
+    
     <!-- 左右布局 -->
     <div class="content-layout">
       <!-- 左侧：创建表单 -->
@@ -18,7 +8,6 @@
         <div class="form-section">
           <CommunityForm
             @submit="handleCommunityCreated"
-            @cancel="goBack"
           />
         </div>
       </div>
@@ -77,16 +66,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import {
-  ArrowLeft,
   Users,
   RefreshCw
 } from 'lucide-vue-next'
 import { client } from '@/api/client'
 import CommunityForm from '@/components/community/CommunityForm.vue'
-
-const router = useRouter()
 
 const communities = ref([])
 const loading = ref(false)
@@ -116,7 +101,7 @@ const formatTime = (dateString) => {
 const loadCommunities = async () => {
   loading.value = true
   try {
-    const response = await client.GET('/v1/communities', {
+    const response = await client.GET('/v1/communities/', {
       params: {
         query: {
           skip: 0,
@@ -144,15 +129,6 @@ const handleCommunityCreated = (community) => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-// 返回
-const goBack = () => {
-  if (window.history.length > 1) {
-    router.back()
-  } else {
-    router.push('/')
-  }
-}
-
 onMounted(() => {
   loadCommunities()
 })
@@ -170,25 +146,6 @@ onMounted(() => {
   align-items: center;
   gap: 16px;
   margin-bottom: 24px;
-}
-
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: transparent;
-  color: #0079d3;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.back-btn:hover {
-  background: rgba(0, 121, 211, 0.1);
 }
 
 .header-content {
