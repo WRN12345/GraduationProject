@@ -10,6 +10,24 @@ const routes = [
     meta: { title: '登录', requiresAuth: false }
   },
   {
+    path: '/communities',
+    name: 'CommunityManage',
+    component: () => import('../views/CommunityManage.vue'),
+    meta: { title: '社区管理', requiresAuth: true }
+  },
+  {
+    path: '/create-post',
+    name: 'CreatePost',
+    component: () => import('../views/CreatePost.vue'),
+    meta: { title: '创建帖子', requiresAuth: true }
+  },
+  {
+    path: '/post/:id',
+    name: 'PostDetail',
+    component: () => import('../views/PostDetail.vue'),
+    meta: { title: '帖子详情', requiresAuth: true }
+  },
+  {
     path: '/',
     name: 'Home',
     component: Layout, // Layout 组件已经包含了 Main，不需要嵌套路由

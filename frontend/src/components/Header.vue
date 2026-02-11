@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   Search,
   MessageCircle,
@@ -25,6 +26,9 @@ import { useUserStore } from '@/stores/user'
 
 // 定义 emit
 const emit = defineEmits(['open-mobile-sidebar'])
+
+// 路由
+const router = useRouter()
 
 // --- 搜索相关逻辑 (保留之前的) ---
 const searchText = ref('')
@@ -64,6 +68,11 @@ const handleLogout = async () => {
   await userStore.logout()
 
   // 登出成功后会自动跳转到登录页（通过路由守卫）
+}
+
+// 创建帖子
+const goToCreatePost = () => {
+  router.push('/create-post')
 }
 
 // 获取图标组件
@@ -126,7 +135,7 @@ const getIcon = (iconName) => {
     <!-- 3. 右侧功能区 -->
     <div class="actions-section">
       <button class="btn-icon" title="消息"><MessageCircle :size="20" /></button>
-      <button class="btn-icon" title="创建"><Plus :size="20" /><span>创建</span></button>
+      <button class="btn-icon" title="创建" @click="goToCreatePost"><Plus :size="20" /><span>创建</span></button>
       <button class="btn-icon" title="通知"><Bell :size="20" /></button>
 
       <!-- 个人头像容器 (Dropdown Trigger) -->

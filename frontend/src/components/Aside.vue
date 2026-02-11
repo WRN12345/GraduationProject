@@ -1,4 +1,5 @@
 <script setup>
+import { useRouter } from 'vue-router'
 import {
   Home,
   TrendingUp,
@@ -11,7 +12,8 @@ import {
   Shield,
   Eye,
   Bookmark,
-  X
+  X,
+  Building2
 } from 'lucide-vue-next'
 
 defineProps({
@@ -27,8 +29,15 @@ defineProps({
 
 const emit = defineEmits(['close-mobile'])
 
+const router = useRouter()
+
 const closeMobileSidebar = () => {
   emit('close-mobile')
+}
+
+const navigateTo = (path) => {
+  router.push(path)
+  closeMobileSidebar()
 }
 </script>
 
@@ -66,6 +75,10 @@ const closeMobileSidebar = () => {
 
     <div class="section-title" v-if="!isCollapsed">社区</div>
     <nav class="nav-group">
+      <div class="nav-item" @click="navigateTo('/communities')">
+        <Building2 :size="20" class="icon" />
+        <span v-if="!isCollapsed" class="text">管理社区</span>
+      </div>
       <div class="nav-item">
         <Users :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">我的社区</span>

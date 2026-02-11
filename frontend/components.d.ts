@@ -12,10 +12,14 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     Aside: typeof import('./src/components/Aside.vue')['default']
+    CommunityForm: typeof import('./src/components/community/CommunityForm.vue')['default']
+    CommunitySelector: typeof import('./src/components/post/CommunitySelector.vue')['default']
     Footer: typeof import('./src/components/Footer.vue')['default']
     Header: typeof import('./src/components/Header.vue')['default']
     Layout: typeof import('./src/components/Layout.vue')['default']
     Main: typeof import('./src/components/Main.vue')['default']
+    MarkdownEditor: typeof import('./src/components/post/MarkdownEditor.vue')['default']
+    PostForm: typeof import('./src/components/post/PostForm.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
   }
