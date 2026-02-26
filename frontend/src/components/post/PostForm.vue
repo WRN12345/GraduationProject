@@ -66,6 +66,31 @@
           {{ errors.content }}
         </span>
       </div>
+
+      <!-- 附件上传 -->
+      <div class="form-group">
+        <label class="form-label">
+          <Paperclip :size="16" />
+          <span>附件</span>
+          <span class="label-hint">(可选)</span>
+        </label>
+        <FileUploader
+          ref="fileUploaderRef"
+          upload-type="mixed"
+          :limit="10"
+          :file-list="attachmentList"
+          @update:fileList="handleFileListUpdate"
+          @upload-progress="handleUploadProgress"
+          @upload-success="handleUploadSuccess"
+        />
+        <div v-if="isUploading" class="uploading-status">
+          <span class="upload-spinner"></span>
+          正在上传附件...
+        </div>
+        <div v-else-if="attachmentList.length > 0" class="attachment-summary">
+          已选择 {{ attachmentList.length }} 个附件
+        </div>
+      </div>
     </div>
 
     <!-- 底部操作栏 -->
@@ -93,11 +118,12 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
-import { Users, FileText, AlignLeft, Info, Send } from 'lucide-vue-next'
+import { Users, FileText, AlignLeft, Info, Send, Paperclip } from 'lucide-vue-next'
 import { client } from '@/api/client'
 import { useDraft } from '@/composables/useDraft'
 import CommunitySelector from './CommunitySelector.vue'
 import MarkdownEditor from './MarkdownEditor.vue'
+import FileUploader from '@/components/upload/FileUploader.vue'
 
 const emit = defineEmits(['submit', 'cancel'])
 
@@ -134,6 +160,9 @@ const isSubmitting = ref(false)
 const errors = ref({})
 const titleInputRef = ref(null)
 const markdownEditorRef = ref(null)
+const fileUploaderRef = ref(null)
+const attachmentList = ref([])
+const isUploading = ref(false)
 
 // 草稿功能
 const { draft, hasDraft, loadDraft, saveDraft, clearDraft, startAutoSave, stopAutoSave } = useDraft()
@@ -227,9 +256,32 @@ const discardDraft = () => {
   draftRestored.value = true
 }
 
+// 处理文件列表更新
+const handleFileListUpdate = (files) => {
+  attachmentList.value = files
+  console.log('[附件] 文件列表更新:', files.map(f => ({ name: f.name, id: f.attachmentId })))
+}
+
+// 处理上传进度
+const handleUploadProgress = () => {
+  isUploading.value = true
+}
+
+// 处理上传成功
+const handleUploadSuccess = () => {
+  isUploading.value = false
+}
+
 // 提交表单
 const onSubmit = async () => {
   console.log('[表单] 开始提交')
+
+  // 检查是否有正在上传的文件
+  if (isUploading.value) {
+    console.log('[表单] 文件上传中，请稍候')
+    alert('请等待文件上传完成')
+    return
+  }
 
   // 验证
   const isTitleValid = validateTitle()
@@ -244,12 +296,20 @@ const onSubmit = async () => {
   isSubmitting.value = true
 
   try {
+    // 获取附件 ID 列表
+    const attachmentIds = attachmentList.value
+      .filter(f => f.attachmentId)
+      .map(f => f.attachmentId)
+
+    console.log('[表单] 附件 ID:', attachmentIds)
+
     // 发布帖子（用户选择社区时已自动加入）
     const response = await client.POST('/v1/posts', {
       body: {
         title: form.title.trim(),
         content: form.content.trim(),
-        community_id: form.community_id
+        community_id: form.community_id,
+        attachment_ids: attachmentIds
       }
     })
 
@@ -446,6 +506,34 @@ onUnmounted(() => {
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.attachment-summary {
+  font-size: 12px;
+  color: #0079d3;
+  margin-top: 8px;
+}
+
+.uploading-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #0079d3;
+  margin-top: 8px;
+}
+
+.upload-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #edeff1;
+  border-top-color: #0079d3;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* 响应式 */

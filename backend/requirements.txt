@@ -15,6 +15,9 @@ asyncpg>=0.29.0               # PostgreSQL 异步驱动（高性能）
 # -------------- 缓存 --------------
 redis[hiredis]>=5.0.0         # Redis 客户端（hiredis 是 C 扩展，加速 Redis 操作）
 
+# -------------- 对象存储 --------------
+minio>=7.2.0                 # MinIO Python SDK
+
 # -------------- 认证和安全 --------------
 python-jose[cryptography]>=3.3.0  # JWT Token 处理
 passlib[bcrypt]>=1.7.4            # 密码哈希（bcrypt 加密）

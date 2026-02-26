@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from redis.asyncio import Redis
 from models.user import User
 from models.community import Community
+from models.post_attachment import PostAttachment
 from core.security import get_current_user
 from core.permissions import can_post_in_community, can_moderate_post, require_superuser, get_community_moderator
 from core.audit import create_audit_log
@@ -42,7 +43,7 @@ async def _get_paginated_posts(
     query = models.Post.all().order_by(order_by)
 
     # 预加载关联对象，避免 N+1 查询问题
-    query = query.select_related('author', 'community')
+    query = query.select_related('author', 'community').prefetch_related('attachments')
 
     # 过滤软删除的帖子
     if not include_deleted:
@@ -135,7 +136,7 @@ async def get_hot_posts(
         db_posts = await models.Post.filter(
             id__in=missing_ids,
             deleted_at__isnull=True
-        ).select_related('author', 'community')
+        ).select_related('author', 'community').prefetch_related('attachments')
 
         # 转换为字典并回填缓存
         for post in db_posts:
@@ -155,6 +156,18 @@ async def get_hot_posts(
                     "id": post.community.id,
                     "name": post.community.name,
                 } if post.community else None,
+                "attachments": [
+                    {
+                        "id": a.id,
+                        "attachment_type": a.attachment_type,
+                        "file_name": a.file_name,
+                        "file_url": a.file_url,
+                        "file_size": a.file_size,
+                        "mime_type": a.mime_type,
+                        "sort_order": a.sort_order,
+                    }
+                    for a in post.attachments
+                ],
                 "upvotes": post.upvotes,
                 "downvotes": post.downvotes,
                 "is_edited": post.is_edited,
@@ -202,12 +215,31 @@ async def create_post(
     # 验证用户是否可以在该社区发帖
     await can_post_in_community(post_in.community_id, current_user)
 
+    # 创建帖子（排除 attachment_ids，后面单独处理）
     post = await models.Post.create(
-        **post_in.model_dump(),
+        **post_in.model_dump(exclude={'attachment_ids'}),
         author=current_user
     )
-    # 重新获取帖子以预加载关联对象
-    post = await models.Post.get(id=post.id).select_related('author', 'community')
+
+    # 关联附件
+    if post_in.attachment_ids:
+        # 验证附件是否存在且属于当前用户且未被使用
+        attachments = await PostAttachment.filter(
+            id__in=post_in.attachment_ids,
+            uploader=current_user,
+            post=None  # 未被其他帖子使用
+        )
+
+        if len(attachments) != len(post_in.attachment_ids):
+            raise HTTPException(status_code=400, detail="部分附件无效或已被使用")
+
+        # 批量更新附件的 post 关联
+        await PostAttachment.filter(id__in=post_in.attachment_ids).update(
+            post_id=post.id
+        )
+
+    # 重新获取帖子以预加载关联对象（包括附件）
+    post = await models.Post.get(id=post.id).select_related('author', 'community').prefetch_related('attachments')
 
     return post
 
@@ -221,7 +253,7 @@ async def get_post(
     from core.redis_service import hot_rank_service
 
     # Pgpool 自动路由，无需应用层判断
-    post = await models.Post.get_or_none(id=post_id).select_related('author', 'community')
+    post = await models.Post.get_or_none(id=post_id).select_related('author', 'community').prefetch_related('attachments')
     if not post:
         raise HTTPException(status_code=404, detail="帖子不存在")
 
@@ -245,6 +277,7 @@ async def update_post(
 ):
     """编辑帖子（仅作者）"""
     from core.redis_service import post_cache_service
+    from core.minio_service import minio_service
 
     post = await models.Post.get_or_none(id=post_id)
 
@@ -260,18 +293,53 @@ async def update_post(
         raise HTTPException(status_code=400, detail="无法编辑已删除的帖子")
 
     # 更新字段
-    update_data = post_in.model_dump(exclude_unset=True)
-    if update_data:
+    update_data = post_in.model_dump(exclude_unset=True, exclude={'attachment_ids'})
+    if update_data or post_in.attachment_ids is not None:
         await models.Post.filter(id=post_id).update(
             **update_data,
             is_edited=True
         )
 
+        # 处理附件更新
+        if post_in.attachment_ids is not None:
+            # 获取当前附件
+            current_attachments = await PostAttachment.filter(post_id=post_id)
+            current_ids = {a.id for a in current_attachments}
+            new_ids = set(post_in.attachment_ids)
+
+            # 找出需要移除的附件
+            to_remove = current_ids - new_ids
+            # 找出需要添加的附件
+            to_add = new_ids - current_ids
+
+            # 移除不再使用的附件（同时删除 MinIO 文件）
+            if to_remove:
+                for attachment in await PostAttachment.filter(id__in=to_remove):
+                    # 删除 MinIO 文件
+                    await minio_service.delete_file(attachment.file_url)
+                # 删除数据库记录
+                await PostAttachment.filter(id__in=to_remove).delete()
+
+            # 添加新附件
+            if to_add:
+                # 验证附件是否存在且属于当前用户且未被使用
+                attachments = await PostAttachment.filter(
+                    id__in=to_add,
+                    uploader=current_user,
+                    post=None
+                )
+
+                if len(attachments) != len(to_add):
+                    raise HTTPException(status_code=400, detail="部分附件无效或已被使用")
+
+                # 批量更新附件的 post 关联
+                await PostAttachment.filter(id__in=to_add).update(post_id=post_id)
+
         # 失效缓存
         await post_cache_service.invalidate_post(redis, post_id)
 
-        # 重新获取帖子，预加载关联对象
-        post = await models.Post.get(id=post_id).select_related('author', 'community')
+        # 重新获取帖子，预加载关联对象（包括附件）
+        post = await models.Post.get(id=post_id).select_related('author', 'community').prefetch_related('attachments')
 
     return post
 
@@ -294,6 +362,7 @@ async def delete_post(
 ):
     """软删除帖子（作者或管理员）"""
     from tortoise import transactions
+    from core.minio_service import minio_service
 
     post = await models.Post.get_or_none(id=post_id)
 
@@ -317,6 +386,9 @@ async def delete_post(
     if not is_author and not is_moderator and not is_superuser:
         raise HTTPException(status_code=403, detail="无权删除此帖子")
 
+    # 获取所有附件，用于删除 MinIO 文件
+    attachments = await PostAttachment.filter(post_id=post_id)
+
     # 使用事务确保删除和审计日志的原子性
     async with transactions.in_transaction():
         # 软删除并记录删除者
@@ -334,6 +406,10 @@ async def delete_post(
             reason=reason,
             metadata={"is_author": is_author, "is_moderator": is_moderator}
         )
+
+    # 删除 MinIO 中的文件（异步执行，不阻塞响应）
+    for attachment in attachments:
+        await minio_service.delete_file(attachment.file_url)
 
     # 从 Redis 热门榜中移除（异步执行，不阻塞响应）
     from core.redis_service import hot_rank_service, post_cache_service

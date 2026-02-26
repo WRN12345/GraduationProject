@@ -36,6 +36,50 @@
 
         <!-- 内容 -->
         <div class="content-body markdown-content" v-html="renderedContent"></div>
+
+        <!-- 附件列表 -->
+        <div v-if="post.attachments && post.attachments.length > 0" class="post-attachments-section">
+          <h4>附件 ({{ post.attachments.length }})</h4>
+          <div class="attachments-list">
+            <!-- 图片附件 -->
+            <div
+              v-for="attachment in post.attachments.filter(a => a.attachment_type === 'image')"
+              :key="attachment.id"
+              class="attachment-item image-attachment"
+            >
+              <img :src="attachment.file_url" :alt="attachment.file_name" @click="viewImage(attachment.file_url)" />
+              <div class="attachment-info">
+                <span class="file-name">{{ attachment.file_name }}</span>
+                <span class="file-size">{{ formatFileSize(attachment.file_size) }}</span>
+              </div>
+            </div>
+            <!-- 视频附件 -->
+            <div
+              v-for="attachment in post.attachments.filter(a => a.attachment_type === 'video')"
+              :key="attachment.id"
+              class="attachment-item video-attachment"
+            >
+              <video :src="attachment.file_url" controls />
+              <div class="attachment-info">
+                <span class="file-name">{{ attachment.file_name }}</span>
+                <span class="file-size">{{ formatFileSize(attachment.file_size) }}</span>
+              </div>
+            </div>
+            <!-- 文件附件 -->
+            <div
+              v-for="attachment in post.attachments.filter(a => a.attachment_type === 'file')"
+              :key="attachment.id"
+              class="attachment-item file-attachment"
+            >
+              <div class="file-icon">📄</div>
+              <div class="attachment-info">
+                <span class="file-name">{{ attachment.file_name }}</span>
+                <span class="file-size">{{ formatFileSize(attachment.file_size) }}</span>
+              </div>
+              <button class="download-btn" @click="downloadFile(attachment)">下载</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- 评论区占位 -->
@@ -91,6 +135,28 @@ const formatTime = (dateString) => {
   if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
 
   return date.toLocaleDateString('zh-CN')
+}
+
+// 格式化文件大小
+const formatFileSize = (bytes) => {
+  if (!bytes) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
+
+// 查看图片
+const viewImage = (url) => {
+  window.open(url, '_blank')
+}
+
+// 下载文件
+const downloadFile = (attachment) => {
+  const link = document.createElement('a')
+  link.href = attachment.file_url
+  link.download = attachment.file_name
+  link.click()
 }
 
 // 加载帖子详情
@@ -333,6 +399,107 @@ onMounted(() => {
   height: auto;
   border-radius: 8px;
   margin: 16px 0;
+}
+
+/* 附件区域 */
+.post-attachments-section {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f6f7f8;
+  border-radius: 8px;
+}
+
+.post-attachments-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: #1c1c1c;
+  font-weight: 600;
+}
+
+.attachments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.image-attachment {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.image-attachment img {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.image-attachment img:hover {
+  transform: scale(1.02);
+}
+
+.video-attachment {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.video-attachment video {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 8px;
+}
+
+.file-attachment {
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #edeff1;
+}
+
+.file-icon {
+  font-size: 32px;
+}
+
+.attachment-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1c1c1c;
+  word-break: break-all;
+}
+
+.file-size {
+  font-size: 12px;
+  color: #878a8c;
+}
+
+.download-btn {
+  padding: 8px 16px;
+  background: #0079d3;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.download-btn:hover {
+  background: #0066b3;
 }
 
 .comments-section {
