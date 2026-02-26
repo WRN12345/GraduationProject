@@ -19,6 +19,12 @@ async def lifespan(app: FastAPI):
     )
     print("Redis 连接成功")
 
+    # 初始化 MinIO 客户端
+    from core.minio_service import minio_service
+    minio_service.initialize()
+    await minio_service.ensure_buckets()
+    print("MinIO 连接成功，Bucket 检查完成")
+
     # 启动后台同步任务
     from core.tasks import start_background_tasks
     await start_background_tasks()
@@ -61,7 +67,7 @@ app.add_middleware(
 register_tortoise(
     app,
     db_url=settings.DB_URL,  # Pgpool 连接
-    modules={"models": ["models.user", "models.movies", "models.vote", "models.comment", "models.community", "models.post", "models.membership", "models.audit_log"]},
+    modules={"models": ["models.user", "models.movies", "models.vote", "models.comment", "models.community", "models.post", "models.post_attachment", "models.membership", "models.audit_log"]},
     generate_schemas=False,  # 使用 Aerich 管理迁移，不再自动生成 schemas
     add_exception_handlers=True,
 )
@@ -80,6 +86,7 @@ TORTOISE_ORM = {
                 "models.comment",
                 "models.community",
                 "models.post",
+                "models.post_attachment",
                 "models.membership",
                 "models.audit_log",
             ],

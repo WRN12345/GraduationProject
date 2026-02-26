@@ -12,8 +12,7 @@ import {
   Shield,
   Eye,
   Bookmark,
-  X,
-  Building2
+  X
 } from 'lucide-vue-next'
 
 defineProps({
@@ -57,31 +56,20 @@ const navigateTo = (path) => {
         <TrendingUp :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">受欢迎</span>
       </div>
-      <div class="nav-item">
-        <Compass :size="20" class="icon" />
-        <span v-if="!isCollapsed" class="text">浏览</span>
-      </div>
-      <div class="nav-item">
-        <Globe :size="20" class="icon" />
-        <span v-if="!isCollapsed" class="text">全部</span>
-      </div>
-      <div class="nav-item">
-        <PlusCircle :size="20" class="icon" />
-        <span v-if="!isCollapsed" class="text">加入社区</span>
-      </div>
+
     </nav>
 
     <div class="divider" v-if="!isCollapsed"></div>
 
     <div class="section-title" v-if="!isCollapsed">社区</div>
     <nav class="nav-group">
-      <div class="nav-item" @click="navigateTo('/communities')">
-        <Building2 :size="20" class="icon" />
-        <span v-if="!isCollapsed" class="text">创建社区</span>
-      </div>
       <div class="nav-item" @click="navigateTo('/my-communities')">
         <Users :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">我的社区</span>
+      </div>
+      <div class="nav-item" @click="navigateTo('/all-communities')">
+        <Compass :size="20" class="icon" />
+        <span v-if="!isCollapsed" class="text">全部社区</span>
       </div>
       <div class="nav-item">
         <Settings :size="20" class="icon" />

@@ -127,6 +127,11 @@ const goToCommunity = (communityId) => {
   console.log('点击社区:', communityId)
 }
 
+// 查看图片
+const viewImage = (url) => {
+  window.open(url, '_blank')
+}
+
 // 加载更多
 const loadMore = () => {
   loadPosts(false)
@@ -187,6 +192,27 @@ const displayPosts = computed(() => posts.value)
           <!-- 内容预览 -->
           <div class="post-preview" v-if="post.content">
             {{ renderPreview(post.content) }}
+          </div>
+
+          <!-- 附件预览 -->
+          <div v-if="post.attachments && post.attachments.length > 0" class="post-attachments">
+            <!-- 只显示图片类型附件，最多3张 -->
+            <div class="attachments-grid">
+              <img
+                v-for="attachment in post.attachments
+                  .filter(a => a.attachment_type === 'image')
+                  .slice(0, 3)"
+                :key="attachment.id"
+                :src="attachment.file_url"
+                :alt="attachment.file_name"
+                class="attachment-thumbnail"
+                @click.stop="viewImage(attachment.file_url)"
+              />
+            </div>
+            <!-- 超过3张显示计数 -->
+            <div v-if="post.attachments.filter(a => a.attachment_type === 'image').length > 3" class="more-count">
+              +{{ post.attachments.filter(a => a.attachment_type === 'image').length - 3 }}
+            </div>
           </div>
 
           <!-- 底部操作区 -->
@@ -370,6 +396,40 @@ const displayPosts = computed(() => posts.value)
   max-height: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 附件预览 */
+.post-attachments {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.attachments-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-width: 240px;
+}
+
+.attachment-thumbnail {
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.attachment-thumbnail:hover {
+  transform: scale(1.05);
+}
+
+.more-count {
+  color: #878a8c;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 /* 底部操作区 */

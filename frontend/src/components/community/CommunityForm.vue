@@ -1,9 +1,5 @@
 <template>
   <div class="community-form">
-    <div class="form-header">
-      <h2 class="title">{{ isEdit ? '编辑社区' : '创建社区' }}</h2>
-      <p class="subtitle">建立属于你的兴趣社区</p>
-    </div>
 
     <form @submit.prevent="onSubmit" class="form-body">
       <!-- 社区名称 -->

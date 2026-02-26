@@ -14,15 +14,32 @@ if TYPE_CHECKING:
     from schemas.user import UserOut
     from schemas.community import CommunityOut
 
+# --- Attachment ---
+class AttachmentOut(BaseModel):
+    """附件信息"""
+    id: int
+    attachment_type: str
+    file_name: str
+    file_url: str
+    file_size: int
+    mime_type: str
+    sort_order: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # --- Post ---
 class PostCreate(BaseModel):
     title: str
     content: str
     community_id: int
+    attachment_ids: List[int] = []  # 关联的附件 ID 列表
+
 
 class PostUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
+    attachment_ids: Optional[List[int]] = None  # 更新附件列表
 
 # 定义内嵌的 Author 和 Community schema
 class PostAuthor(BaseModel):
@@ -50,6 +67,7 @@ class PostOut(BaseModel):
     community_id: int
     author: Optional[PostAuthor] = None
     community: Optional[PostCommunity] = None
+    attachments: List[AttachmentOut] = []  # 附件列表
     upvotes: int
     downvotes: int
     is_edited: bool

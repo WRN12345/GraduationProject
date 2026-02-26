@@ -1,11 +1,7 @@
 <template>
-  <div class="my-communities">
+  <div class="all-communities">
     <header class="page-header">
-      <h1>我的社区</h1>
-      <button class="btn-create" @click="goToCreateCommunity">
-        <Plus :size="20" />
-        <span>创建社区</span>
-      </button>
+      <h1>全部社区</h1>
     </header>
 
     <!-- 加载状态 -->
@@ -22,13 +18,9 @@
 
     <!-- 空状态 -->
     <div v-else-if="communities.length === 0" class="empty-state">
-      <Users :size="64" />
-      <h3>还没有加入任何社区</h3>
-      <p>去探索并加入你感兴趣的社区吧！</p>
-      <button class="btn-explore" @click="goToExplore">
-        <Search :size="18" />
-        <span>探索社区</span>
-      </button>
+      <Compass :size="64" />
+      <h3>还没有任何社区</h3>
+      <p>快去创建一个吧！</p>
     </div>
 
     <!-- 社区网格 -->
@@ -42,9 +34,6 @@
         <div class="card-header">
           <span class="community-icon">👾</span>
           <span class="community-name">{{ community.name }}</span>
-          <span class="role-badge" :class="getRoleClass(community.role)">
-            {{ community.role_display }}
-          </span>
         </div>
 
         <p class="description">{{ community.description || '暂无描述' }}</p>
@@ -61,7 +50,7 @@
         </div>
 
         <div class="footer">
-          <span class="join-time">加入于 {{ formatTime(community.joined_at) }}</span>
+          <span class="join-time">创建于 {{ formatTime(community.created_at) }}</span>
         </div>
       </div>
     </div>
@@ -71,7 +60,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Users, Plus, Search, FileText } from 'lucide-vue-next'
+import { Compass, Users, FileText } from 'lucide-vue-next'
 import { client } from '@/api/client'
 
 const router = useRouter()
@@ -87,35 +76,25 @@ const loadCommunities = async () => {
   error.value = null
 
   try {
-    const response = await client.GET('/v1/memberships/my-communities', {
+    const response = await client.GET('/v1/communities/', {
       params: {
         query: {
           skip: 0,
-          limit: 50
+          limit: 100
         }
       }
     })
 
     if (response.data) {
       communities.value = response.data
-      console.log('[我的社区] 加载成功，数量:', communities.value.length)
+      console.log('[全部社区] 加载成功，数量:', communities.value.length)
     }
   } catch (err) {
-    console.error('[我的社区] 加载失败:', err)
+    console.error('[全部社区] 加载失败:', err)
     error.value = '加载失败，请稍后重试'
   } finally {
     loading.value = false
   }
-}
-
-// 获取角色样式类
-const getRoleClass = (role) => {
-  const classMap = {
-    2: 'owner',
-    1: 'admin',
-    0: 'member'
-  }
-  return classMap[role] || 'member'
 }
 
 // 格式化时间
@@ -123,10 +102,10 @@ const formatTime = (dateString) => {
   if (!dateString) return '未知时间'
   const date = new Date(dateString)
   const now = new Date()
-  const diff = (now - date) / 1000 // 秒
+  const diff = (now - date) / 1000 / 60 // 分钟
 
-  if (diff < 86400) return '今天'
-  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
+  if (diff < 1440) return '今天'
+  if (diff < 43200) return `${Math.floor(diff / 1440)} 小时前`
 
   return date.toLocaleDateString('zh-CN')
 }
@@ -136,25 +115,15 @@ const goToDetail = (communityId) => {
   router.push(`/community/${communityId}`)
 }
 
-// 跳转到创建社区
-const goToCreateCommunity = () => {
-  router.push('/create-community')
-}
-
-// 跳转到探索页面（暂时跳转到主页）
-const goToExplore = () => {
-  router.push('/')
-}
-
 // 初始化
 onMounted(() => {
-  console.log('[我的社区] 组件挂载')
+  console.log('[全部社区] 组件挂载')
   loadCommunities()
 })
 </script>
 
 <style scoped>
-.my-communities {
+.all-communities {
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px 16px;
@@ -163,7 +132,6 @@ onMounted(() => {
 .page-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   margin-bottom: 32px;
 }
 
@@ -172,25 +140,6 @@ onMounted(() => {
   font-weight: 700;
   color: #1c1c1c;
   margin: 0;
-}
-
-.btn-create {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: #0079d3;
-  color: #fff;
-  border: none;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-create:hover {
-  background: #0066b3;
 }
 
 /* 加载状态 */
@@ -219,8 +168,7 @@ onMounted(() => {
   to { transform: rotate(360deg); }
 }
 
-.retry-btn,
-.btn-explore {
+.retry-btn {
   padding: 10px 24px;
   background: #0079d3;
   color: #fff;
@@ -235,8 +183,7 @@ onMounted(() => {
   gap: 6px;
 }
 
-.retry-btn:hover,
-.btn-explore:hover {
+.retry-btn:hover {
   background: #0066b3;
 }
 
@@ -295,28 +242,6 @@ onMounted(() => {
   flex: 1;
 }
 
-.role-badge {
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.role-badge.owner {
-  background: #e6f2ff;
-  color: #0079d3;
-}
-
-.role-badge.admin {
-  background: #fff3e6;
-  color: #ff4500;
-}
-
-.role-badge.member {
-  background: #f6f7f8;
-  color: #878a8c;
-}
-
 .description {
   color: #1c1c1c;
   font-size: 14px;
@@ -355,7 +280,7 @@ onMounted(() => {
 
 /* 响应式 */
 @media (max-width: 639px) {
-  .my-communities {
+  .all-communities {
     padding: 16px 8px;
   }
 
@@ -382,6 +307,13 @@ onMounted(() => {
 @media (min-width: 640px) and (max-width: 959px) {
   .communities-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (min-width: 960px) {
+  .communities-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 </style>
