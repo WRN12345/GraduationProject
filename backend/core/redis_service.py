@@ -9,6 +9,7 @@ from typing import Optional, List
 from datetime import datetime, timezone
 from redis.asyncio import Redis
 from core.config import settings
+from datetime import timezone
 
 
 class HotRankService:
@@ -418,9 +419,492 @@ class PostCacheService:
         await redis.delete(detail_key, list_key)
 
 
+class CommentCacheService:
+    """评论树懒加载缓存服务"""
+
+    # Redis Key 前缀
+    COMMENT_DETAIL_PREFIX = "comment:detail"
+    COMMENT_CHILDREN_PREFIX = "comment:children"
+    COMMENT_ROOT_PREFIX = "comment:root"
+    COMMENT_META_PREFIX = "comment:meta"
+
+    # TTL 配置
+    DEFAULT_TTL = getattr(settings, 'REDIS_COMMENT_TTL', 3600)  # 1小时
+    META_TTL = getattr(settings, 'REDIS_COMMENT_META_TTL', 600)  # 10分钟
+
+    # 默认加载配置
+    DEFAULT_ROOT_LIMIT = 20  # 首次加载根评论数
+    DEFAULT_REPLY_LIMIT = 3  # 每个根评论预加载的子评论数
+
+    @staticmethod
+    def _get_comment_detail_key(post_id: int, comment_id: int) -> str:
+        """获取单条评论详情 key"""
+        return f"{CommentCacheService.COMMENT_DETAIL_PREFIX}:{post_id}:{comment_id}"
+
+    @staticmethod
+    def _get_children_key(post_id: int, parent_id: int) -> str:
+        """获取子评论列表 key（parent_id=0 表示根评论）"""
+        if parent_id is None or parent_id == 0:
+            return f"{CommentCacheService.COMMENT_ROOT_PREFIX}:{post_id}"
+        return f"{CommentCacheService.COMMENT_CHILDREN_PREFIX}:{post_id}:{parent_id}"
+
+    @staticmethod
+    def _get_meta_key(post_id: int) -> str:
+        """获取元数据 key"""
+        return f"{CommentCacheService.COMMENT_META_PREFIX}:{post_id}"
+
+    @staticmethod
+    def _serialize_comment(comment_dict: dict) -> dict:
+        """序列化评论数据（处理 datetime 等类型）"""
+        serialized = {}
+        for key, value in comment_dict.items():
+            if value is None:
+                # Convert None to empty string for Redis compatibility
+                serialized[key] = ''
+            elif isinstance(value, datetime):
+                serialized[key] = value.isoformat()
+            elif isinstance(value, bool):
+                # Convert boolean to string for Redis compatibility
+                serialized[key] = str(value)
+            else:
+                serialized[key] = value
+        return serialized
+
+    @staticmethod
+    def _deserialize_comment(hash_data: dict) -> dict:
+        """反序列化评论数据"""
+        result = {}
+        for key, value in hash_data.items():
+            if key in ('created_at', 'updated_at', 'deleted_at'):
+                # Handle empty string as None for datetime fields
+                result[key] = value if value is None or value == '' else datetime.fromisoformat(value)
+            elif key in ('id', 'author_id', 'parent_id', 'upvotes', 'downvotes', 'score'):
+                result[key] = int(value) if value and value != '' else None
+            elif key == 'is_edited':
+                result[key] = value.lower() == 'true' if isinstance(value, str) else bool(value)
+            else:
+                result[key] = value
+        return result
+
+    async def cache_comment(
+        self,
+        redis: Redis,
+        post_id: int,
+        comment_data: dict,
+        ttl: Optional[int] = None
+    ):
+        """
+        缓存单条评论内容
+
+        Args:
+            redis: Redis 客户端
+            post_id: 帖子 ID
+            comment_data: 评论数据字典
+            ttl: 过期时间（秒）
+        """
+        comment_id = comment_data['id']
+        key = self._get_comment_detail_key(post_id, comment_id)
+
+        serialized = self._serialize_comment(comment_data)
+
+        await redis.hset(key, mapping=serialized)
+        if ttl:
+            await redis.expire(key, ttl)
+
+    async def cache_comments_batch(
+        self,
+        redis: Redis,
+        post_id: int,
+        comments: List[dict],
+        ttl: Optional[int] = None
+    ):
+        """
+        批量缓存评论内容
+
+        Args:
+            redis: Redis 客户端
+            post_id: 帖子 ID
+            comments: 评论数据列表
+            ttl: 过期时间（秒）
+        """
+        pipe = redis.pipeline()
+        for comment in comments:
+            comment_id = comment['id']
+            key = self._get_comment_detail_key(post_id, comment_id)
+            serialized = self._serialize_comment(comment)
+            pipe.hset(key, mapping=serialized)
+            if ttl:
+                pipe.expire(key, ttl)
+        await pipe.execute()
+
+    async def add_to_children_index(
+        self,
+        redis: Redis,
+        post_id: int,
+        parent_id: Optional[int],
+        comment_id: int,
+        score: int,
+        ttl: Optional[int] = None
+    ):
+        """
+        将评论添加到父子关系索引
+
+        Args:
+            redis: Redis 客户端
+            post_id: 帖子 ID
+            parent_id: 父评论 ID（None 表示根评论）
+            comment_id: 评论 ID
+            score: 评论评分（用于排序）
+            ttl: 过期时间（秒）
+        """
+        key = self._get_children_key(post_id, parent_id or 0)
+        await redis.zadd(key, {str(comment_id): score})
+        if ttl:
+            await redis.expire(key, ttl)
+
+    async def get_cached_comment(
+        self,
+        redis: Redis,
+        post_id: int,
+        comment_id: int
+    ) -> Optional[dict]:
+        """
+        获取缓存的评论详情
+
+        Returns:
+            评论数据字典，未命中返回 None
+        """
+        key = self._get_comment_detail_key(post_id, comment_id)
+        data = await redis.hgetall(key)
+
+        if not data:
+            return None
+
+        return self._deserialize_comment(data)
+
+    async def get_cached_comments_batch(
+        self,
+        redis: Redis,
+        post_id: int,
+        comment_ids: List[int]
+    ) -> dict:
+        """
+        批量获取缓存的评论详情
+
+        Returns:
+            dict: {comment_id: comment_data}
+        """
+        if not comment_ids:
+            return {}
+
+        pipe = redis.pipeline()
+        keys = [self._get_comment_detail_key(post_id, cid) for cid in comment_ids]
+        for key in keys:
+            pipe.hgetall(key)
+
+        results = await pipe.execute()
+
+        cached_comments = {}
+        for cid, data in zip(comment_ids, results):
+            if data:
+                cached_comments[cid] = self._deserialize_comment(data)
+
+        return cached_comments
+
+    async def get_children_ids(
+        self,
+        redis: Redis,
+        post_id: int,
+        parent_id: Optional[int],
+        offset: int = 0,
+        limit: int = 20,
+        order: str = 'desc'
+    ) -> List[int]:
+        """
+        获取子评论 ID 列表（按 score 排序）
+
+        Args:
+            redis: Redis 客户端
+            post_id: 帖子 ID
+            parent_id: 父评论 ID（None 表示根评论）
+            offset: 偏移量
+            limit: 返回数量
+            order: 排序方向 ('desc' 或 'asc')
+
+        Returns:
+            评论 ID 列表
+        """
+        key = self._get_children_key(post_id, parent_id or 0)
+
+        # 使用 ZREVRANGE 或 ZRANGE
+        if order == 'desc':
+            comment_ids = await redis.zrevrange(key, start=offset, end=offset + limit - 1)
+        else:
+            comment_ids = await redis.zrange(key, start=offset, end=offset + limit - 1)
+
+        return [int(cid) for cid in comment_ids]
+
+    async def get_children_count(
+        self,
+        redis: Redis,
+        post_id: int,
+        parent_id: Optional[int]
+    ) -> int:
+        """获取子评论总数"""
+        key = self._get_children_key(post_id, parent_id or 0)
+        return await redis.zcard(key)
+
+    async def get_post_comments(
+        self,
+        redis: Redis,
+        post_id: int,
+        root_limit: int = DEFAULT_ROOT_LIMIT,
+        root_offset: int = 0,
+        reply_limit: int = DEFAULT_REPLY_LIMIT,
+        include_children: bool = True
+    ) -> List[dict]:
+        """
+        获取帖子评论树（懒加载首次请求）
+
+        Args:
+            redis: Redis 客户端
+            post_id: 帖子 ID
+            root_limit: 根评论数量
+            root_offset: 根评论偏移量
+            reply_limit: 每个根评论预加载的子评论数量
+            include_children: 是否包含子评论
+
+        Returns:
+            评论树列表（嵌套结构）
+        """
+        # 1. 获取根评论 ID 列表
+        root_ids = await self.get_children_ids(
+            redis, post_id, None,
+            offset=root_offset, limit=root_limit, order='desc'
+        )
+
+        if not root_ids:
+            return []
+
+        # 2. 批量获取根评论详情
+        cached_roots = await self.get_cached_comments_batch(redis, post_id, root_ids)
+
+        # 3. 构建结果树
+        result = []
+        for root_id in root_ids:
+            root_comment = cached_roots.get(root_id)
+            if not root_comment:
+                # 缓存未命中，需要从 DB 加载
+                continue
+
+            root_comment['replies'] = []
+            root_comment['reply_count'] = await self.get_children_count(redis, post_id, root_id)
+            root_comment['has_more_replies'] = root_comment['reply_count'] > reply_limit
+
+            # 4. 预加载少量子评论
+            if include_children and root_comment['reply_count'] > 0:
+                reply_ids = await self.get_children_ids(
+                    redis, post_id, root_id,
+                    offset=0, limit=reply_limit, order='desc'
+                )
+
+                if reply_ids:
+                    cached_replies = await self.get_cached_comments_batch(redis, post_id, reply_ids)
+
+                    for reply_id in reply_ids:
+                        reply = cached_replies.get(reply_id)
+                        if reply:
+                            reply['replies'] = []
+                            reply['reply_count'] = await self.get_children_count(redis, post_id, reply_id)
+                            reply['has_more_replies'] = reply['reply_count'] > 0
+                            root_comment['replies'].append(reply)
+
+            result.append(root_comment)
+
+        return result
+
+    async def get_comment_replies(
+        self,
+        redis: Redis,
+        post_id: int,
+        parent_id: int,
+        offset: int = 0,
+        limit: int = 20
+    ) -> dict:
+        """
+        获取子评论列表（点击展开时调用）
+
+        Args:
+            redis: Redis 客户端
+            post_id: 帖子 ID
+            parent_id: 父评论 ID
+            offset: 偏移量
+            limit: 返回数量
+
+        Returns:
+            {
+                'replies': List[Dict],  # 子评论列表
+                'total': int,           # 总数
+                'has_more': bool        # 是否有更多
+            }
+        """
+        # 获取子评论 ID 列表
+        reply_ids = await self.get_children_ids(
+            redis, post_id, parent_id,
+            offset=offset, limit=limit, order='desc'
+        )
+
+        # 批量获取详情
+        cached_replies = await self.get_cached_comments_batch(redis, post_id, reply_ids)
+
+        # 构建结果
+        replies = []
+        for reply_id in reply_ids:
+            reply = cached_replies.get(reply_id)
+            if reply:
+                reply['replies'] = []
+                reply['reply_count'] = await self.get_children_count(redis, post_id, reply_id)
+                reply['has_more_replies'] = reply['reply_count'] > 0
+                replies.append(reply)
+
+        total = await self.get_children_count(redis, post_id, parent_id)
+        has_more = offset + limit < total
+
+        return {
+            'replies': replies,
+            'total': total,
+            'has_more': has_more
+        }
+
+    async def build_cache_from_db(
+        self,
+        redis: Redis,
+        post_id: int,
+        comments_data: List[dict]
+    ):
+        """
+        从数据库重建缓存（Cache-Aside 兜底）
+
+        Args:
+            redis: Redis 客户端
+            post_id: 帖子 ID
+            comments_data: 从数据库查询的评论列表（需包含所有字段）
+        """
+        pipe = redis.pipeline()
+
+        # 1. 批量缓存评论详情
+        for comment in comments_data:
+            comment_id = comment['id']
+            detail_key = self._get_comment_detail_key(post_id, comment_id)
+            serialized = self._serialize_comment(comment)
+            pipe.hset(detail_key, mapping=serialized)
+            pipe.expire(detail_key, self.DEFAULT_TTL)
+
+            # 2. 构建父子关系索引
+            parent_id = comment.get('parent_id') or 0
+            children_key = self._get_children_key(post_id, parent_id)
+            score = comment.get('score', 0)
+            pipe.zadd(children_key, {str(comment_id): score})
+            pipe.expire(children_key, self.DEFAULT_TTL)
+
+        # 3. 更新元数据
+        meta_key = self._get_meta_key(post_id)
+        root_comments = [c for c in comments_data if not c.get('parent_id')]
+        pipe.hset(meta_key, 'total_count', len(comments_data))
+        pipe.hset(meta_key, 'root_count', len(root_comments))
+        pipe.hset(meta_key, 'last_updated', datetime.now(timezone.utc).isoformat())
+        pipe.expire(meta_key, self.META_TTL)
+
+        await pipe.execute()
+
+    async def invalidate_comment(
+        self,
+        redis: Redis,
+        post_id: int,
+        comment_id: int,
+        parent_id: Optional[int] = None
+    ):
+        """
+        失效评论缓存（编辑、删除时调用）
+
+        Args:
+            redis: Redis 客户端
+            post_id: 帖子 ID
+            comment_id: 评论 ID
+            parent_id: 父评论 ID（可选，用于优化）
+        """
+        # 1. 删除评论详情
+        detail_key = self._get_comment_detail_key(post_id, comment_id)
+        await redis.delete(detail_key)
+
+        # 2. 从父评论的子评论列表中移除
+        children_key = self._get_children_key(post_id, parent_id or 0)
+        await redis.zrem(children_key, str(comment_id))
+
+        # 3. 如果有子评论，也需要清理子评论索引
+        # 注意：这需要递归处理或使用更复杂的策略
+        # 简化版：只删除直接索引，依赖 TTL 清理深层缓存
+
+    async def invalidate_post_comments(
+        self,
+        redis: Redis,
+        post_id: int
+    ):
+        """
+        失效整个帖子的评论缓存（帖子删除时调用）
+
+        Args:
+            redis: Redis 客户端
+            post_id: 帖子 ID
+        """
+        # 使用 SCAN 查找所有相关 key
+        pattern = f"{self.COMMENT_DETAIL_PREFIX}:{post_id}:*"
+        keys = []
+        async for key in redis.scan_iter(match=pattern, count=100):
+            keys.append(key)
+
+        # 同时删除关系索引和元数据
+        keys.append(f"{self.COMMENT_ROOT_PREFIX}:{post_id}")
+        keys.append(f"{self.COMMENT_META_PREFIX}:{post_id}")
+
+        # 扫描子评论索引
+        children_pattern = f"{self.COMMENT_CHILDREN_PREFIX}:{post_id}:*"
+        async for key in redis.scan_iter(match=children_pattern, count=100):
+            keys.append(key)
+
+        if keys:
+            await redis.delete(*keys)
+
+    async def get_meta(
+        self,
+        redis: Redis,
+        post_id: int
+    ) -> Optional[dict]:
+        """获取帖子评论元数据"""
+        key = self._get_meta_key(post_id)
+        data = await redis.hgetall(key)
+
+        if not data:
+            return None
+
+        return {
+            'total_count': int(data.get('total_count', 0)),
+            'root_count': int(data.get('root_count', 0)),
+            'last_updated': data.get('last_updated')
+        }
+
+
 # 导出服务实例
 hot_rank_service = HotRankService()
 post_cache_service = PostCacheService()
+comment_cache_service = CommentCacheService()
 
 
-__all__ = ["hot_rank_service", "post_cache_service", "HotRankService", "PostCacheService"]
+__all__ = [
+    "hot_rank_service",
+    "post_cache_service",
+    "comment_cache_service",
+    "HotRankService",
+    "PostCacheService",
+    "CommentCacheService"
+]

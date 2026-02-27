@@ -107,3 +107,5 @@ out
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+# 自动生成的类型定义文件
+frontend/components.d.ts
