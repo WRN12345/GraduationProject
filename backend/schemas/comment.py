@@ -14,6 +14,7 @@ class CommentOut(BaseModel):
     id: int
     content: str
     author_id: int
+    author_name: Optional[str] = None  # 作者用户名
     parent_id: Optional[int]
     upvotes: int
     downvotes: int
@@ -23,7 +24,20 @@ class CommentOut(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime]
     replies: List['CommentOut'] = [] # 嵌套
+    reply_count: int = 0  # 子评论总数
+    has_more_replies: bool = False  # 是否有更多子评论
 
 
     class Config:
         from_attributes = True
+
+
+# 新增：子评论响应 Schema
+class CommentRepliesResponse(BaseModel):
+    replies: List[CommentOut]
+    total: int
+    has_more: bool
+
+
+# 更新前向引用
+CommentOut.model_rebuild()

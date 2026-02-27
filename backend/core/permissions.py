@@ -96,7 +96,7 @@ async def can_comment_on_post(
     """
     验证用户是否可以评论指定帖子
     - 帖子未锁定
-    - 用户在帖子所属社区有权限
+    - 用户在帖子所属社区有权限（如非成员则自动加入）
     """
     post = await Post.get_or_none(id=post_id).prefetch_related('community')
 
@@ -113,7 +113,23 @@ async def can_comment_on_post(
         )
 
     # 检查用户是否为社区成员
-    await get_current_member(post.community_id, current_user)
+    membership = await CommunityMembership.get_or_none(
+        user=current_user,
+        community_id=post.community_id
+    )
+
+    # 如果不是成员，自动加入（但排除被封禁的情况）
+    if not membership:
+        await CommunityMembership.create(
+            user=current_user,
+            community_id=post.community_id,
+            role=MembershipRole.MEMBER.value
+        )
+    elif membership.role == MembershipRole.BANNED.value:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="您已被该社区封禁"
+        )
 
     return post
 

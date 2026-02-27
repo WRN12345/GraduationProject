@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     HOT_SHARE_WEIGHT: int = int(os.getenv("HOT_SHARE_WEIGHT", "5"))  # 分享权重
     HOT_VOTE_WEIGHT: int = int(os.getenv("HOT_VOTE_WEIGHT", "10"))  # 投票权重
 
+    # --- Redis 评论缓存配置 ---
+    REDIS_COMMENT_TTL: int = int(os.getenv("REDIS_COMMENT_TTL", "3600"))  # 评论缓存 TTL (1小时)
+    REDIS_COMMENT_META_TTL: int = int(os.getenv("REDIS_COMMENT_META_TTL", "600"))  # 评论元数据 TTL (10分钟)
+
     # --- 配置加载规则 ---
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(__file__), "..", ".env"),
