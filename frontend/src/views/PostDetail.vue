@@ -82,9 +82,9 @@
         </div>
       </div>
 
-      <!-- 评论区占位 -->
+      <!-- 评论区 -->
       <div class="comments-section">
-        <p class="comments-placeholder">评论功能即将推出...</p>
+        <CommentTree v-if="post" :post-id="post.id" />
       </div>
     </div>
 
@@ -99,6 +99,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { client } from '@/api/client'
 import { marked } from 'marked'
+import CommentTree from '@/components/comment/CommentTree.vue'
 
 const route = useRoute()
 

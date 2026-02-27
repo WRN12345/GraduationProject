@@ -12,10 +12,23 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     Aside: typeof import('./src/components/Aside.vue')['default']
+    CommentActions: typeof import('./src/components/comment/CommentActions.vue')['default']
+    CommentContent: typeof import('./src/components/comment/CommentContent.vue')['default']
+    CommentEditor: typeof import('./src/components/comment/CommentEditor.vue')['default']
+    CommentItem: typeof import('./src/components/comment/CommentItem.vue')['default']
+    CommentList: typeof import('./src/components/comment/CommentList.vue')['default']
+    CommentReplyEditor: typeof import('./src/components/comment/CommentReplyEditor.vue')['default']
+    CommentSkeleton: typeof import('./src/components/comment/CommentSkeleton.vue')['default']
+    CommentTree: typeof import('./src/components/comment/CommentTree.vue')['default']
     CommunityForm: typeof import('./src/components/community/CommunityForm.vue')['default']
     CommunityInfoCard: typeof import('./src/components/community/CommunityInfoCard.vue')['default']
     CommunitySelector: typeof import('./src/components/post/CommunitySelector.vue')['default']
+    ElAlert: typeof import('element-plus/es')['ElAlert']
+    ElButton: typeof import('element-plus/es')['ElButton']
+    ElEmpty: typeof import('element-plus/es')['ElEmpty']
     ElIcon: typeof import('element-plus/es')['ElIcon']
+    ElInput: typeof import('element-plus/es')['ElInput']
+    ElText: typeof import('element-plus/es')['ElText']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     FileUploader: typeof import('./src/components/upload/FileUploader.vue')['default']
     Footer: typeof import('./src/components/Footer.vue')['default']
@@ -27,5 +40,6 @@ declare module 'vue' {
     PostList: typeof import('./src/components/PostList.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    VoteButton: typeof import('./src/components/comment/VoteButton.vue')['default']
   }
 }
