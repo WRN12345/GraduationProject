@@ -7,6 +7,7 @@ from fastapi import APIRouter
 from .endpoints import memberships
 from .endpoints import *
 from .endpoints import uploads
+from .endpoints import attachments
 
 
 
@@ -23,3 +24,4 @@ v1.include_router(votes)
 v1.include_router(search)
 v1.include_router(memberships.router)
 v1.include_router(uploads.router)
+v1.include_router(attachments.router)

@@ -7,7 +7,7 @@ from fastapi import HTTPException
 import io
 import uuid
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from core.config import settings
 
@@ -26,7 +26,8 @@ class MinioService:
                 endpoint=settings.MINIO_ENDPOINT,
                 access_key=settings.MINIO_ACCESS_KEY,
                 secret_key=settings.MINIO_SECRET_KEY,
-                secure=settings.MINIO_SECURE
+                secure=settings.MINIO_SECURE,
+                region=settings.MINIO_REGION
             )
             # 测试连接
             self.client.list_buckets()
@@ -156,6 +157,76 @@ class MinioService:
             # 记录错误但不抛出异常
             print(f"删除文件失败: {e}")
         return False
+
+    async def generate_presigned_url(
+        self,
+        url: str,
+        expires: timedelta = timedelta(hours=24)
+    ) -> str:
+        """
+        根据存储的 URL 生成 presigned URL（临时访问链接）
+
+        Args:
+            url: 文件的公共访问 URL
+            expires: 过期时间（默认24小时）
+
+        Returns:
+            presigned URL
+        """
+        if not self._initialized:
+            raise HTTPException(status_code=503, detail="MinIO 服务未初始化")
+
+        try:
+            # 解析 URL: http://localhost:9000/bucket/filename
+            parts = url.replace(f"{settings.MINIO_PUBLIC_URL}/", "").split('/', 1)
+            if len(parts) != 2:
+                raise ValueError(f"无效的 MinIO URL 格式: {url}")
+
+            bucket, object_name = parts
+
+            # 生成 presigned URL
+            presigned_url = self.client.presigned_get_object(
+                bucket_name=bucket,
+                object_name=object_name,
+                expires=expires
+            )
+
+            # 替换 base URL 为 MINIO_PUBLIC_URL（让前端可以访问）
+            # presigned URL 使用 MINIO_ENDPOINT，需要替换为 MINIO_PUBLIC_URL
+            endpoint_base = f"http://{settings.MINIO_ENDPOINT}"
+            if settings.MINIO_SECURE:
+                endpoint_base = f"https://{settings.MINIO_ENDPOINT}"
+
+            presigned_url = presigned_url.replace(endpoint_base, settings.MINIO_PUBLIC_URL)
+
+            return presigned_url
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"生成临时链接失败: {str(e)}")
+
+    async def batch_generate_presigned_urls(
+        self,
+        urls: list[str],
+        expires: timedelta = timedelta(hours=24)
+    ) -> dict[str, str]:
+        """
+        批量生成 presigned URLs
+
+        Args:
+            urls: 文件 URL 列表
+            expires: 过期时间
+
+        Returns:
+            {original_url: presigned_url} 字典
+        """
+        result = {}
+        for url in urls:
+            try:
+                result[url] = await self.generate_presigned_url(url, expires)
+            except Exception as e:
+                # 失败时保留原 URL
+                result[url] = url
+                print(f"生成 presigned URL 失败: {url}, 错误: {e}")
+        return result
 
 
 # 全局单例
