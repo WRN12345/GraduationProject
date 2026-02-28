@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     MINIO_ACCESS_KEY: str = os.getenv("MINIO_ACCESS_KEY", "")
     MINIO_SECRET_KEY: str = os.getenv("MINIO_SECRET_KEY", "")
     MINIO_SECURE: bool = os.getenv("MINIO_SECURE", "False").lower() == "True"
+    MINIO_REGION: str = os.getenv("MINIO_REGION", "us-east-1")
     MINIO_IMAGE_BUCKET: str = os.getenv("MINIO_IMAGE_BUCKET", "superimg")
     MINIO_VIDEO_BUCKET: str = os.getenv("MINIO_VIDEO_BUCKET", "supervideo")
     MINIO_FILE_BUCKET: str = os.getenv("MINIO_FILE_BUCKET", "superfile")

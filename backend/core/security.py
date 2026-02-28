@@ -132,3 +132,33 @@ async def get_current_admin(current_user: User = Depends(get_current_user)) -> U
             detail="权限不足，仅管理员可访问"
         )
     return current_user
+
+
+async def get_current_user_optional(token: str = Depends(lambda: None)) -> User | None:
+    """
+    依赖项：可选认证，如果提供了 token 则验证，否则返回 None
+    用于公开内容但支持用户信息的接口
+    """
+    if not token:
+        return None
+
+    try:
+        # 解码 Token
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+
+        # 获取用户 ID
+        user_id: str = payload.get("id")
+
+        if user_id is None:
+            return None
+
+    except JWTError:
+        # Token 格式错误或签名不对
+        return None
+
+    user = await User.get_or_none(id=user_id)
+
+    if user is None or not user.is_active:
+        return None
+
+    return user
