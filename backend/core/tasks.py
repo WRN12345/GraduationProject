@@ -11,8 +11,10 @@ from core.cache import get_redis
 from core.redis_service import hot_rank_service
 from models.post import Post
 from core.config import settings
+from core.database import db_retry, check_db_connection, ensure_connection
 
 
+@db_retry()
 async def sync_post_stats_to_db():
     """
     定时任务：将 Redis 交互计数同步到 PostgreSQL
@@ -51,44 +53,65 @@ async def sync_post_stats_to_db():
             # 提取 post_id
             post_id = int(key.split(":")[-1])
 
+            # 使用重试机制同步单个帖子
             try:
-                post = await Post.get_or_none(id=post_id)
-                if not post:
-                    # 帖子不存在，清理 Redis 数据
-                    await redis.delete(key)
-                    continue
-
-                # 解析交互数据
-                upvote_count = int(interactions.get('upvote_count', 0))
-                downvote_count = int(interactions.get('downvote_count', 0))
-
-                vote_weight = getattr(settings, 'HOT_VOTE_WEIGHT', 10)
-                upvotes = upvote_count // vote_weight
-                downvotes = downvote_count // vote_weight
-
-                # 更新数据库
-                await Post.filter(id=post_id).update(
-                    upvotes=upvotes,
-                    downvotes=downvotes,
-                    score=upvotes - downvotes
+                success = await _sync_single_post_with_retry(
+                    redis=redis,
+                    post_id=post_id,
+                    interactions=interactions
                 )
-
-                # 重新计算热度
-                await post.update_hot_rank()
-
-                synced_count += 1
-
+                if success:
+                    synced_count += 1
             except Exception as e:
-                logger.error(f"同步帖子 {post_id} 失败: {e}")
+                logger.error(f"同步帖子 {post_id} 最终失败（已重试）: {e}")
 
         logger.info(f"成功同步 {synced_count} 个帖子到 PostgreSQL")
 
-    except Exception as e:
-        logger.error(f"同步任务执行失败: {e}")
     finally:
         await redis.close()
 
 
+@db_retry()
+async def _sync_single_post_with_retry(redis, post_id: int, interactions: dict) -> bool:
+    """
+    同步单个帖子的数据到数据库（带重试）
+
+    Args:
+        redis: Redis 连接
+        post_id: 帖子 ID
+        interactions: 交互数据
+
+    Returns:
+        bool: 是否成功同步
+    """
+    post = await Post.get_or_none(id=post_id)
+    if not post:
+        # 帖子不存在，清理 Redis 数据（不重试）
+        await redis.delete(f"post:interactions:{post_id}")
+        return False
+
+    # 解析交互数据
+    upvote_count = int(interactions.get('upvote_count', 0))
+    downvote_count = int(interactions.get('downvote_count', 0))
+
+    vote_weight = getattr(settings, 'HOT_VOTE_WEIGHT', 10)
+    upvotes = upvote_count // vote_weight
+    downvotes = downvote_count // vote_weight
+
+    # 更新数据库（这里会自动重试如果连接失败）
+    await Post.filter(id=post_id).update(
+        upvotes=upvotes,
+        downvotes=downvotes,
+        score=upvotes - downvotes
+    )
+
+    # 重新计算热度
+    await post.update_hot_rank()
+
+    return True
+
+
+@db_retry()
 async def update_hot_ranks():
     """
     定时任务：批量重新计算并更新热门帖子热度
@@ -144,6 +167,11 @@ async def start_background_tasks():
         """同步循环"""
         while True:
             try:
+                # 执行前检查连接
+                if not await check_db_connection():
+                    logger.warning("数据库连接不可用，尝试重新连接...")
+                    await ensure_connection()
+
                 await sync_post_stats_to_db()
             except Exception as e:
                 logger.error(f"同步循环异常: {e}")
@@ -153,6 +181,11 @@ async def start_background_tasks():
         """热度更新循环"""
         while True:
             try:
+                # 执行前检查连接
+                if not await check_db_connection():
+                    logger.warning("数据库连接不可用，尝试重新连接...")
+                    await ensure_connection()
+
                 await update_hot_ranks()
             except Exception as e:
                 logger.error(f"热度更新循环异常: {e}")

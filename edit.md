@@ -33,3 +33,56 @@
 “通过配置细粒度的权重分配（Weighting Factor），实现了读流量在三个从节点间的均匀分布（Round Robin/Random），显著提升了系统的并发查询吞吐量（Throughput）。”
 “在运维层面，针对 Pgpool 状态持久化机制导致的节点状态不同步问题，设计了基于 PCP 协议的节点动态挂载方案，确保了故障恢复后的快速上线。”
 “结合 PostgreSQL 的 WAL（Write-Ahead Logging）机制 与 Pgpool 的连接池技术，不仅保证了数据的高可靠性，还通过复用数据库连接大幅减少了 TCP 握手开销。”
+
+
+根本原因：Pgpool 查询缓存权限问题
+1. 问题链条
+
+Pgpool 尝试使用查询缓存功能
+    ↓
+需要创建锁文件：/var/log/postgresql/memq_lock_file
+    ↓
+目录权限不足（虽然目录存在，但锁文件所有者是 root）
+    ↓
+锁文件创建失败，查询执行异常
+    ↓
+连接状态变得不稳定
+    ↓
+后续操作使用该连接时出现 ConnectionDoesNotExistError
+2. 具体原因
+权限冲突：
+
+Pgpool 进程以 postgres 用户运行
+锁文件 /var/log/postgresql/memq_lock_file 的所有者是 root
+postgres 用户无法覆盖 root 拥有的文件
+为什么会有这个文件：
+
+之前可能有 root 进程创建了这个文件
+或者是之前手动创建的，权限设置不当
+3. 修复方案
+关键步骤：
+
+删除旧的锁文件：rm -f /var/log/postgresql/memq_lock_file
+确保 /var/log/postgresql 目录权限正确：chmod 777 + chown postgres:postgres
+重新加载 Pgpool 配置
+为什么这样修复有效：
+
+删除旧文件后，Pgpool 可以重新创建属于自己的锁文件
+目录权限设置为 777 确保 postgres 用户可以写入
+Pgpool 重新创建锁文件后，查询缓存功能正常工作
+为什么重试机制不够
+重试机制（@db_retry() 装饰器）只是应对症状，而不是解决根本问题：
+
+重试可以在连接失败时自动重试
+但如果 Pgpool 本身配置有问题，重试也会失败
+只有修复了 Pgpool 的权限问题，重试机制才能真正发挥作用
+修复后的效果
+✅ 之前：频繁出现连接错误，需要不断重试
+✅ 之后：连接稳定，无需频繁重试
+
+总结
+数据库连接不成功的根本原因是：
+
+Pgpool 的查询缓存功能需要创建锁文件 /var/log/postgresql/memq_lock_file，但由于该文件权限不当（root 拥有），导致 Pgpool（以 postgres 用户运行）无法覆盖，进而导致查询缓存功能失败，最终引发连接异常。
+
+解决方案：删除旧锁文件，让 Pgpool 重新创建，并确保目录权限正确。
