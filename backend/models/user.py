@@ -18,6 +18,7 @@ class User(models.Model):
     is_superuser = fields.BooleanField(default=False, description="是否管理员")
     karma = fields.IntField(default=0, description="声望值（来自帖子和评论的点赞）")
     bio = fields.TextField(null=True, max_length=5000, description="个人简介")
+    avatar = fields.CharField(max_length=500, null=True, description="头像URL")
     created_at = fields.DatetimeField(auto_now_add=True, description="注册时间")
     last_login = fields.DatetimeField(null=True, description="最后登录时间")
 

@@ -28,6 +28,26 @@ class UserUpdate(BaseModel):
     nickname: Optional[str] = Field(None, description="昵称")
     email: Optional[EmailStr] = Field(None, description="邮箱")
     bio: Optional[str] = Field(None, description="个人简介")
+    avatar: Optional[str] = Field(None, description="头像URL")
+
+# --- 2.1 用户名修改 (Request Body) ---
+class UsernameUpdate(BaseModel):
+    """用户名修改请求"""
+    username: str = Field(..., description="新用户名", min_length=3, max_length=20)
+
+# --- 2.2 密码修改 (Request Body) ---
+class PasswordUpdate(BaseModel):
+    """密码修改请求"""
+    old_password: str = Field(..., description="旧密码")
+    new_password: str = Field(..., description="新密码", min_length=6, max_length=30)
+
+# --- 2.3 用户资料更新扩展 (Request Body) ---
+class UserProfileUpdate(BaseModel):
+    """用户资料更新请求（包含头像）"""
+    nickname: Optional[str] = Field(None, description="昵称")
+    email: Optional[EmailStr] = Field(None, description="邮箱")
+    bio: Optional[str] = Field(None, description="个人简介")
+    avatar: Optional[str] = Field(None, description="头像URL")
 
 # --- 3. 用户简要信息（用于帖子列表等场景） ---
 class UserOut(BaseModel):
@@ -45,6 +65,7 @@ class UserProfile(BaseModel):
     username: str
     nickname: Optional[str]
     bio: Optional[str]
+    avatar: Optional[str] = None
     karma: int
     created_at: datetime
     is_active: bool
@@ -70,6 +91,7 @@ class UserInfo(BaseModel):
     nickname: Optional[str] = None
     email: Optional[str] = None
     bio: Optional[str] = None
+    avatar: Optional[str] = None
     karma: int = 0
     is_active: bool = True
     is_superuser: bool = False

@@ -126,6 +126,9 @@ export const useUserStore = defineStore('user', {
       localStorage.setItem('user_id', String(data.user_id))
       localStorage.setItem('is_superuser', String(data.is_superuser))
       console.log('[DEBUG] 认证信息已保存到 localStorage')
+
+      // 登录成功后获取用户信息
+      this.fetchUserInfo()
     },
 
     // 清除认证信息
@@ -152,10 +155,27 @@ export const useUserStore = defineStore('user', {
           this.refreshToken = localStorage.getItem('refresh_token')
           this.userId = Number(localStorage.getItem('user_id'))
           this.isSuperuser = localStorage.getItem('is_superuser') === 'true'
+
+          // 恢复状态后获取用户信息
+          this.fetchUserInfo()
         } catch (error) {
           // localStorage 数据损坏，清除
           this.clearAuth()
         }
+      }
+    },
+
+    // 获取当前用户信息
+    async fetchUserInfo() {
+      console.log('[DEBUG] 获取用户信息')
+      try {
+        const response = await client.GET('/v1/users')
+        if (response.data) {
+          this.userInfo = response.data
+          console.log('[DEBUG] 用户信息获取成功:', response.data)
+        }
+      } catch (error) {
+        console.error('[DEBUG] 获取用户信息失败:', error)
       }
     }
   }

@@ -48,6 +48,7 @@ async def create_comment(
         'content': comment.content,
         'author_id': comment.author_id,
         'author_name': current_user.username,
+        'author_avatar': current_user.avatar,
         'parent_id': comment.parent_id,
         'upvotes': comment.upvotes,
         'downvotes': comment.downvotes,
@@ -79,6 +80,7 @@ async def create_comment(
         'content': comment.content,
         'author_id': comment.author_id,
         'author_name': current_user.username,
+        'author_avatar': current_user.avatar,
         'parent_id': comment.parent_id,
         'upvotes': comment.upvotes,
         'downvotes': comment.downvotes,
@@ -140,6 +142,7 @@ async def get_comments_tree(
                 c.created_at,
                 c.updated_at,
                 u.username as author_name,
+                u.avatar as author_avatar,
                 0 as depth
             FROM comments c
             JOIN users u ON c.author_id = u.id
@@ -160,6 +163,7 @@ async def get_comments_tree(
                 c.created_at,
                 c.updated_at,
                 u.username as author_name,
+                u.avatar as author_avatar,
                 ct.depth + 1
             FROM comments c
             JOIN users u ON c.author_id = u.id
@@ -235,7 +239,8 @@ async def get_comment_replies(
             c.is_edited,
             c.created_at,
             c.updated_at,
-            u.username as author_name
+            u.username as author_name,
+            u.avatar as author_avatar
         FROM comments c
         JOIN users u ON c.author_id = u.id
         WHERE c.post_id = $1 AND c.parent_id = $2
@@ -335,12 +340,13 @@ async def update_comment(
         parent_id=comment.parent_id
     )
 
-    # 构建响应数据（添加 author_name）
+    # 构建响应数据（添加 author_name 和 author_avatar）
     return {
         'id': comment.id,
         'content': comment.content,
         'author_id': comment.author_id,
         'author_name': comment.author.username if comment.author else current_user.username,
+        'author_avatar': comment.author.avatar if comment.author else current_user.avatar,
         'parent_id': comment.parent_id,
         'upvotes': comment.upvotes,
         'downvotes': comment.downvotes,
