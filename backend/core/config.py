@@ -55,6 +55,12 @@ class Settings(BaseSettings):
     REDIS_COMMENT_TTL: int = int(os.getenv("REDIS_COMMENT_TTL", "3600"))  # 评论缓存 TTL (1小时)
     REDIS_COMMENT_META_TTL: int = int(os.getenv("REDIS_COMMENT_META_TTL", "600"))  # 评论元数据 TTL (10分钟)
 
+    # --- 数据库重试配置 ---
+    DB_RETRY_MAX_ATTEMPTS: int = int(os.getenv("DB_RETRY_MAX_ATTEMPTS", "3"))  # 最大重试次数
+    DB_RETRY_BASE_DELAY: float = float(os.getenv("DB_RETRY_BASE_DELAY", "1.0"))  # 基础延迟（秒）
+    DB_RETRY_MAX_DELAY: float = float(os.getenv("DB_RETRY_MAX_DELAY", "10.0"))  # 最大延迟（秒）
+    DB_HEALTH_CHECK_INTERVAL: int = int(os.getenv("DB_HEALTH_CHECK_INTERVAL", "30"))  # 健康检查间隔（秒）
+
     # --- 配置加载规则 ---
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(__file__), "..", ".env"),
