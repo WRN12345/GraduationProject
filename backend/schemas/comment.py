@@ -15,6 +15,7 @@ class CommentOut(BaseModel):
     content: str
     author_id: int
     author_name: Optional[str] = None  # 作者用户名
+    author_avatar: Optional[str] = None  # 作者头像
     parent_id: Optional[int]
     upvotes: int
     downvotes: int

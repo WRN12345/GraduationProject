@@ -3,7 +3,13 @@
     <!-- 左侧内容区 -->
     <div class="comment-main">
       <!-- 头像 -->
-      <div class="comment-avatar">{{ avatarText }}</div>
+      <img
+        v-if="comment.author_avatar"
+        :src="comment.author_avatar"
+        class="comment-avatar comment-avatar-img"
+        @error="handleAvatarError"
+      />
+      <div v-else class="comment-avatar">{{ avatarText }}</div>
 
       <!-- 评论内容 -->
       <div class="comment-body">
@@ -128,6 +134,12 @@ const saveEdit = async () => {
     saving.value = false
   }
 }
+
+// 头像加载失败处理
+const handleAvatarError = (event) => {
+  // 图片加载失败时隐藏img元素，会自动显示首字母头像
+  event.target.style.display = 'none'
+}
 </script>
 
 <style scoped>
@@ -156,6 +168,12 @@ const saveEdit = async () => {
   justify-content: center;
   font-size: 14px;
   font-weight: 600;
+}
+
+.comment-avatar-img {
+  background: transparent;
+  object-fit: cover;
+  border: 1px solid #edeff1;
 }
 
 .comment-body {

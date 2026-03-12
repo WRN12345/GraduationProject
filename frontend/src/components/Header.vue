@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Search,
@@ -11,19 +11,20 @@ import {
   Shirt,
   FileText,
   Trophy,
-  DollarSign,
-  Shield,
-  Star,
-  Moon,
   LogOut,
-  Megaphone,
-  Clock,
   Settings,
   ChevronDown,
   Menu,
-  Building2
+  Building2,
+  Lock
 } from 'lucide-vue-next'
 import { useUserStore } from '@/stores/user'
+import ProfileEditDialog from '@/components/user/ProfileEditDialog.vue'
+import PasswordEditDialog from '@/components/user/PasswordEditDialog.vue'
+import defaultAvatar from '@/assets/image/wrn.png'
+
+// 默认头像
+const DEFAULT_AVATAR = defaultAvatar
 
 // 定义 emit
 const emit = defineEmits(['open-mobile-sidebar'])
@@ -50,7 +51,11 @@ const handleSearchResultSelect = (item) => {
 
 // --- 个人菜单相关逻辑  ---
 const isProfileOpen = ref(false)
-const isDarkMode = ref(false) // 模拟暗黑模式状态
+const profileEditVisible = ref(false)
+const passwordEditVisible = ref(false)
+
+// 获取用户信息
+const userInfo = computed(() => userStore.userInfo)
 
 // --- 创建菜单相关逻辑 ---
 const isCreateMenuOpen = ref(false)
@@ -135,6 +140,43 @@ const getIcon = (iconName) => {
   }
   return icons[iconName] || Trophy
 }
+
+// 打开个人资料编辑
+const openProfileEdit = () => {
+  isProfileOpen.value = false
+  profileEditVisible.value = true
+}
+
+// 打开密码修改
+const openPasswordEdit = () => {
+  isProfileOpen.value = false
+  passwordEditVisible.value = true
+}
+
+// 跳转到设置页面
+const goToSettings = () => {
+  isProfileOpen.value = false
+  router.push('/settings')
+}
+
+// 查看个人资料
+const goToProfile = () => {
+  isProfileOpen.value = false
+  const username = userInfo.value?.username || userStore.userId
+  router.push(`/user/${username}`)
+}
+
+// 资料更新成功回调
+const handleProfileUpdate = async () => {
+  // 重新获取用户信息
+  await userStore.fetchUserInfo()
+}
+
+// 密码修改成功回调
+const handlePasswordUpdate = async () => {
+  // 密码修改成功后登出
+  await userStore.logout()
+}
 </script>
 
 <template>
@@ -214,102 +256,47 @@ const getIcon = (iconName) => {
       <div class="user-menu-container">
         <div class="avatar-trigger" @click="toggleProfile">
           <div class="avatar-box">
-             <!-- 这里的图片可以换成你自己的 -->
              <div class="avatar-img-wrapper">
-               <img src="@/assets/image/wrn.png" class="user-avatar-img" />
+               <img :src="userInfo?.avatar || DEFAULT_AVATAR" class="user-avatar-img" />
                <div class="status-dot"></div>
              </div>
           </div>
           <ChevronDown :size="12" class="dropdown-arrow" />
         </div>
 
-        <!-- 个人下拉菜单 (核心新增部分) -->
+        <!-- 个人下拉菜单 (简化版) -->
         <div class="profile-dropdown" v-if="isProfileOpen">
-
-          <!-- 第一部分：用户信息 -->
-          <div class="menu-section user-info-section">
+          <!-- 用户信息 -->
+          <div class="menu-section user-info-section" @click="goToProfile">
             <div class="menu-item-user">
               <div class="user-avatar-large">
-                <img src="@/assets/image/wrn.png" />
+                <img :src="userInfo?.avatar || DEFAULT_AVATAR" />
                 <div class="status-dot large"></div>
               </div>
               <div class="user-text-info">
-                <div class="user-display-name">查看个人资料</div>
-                <div class="user-handle">u/CapitalGreedy2260</div>
+                <div class="user-display-name">{{ userInfo?.nickname || '查看个人资料' }}</div>
+                <div class="user-handle">@{{ userInfo?.username || 'user' }}</div>
               </div>
             </div>
           </div>
 
-          <!-- 第二部分：通用操作 -->
+          <div class="divider-line"></div>
+
+          <!-- 操作菜单 -->
           <div class="menu-section">
-            <div class="menu-item">
+            <div class="menu-item" @click="openProfileEdit">
               <Shirt :size="20" class="menu-icon" />
-              <span class="menu-text">编辑头像</span>
+              <span class="menu-text">编辑资料</span>
             </div>
-            <div class="menu-item">
-              <FileText :size="20" class="menu-icon" />
-              <span class="menu-text">草稿</span>
+            <div class="menu-item" @click="openPasswordEdit">
+              <Lock :size="20" class="menu-icon" />
+              <span class="menu-text">修改密码</span>
             </div>
-            <div class="menu-item">
-              <Trophy :size="20" class="menu-icon" />
-              <div class="menu-text-group">
-                <span class="menu-text">成就</span>
-                <span class="sub-text blue-text">已解锁 5 个</span>
-              </div>
-            </div>
-            <div class="menu-item">
-              <DollarSign :size="20" class="menu-icon" />
-              <div class="menu-text-group">
-                <span class="menu-text">创收</span>
-                <span class="sub-text">在 Reddit 上赚取现金</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 第三部分：Premium 与设置 -->
-          <div class="menu-section">
-             <div class="menu-item">
-              <Shield :size="20" class="menu-icon" />
-              <span class="menu-text">Premium</span>
-              <Star :size="16" class="badge-icon" />
-            </div>
-            <div class="menu-item toggle-item" @click.stop="isDarkMode = !isDarkMode">
-              <div class="left-content">
-                <Moon :size="20" class="menu-icon" />
-                <span class="menu-text">深色模式</span>
-              </div>
-              <!-- 模拟开关 Switch -->
-              <div class="toggle-switch" :class="{ active: isDarkMode }">
-                <div class="toggle-circle"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="divider-line"></div>
-
-          <!-- 第四部分：底部链接 -->
-          <div class="menu-section">
-             <div class="menu-item">
-              <Megaphone :size="20" class="menu-icon" />
-              <span class="menu-text">在 Reddit 上投放广告</span>
-            </div>
-             <div class="menu-item">
-              <Clock :size="20" class="menu-icon" />
-              <div class="menu-text-group">
-                <span class="menu-text">试用 Reddit Pro</span>
-                <span class="sub-text orange-text">测试版</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="divider-line"></div>
-
-           <div class="menu-section">
-             <div class="menu-item">
+            <div class="menu-item" @click="goToSettings">
               <Settings :size="20" class="menu-icon" />
               <span class="menu-text">设置</span>
             </div>
-           </div>
+          </div>
 
           <div class="divider-line"></div>
 
@@ -320,8 +307,18 @@ const getIcon = (iconName) => {
               <span class="menu-text">退出登录</span>
             </div>
           </div>
-
         </div>
+
+        <!-- 编辑弹窗 -->
+        <ProfileEditDialog
+          v-model="profileEditVisible"
+          :user="userInfo"
+          @success="handleProfileUpdate"
+        />
+        <PasswordEditDialog
+          v-model="passwordEditVisible"
+          @success="handlePasswordUpdate"
+        />
       </div>
     </div>
   </header>
