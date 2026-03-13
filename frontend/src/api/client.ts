@@ -36,55 +36,61 @@ const createInterceptor = (): Middleware => {
       // Token 过期处理
       if (status === 401) {
         console.log('[API Client] Token 过期，尝试刷新');
-        // 动态导入 userStore 避免循环依赖
-        const { useUserStore } = await import("@/stores/user");
-        const userStore = useUserStore();
 
-        if (!isRefreshing) {
-          isRefreshing = true;
+        // 只在非登录页面才尝试刷新 token
+        if (window.location.pathname !== '/login') {
+          // 动态导入 userStore 避免循环依赖
+          const { useUserStore } = await import("@/stores/user");
+          const userStore = useUserStore();
 
-          try {
-            // 尝试刷新 token
-            const success = await userStore.refreshAccessToken();
+          if (!isRefreshing) {
+            isRefreshing = true;
 
-            if (success && userStore.token) {
-              // 刷新成功，通知所有等待的请求
-              onRefreshed(userStore.token);
+            try {
+              // 尝试刷新 token
+              const success = await userStore.refreshAccessToken();
 
-              // 返回原始 401 响应，让应用层处理重试
-              return response;
-            } else {
-              // 刷新失败，清除认证并跳转登录
+              if (success && userStore.token) {
+                // 刷新成功，通知所有等待的请求
+                onRefreshed(userStore.token);
+
+                // 返回原始 401 响应，让应用层处理重试
+                return response;
+              } else {
+                // 刷新失败，清除认证并跳转登录
+                userStore.clearAuth();
+                window.location.href = "/login";
+                return response;
+              }
+            } catch (error) {
+              // 刷新过程出错
+              console.error("Token refresh failed:", error);
               userStore.clearAuth();
               window.location.href = "/login";
               return response;
+            } finally {
+              isRefreshing = false;
             }
-          } catch (error) {
-            // 刷新过程出错
-            console.error("Token refresh failed:", error);
-            userStore.clearAuth();
-            window.location.href = "/login";
-            return response;
-          } finally {
-            isRefreshing = false;
-          }
-        } else {
-          // 正在刷新，等待刷新完成
-          return new Promise((resolve) => {
-            addRefreshSubscriber((token) => {
-              const newHeaders = new Headers();
-              response.headers.forEach((value, key) => {
-                newHeaders.set(key, value);
-              });
-              newHeaders.set("Authorization", `Bearer ${token}`);
+          } else {
+            // 正在刷新，等待刷新完成
+            return new Promise((resolve) => {
+              addRefreshSubscriber((token) => {
+                const newHeaders = new Headers();
+                response.headers.forEach((value, key) => {
+                  newHeaders.set(key, value);
+                });
+                newHeaders.set("Authorization", `Bearer ${token}`);
 
-              const newRequest = new Request(response.url, {
-                headers: newHeaders,
+                const newRequest = new Request(response.url, {
+                  headers: newHeaders,
+                });
+                resolve(fetch(newRequest));
               });
-              resolve(fetch(newRequest));
-            });
-          }) as Promise<Response>;
+            }) as Promise<Response>;
+          }
         }
+        // 如果是登录页面，不执行 token 刷新逻辑，也不提前返回
+        // 让代码继续执行到下面的错误处理逻辑 (status >= 400)
       }
 
       // 其他错误处理

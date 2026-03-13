@@ -19,7 +19,6 @@
             type="text"
             v-model="form.username"
             placeholder="用户名 / 邮箱"
-            required
           />
         </div>
 
@@ -30,7 +29,6 @@
             type="password"
             v-model="form.password"
             placeholder="密码"
-            required
           />
         </div>
 
@@ -40,7 +38,6 @@
             type="password"
             v-model="form.confirmPassword"
             placeholder="确认密码"
-            required
           />
         </div>
 
@@ -70,6 +67,7 @@
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { User, Lock, LogIn, UserPlus, Shield } from 'lucide-vue-next';
+import { ElMessage } from 'element-plus';
 import { useUserStore } from '@/stores/user';
 
 const router = useRouter();
@@ -104,10 +102,25 @@ const handleSubmit = async () => {
 
   if (isLoading.value) return;
 
+  // 表单验证
+  if (!form.username.trim()) {
+    ElMessage.error('请输入用户名');
+    return;
+  }
+
+  if (!form.password) {
+    ElMessage.error('请输入密码');
+    return;
+  }
+
   // 注册模式下验证密码
   if (!isLogin.value) {
+    if (!form.confirmPassword) {
+      ElMessage.error('请确认密码');
+      return;
+    }
     if (form.password !== form.confirmPassword) {
-      alert('两次输入的密码不一致');
+      ElMessage.error('两次输入的密码不一致');
       return;
     }
   }
@@ -126,7 +139,7 @@ const handleSubmit = async () => {
       const result = await userStore.register(form.username, form.password, form.username);
       console.log('[Login] 注册成功:', result);
       // 注册成功后切换到登录模式
-      alert('注册成功，请登录');
+      ElMessage.success('注册成功，请登录');
       toggleMode();
     }
   } catch (error) {
