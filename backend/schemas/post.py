@@ -5,7 +5,7 @@
 """
 
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
 
@@ -79,7 +79,18 @@ class PostOut(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime]
 
+    # 用户状态字段
+    user_vote: int = 0  # 用户投票状态: 1=赞, -1=踩, 0=无
+    bookmarked: bool = False  # 用户是否已收藏
+    bookmark_count: int = 0  # 收藏数量
+
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator('upvotes', 'downvotes', mode='before')
+    @classmethod
+    def ensure_non_negative(cls, v):
+        """确保投票计数永远不小于0"""
+        return max(0, v)
 
 
 class PaginatedPostResponse(BaseModel):

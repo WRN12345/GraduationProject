@@ -29,6 +29,10 @@ async def lifespan(app: FastAPI):
     from core.tasks import start_background_tasks
     await start_background_tasks()
 
+    # 启动投票和收藏同步任务
+    from core.sync_tasks import start_sync_tasks
+    await start_sync_tasks()
+
     yield # 应用运行期间
 
     # [关闭时执行]
@@ -67,7 +71,7 @@ app.add_middleware(
 register_tortoise(
     app,
     db_url=settings.DB_URL,  # Pgpool 连接
-    modules={"models": ["models.user", "models.movies", "models.vote", "models.comment", "models.community", "models.post", "models.post_attachment", "models.membership", "models.audit_log"]},
+    modules={"models": ["models.user", "models.movies", "models.vote", "models.comment", "models.community", "models.post", "models.post_attachment", "models.membership", "models.bookmark", "models.audit_log"]},
     generate_schemas=False,  # 使用 Aerich 管理迁移，不再自动生成 schemas
     add_exception_handlers=True,
 )
@@ -88,6 +92,7 @@ TORTOISE_ORM = {
                 "models.post",
                 "models.post_attachment",
                 "models.membership",
+                "models.bookmark",
                 "models.audit_log",
             ],
             "default_connection": "default",

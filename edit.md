@@ -86,3 +86,9 @@ Pgpool 重新创建锁文件后，查询缓存功能正常工作
 Pgpool 的查询缓存功能需要创建锁文件 /var/log/postgresql/memq_lock_file，但由于该文件权限不当（root 拥有），导致 Pgpool（以 postgres 用户运行）无法覆盖，进而导致查询缓存功能失败，最终引发连接异常。
 
 解决方案：删除旧锁文件，让 Pgpool 重新创建，并确保目录权限正确。
+
+Vue 3.5.25 + Composition API
+Pinia 2.3.1 - 状态管理
+Element Plus 2.12.0 - UI 组件
+openapi-fetch 0.15.0 - 类型安全 API 调用
+lucide-vue-next - 图标库

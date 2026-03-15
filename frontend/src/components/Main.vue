@@ -216,28 +216,30 @@ const displayPosts = computed(() => posts.value)
           </div>
 
           <!-- 底部操作区 -->
-          <div class="post-footer" @click.stop>
+          <div class="post-footer">
             <!-- 左侧：点赞点踩 -->
             <div class="footer-left">
-              <button class="vote-action-btn" :class="{ active: post.upvotes > 0 }">
+              <button class="vote-action-btn" @click="goToPost(post.id)">
                 <ThumbsUp :size="18" />
                 <span>{{ post.upvotes || 0 }}</span>
               </button>
-              <button class="vote-action-btn">
+              <button class="vote-action-btn" @click="goToPost(post.id)">
                 <ThumbsDown :size="18" />
+                <span>{{ post.downvotes || 0 }}</span>
               </button>
             </div>
 
             <!-- 右侧：评论收藏转发 -->
             <div class="footer-right">
-              <button class="action-btn" title="评论">
+              <button class="action-btn" @click="goToPost(post.id)">
                 <MessageCircle :size="18" />
                 <span>{{ post.comment_count || 0 }}</span>
               </button>
-              <button class="action-btn" title="收藏">
+              <button class="action-btn" @click="goToPost(post.id)">
                 <Bookmark :size="18" />
+                <span>{{ post.bookmark_count || 0 }}</span>
               </button>
-              <button class="action-btn" title="转发">
+              <button class="action-btn" @click="goToPost(post.id)">
                 <Share2 :size="18" />
               </button>
             </div>
@@ -472,8 +474,9 @@ const displayPosts = computed(() => posts.value)
   color: #1c1c1c;
 }
 
+/* 移除 active 状态的视觉反馈 - 首页仅展示数据 */
 .vote-action-btn.active {
-  color: #0079d3;
+  color: #878a8c;
 }
 
 .action-btn {
