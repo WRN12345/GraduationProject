@@ -71,7 +71,7 @@ app.add_middleware(
 register_tortoise(
     app,
     db_url=settings.DB_URL,  # Pgpool 连接
-    modules={"models": ["models.user", "models.movies", "models.vote", "models.comment", "models.community", "models.post", "models.post_attachment", "models.membership", "models.bookmark", "models.audit_log"]},
+    modules={"models": ["models.user", "models.vote", "models.comment", "models.community", "models.post", "models.post_attachment", "models.membership", "models.bookmark", "models.audit_log"]},
     generate_schemas=False,  # 使用 Aerich 管理迁移，不再自动生成 schemas
     add_exception_handlers=True,
 )
@@ -85,7 +85,6 @@ TORTOISE_ORM = {
         "models": {
             "models": [
                 "models.user",
-                "models.movies",
                 "models.vote",
                 "models.comment",
                 "models.community",

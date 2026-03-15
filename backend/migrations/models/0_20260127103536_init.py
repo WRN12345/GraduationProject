@@ -29,18 +29,6 @@ COMMENT ON COLUMN "users"."karma" IS '声望值（来自帖子和评论的点赞
 COMMENT ON COLUMN "users"."bio" IS '个人简介';
 COMMENT ON COLUMN "users"."created_at" IS '注册时间';
 COMMENT ON COLUMN "users"."last_login" IS '最后登录时间';
-CREATE TABLE IF NOT EXISTS "movies" (
-    "id" SERIAL NOT NULL PRIMARY KEY,
-    "name" VARCHAR(50) NOT NULL,
-    "year" INT NOT NULL,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX IF NOT EXISTS "idx_movies_name_29c689" ON "movies" ("name");
-COMMENT ON COLUMN "movies"."name" IS '电影名称';
-COMMENT ON COLUMN "movies"."year" IS '上映年份';
-COMMENT ON COLUMN "movies"."created_at" IS '创建时间';
-COMMENT ON COLUMN "movies"."updated_at" IS '最后更新时间';
 CREATE TABLE IF NOT EXISTS "communities" (
     "id" SERIAL NOT NULL PRIMARY KEY,
     "name" VARCHAR(50) NOT NULL UNIQUE,
