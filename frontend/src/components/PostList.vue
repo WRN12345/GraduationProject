@@ -30,6 +30,13 @@
         <!-- 帖子内容 -->
         <div class="post-content">
           <div class="post-header">
+            <img
+              v-if="post.author?.avatar"
+              :src="post.author.avatar"
+              class="author-avatar author-avatar-img"
+              @error="handleAvatarError($event, post.id)"
+            />
+            <div v-else class="author-avatar">{{ getAvatarText(post) }}</div>
             <span class="community-icon">👾</span>
             <span class="community-name" @click.stop="goToCommunity(post.community?.id)">
               {{ post.community?.name || '未知社区' }}
@@ -171,6 +178,18 @@ marked.setOptions({
   breaks: true,
   gfm: true,
 })
+
+// 获取头像文字（首字母）
+const getAvatarText = (post) => {
+  const name = post?.author?.username || 'U'
+  return name.charAt(0).toUpperCase()
+}
+
+// 头像加载失败处理
+const handleAvatarError = (event, postId) => {
+  // 图片加载失败时隐藏img元素，会自动显示首字母头像
+  event.target.style.display = 'none'
+}
 
 // 格式化时间
 const formatTime = (dateString) => {
@@ -386,6 +405,26 @@ defineExpose({
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+}
+
+.author-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0079d3;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.author-avatar-img {
+  background: transparent;
+  object-fit: cover;
+  border: 1px solid #e6e6e6;
 }
 
 .community-name {

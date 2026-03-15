@@ -46,6 +46,7 @@ class PostAuthor(BaseModel):
     """帖子作者信息（简化版）"""
     id: int
     username: str
+    avatar: Optional[str] = None  # 作者头像 URL
     model_config = ConfigDict(from_attributes=True)
 
 
