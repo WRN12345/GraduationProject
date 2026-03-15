@@ -21,7 +21,13 @@
 
         <!-- 作者信息 -->
         <div class="author-info">
-          <div class="author-avatar">{{ post.author?.username?.charAt(0).toUpperCase() || '?' }}</div>
+          <img
+            v-if="post.author?.avatar"
+            :src="post.author.avatar"
+            class="author-avatar author-avatar-img"
+            @error="handleAvatarError"
+          />
+          <div v-else class="author-avatar">{{ avatarText }}</div>
           <div class="author-details">
             <div class="author-name">{{ post.author?.username || '匿名用户' }}</div>
             <div class="post-meta">
@@ -148,6 +154,18 @@ const renderedContent = computed(() => {
     return '<p>渲染错误</p>'
   }
 })
+
+// 头像文字（用于没有头像时显示首字母）
+const avatarText = computed(() => {
+  const name = post.value?.author?.username || 'U'
+  return name.charAt(0).toUpperCase()
+})
+
+// 头像加载失败处理
+const handleAvatarError = (event) => {
+  // 图片加载失败时隐藏img元素，会自动显示首字母头像
+  event.target.style.display = 'none'
+}
 
 // 格式化时间
 const formatTime = (dateString) => {
@@ -329,6 +347,12 @@ onMounted(() => {
   justify-content: center;
   font-size: 18px;
   font-weight: 600;
+}
+
+.author-avatar-img {
+  background: transparent;
+  object-fit: cover;
+  border: 2px solid #e6e6e6;
 }
 
 .author-details {

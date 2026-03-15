@@ -6,7 +6,6 @@
 import asyncio
 import logging
 from typing import List
-from datetime import datetime
 from redis.asyncio import Redis
 from tortoise.transactions import in_transaction
 
@@ -206,8 +205,7 @@ async def _sync_user_bookmarks(redis: Redis, user_id: int):
                 await Bookmark.create(
                     user_id=user_id,
                     post_id=post_id,
-                    folder='default',
-                    created_at=datetime.now()  # 显式传递 naive datetime，避免时区错误
+                    folder='default'
                 )
             except Exception as e:
                 logger.warning(f"添加收藏失败 user_id={user_id} post_id={post_id}: {e}")

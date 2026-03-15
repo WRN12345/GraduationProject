@@ -550,6 +550,7 @@ class PostService:
             "author": {
                 "id": post.author.id,
                 "username": post.author.username,
+                "avatar": post.author.avatar,  # 包含作者头像
             } if post.author else None,
             "community": {
                 "id": post.community.id,
