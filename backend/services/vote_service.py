@@ -273,7 +273,7 @@ class VoteService:
 
         # 5. 更新帖子热度（仅对帖子）
         if target_type == "post" and delta != 0 and target_created_at:
-            from core.redis_service import hot_rank_service
+            from services.redis_service import hot_rank_service
             vote_type = 'upvote' if delta > 0 else 'downvote'
             await hot_rank_service.increment_interaction(
                 redis=redis,

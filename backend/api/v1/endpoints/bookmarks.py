@@ -9,7 +9,7 @@ from models.user import User
 from models.post import Post
 from core.cache import get_redis
 from core.security import get_current_user
-from core.bookmark_service import bookmark_service
+from services.bookmark_service import bookmark_service
 from schemas import bookmark as schemas
 
 router = APIRouter(tags=["收藏管理"])

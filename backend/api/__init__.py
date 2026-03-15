@@ -20,17 +20,17 @@ async def lifespan(app: FastAPI):
     print("Redis 连接成功")
 
     # 初始化 MinIO 客户端
-    from core.minio_service import minio_service
+    from services.minio_service import minio_service
     minio_service.initialize()
     await minio_service.ensure_buckets()
     print("MinIO 连接成功，Bucket 检查完成")
 
     # 启动后台同步任务
-    from core.tasks import start_background_tasks
+    from tasks.tasks import start_background_tasks
     await start_background_tasks()
 
     # 启动投票和收藏同步任务
-    from core.sync_tasks import start_sync_tasks
+    from tasks.sync_tasks import start_sync_tasks
     await start_sync_tasks()
 
     yield # 应用运行期间

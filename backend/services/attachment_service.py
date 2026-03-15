@@ -4,7 +4,7 @@
 from datetime import timedelta
 from typing import Optional
 from core.cache import get_redis
-from core.minio_service import minio_service
+from services.minio_service import minio_service
 
 
 class AttachmentService:

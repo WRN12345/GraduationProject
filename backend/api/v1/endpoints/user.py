@@ -12,7 +12,7 @@ from models.comment import Comment
 from schemas import UserUpdate, User_Pydantic
 from schemas.user import UserProfile, UserActivity, UserInfo, UsernameUpdate, PasswordUpdate, UserProfileUpdate
 from core.security import get_current_user, get_password_hash, verify_password
-from core.minio_service import minio_service
+from services.minio_service import minio_service
 
 # 鉴权
 user = APIRouter(tags=["用户相关"], dependencies=[Depends(get_current_user)])
