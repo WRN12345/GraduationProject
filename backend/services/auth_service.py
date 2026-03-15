@@ -8,6 +8,7 @@ from models.user import User
 from core.security import verify_password, get_password_hash, create_access_token, create_refresh_token, verify_refresh_token
 from core.config import settings
 from tortoise.expressions import Q
+from services.token_blacklist_service import token_blacklist_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -167,17 +168,50 @@ class AuthService:
             "user_id": user.id
         }
 
-    async def logout(self) -> dict:
+    async def logout(self, authorization: str = None) -> dict:
         """
-        用户登出
+        用户登出 - 将 Token 加入黑名单
 
-        注意：由于 JWT 是无状态的，服务端无法直接使令牌失效
-        实际应用中可以使用 Redis 黑名单来实现服务端登出
+        Args:
+            authorization: Authorization 请求头值
 
         Returns:
             dict: 登出结果
         """
-        return {"message": "登出成功，请删除客户端存储的令牌"}
+        try:
+            # 提取 Bearer Token
+            if not authorization or not authorization.startswith("Bearer "):
+                return {
+                    "message": "登出成功",
+                    "warning": "未找到有效的 Token"
+                }
+
+            token = authorization.split(" ")[1]
+
+            # 添加到黑名单
+            result = await token_blacklist_service.add_to_blacklist(token)
+
+            if "error" in result:
+                # Token 无效或已过期，但仍返回成功（客户端会清除本地 Token）
+                return {
+                    "message": "登出成功",
+                    "warning": result["error"]
+                }
+
+            return {
+                "message": "登出成功，Token 已失效",
+                "details": {
+                    "ttl": result.get("ttl"),
+                    "exp": result.get("exp")
+                }
+            }
+
+        except Exception as e:
+            # 即使出错也返回成功（确保客户端能清除 Token）
+            return {
+                "message": "登出成功",
+                "warning": f"黑名单操作异常: {str(e)}"
+            }
 
 
 # 导出服务实例
