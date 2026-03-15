@@ -11,7 +11,7 @@ from models.post import Post
 from models.comment import Comment
 from core.cache import get_redis
 from core.security import get_current_user
-from core.vote_service import vote_service
+from services.vote_service import vote_service
 from schemas import vote as schemas
 
 router = APIRouter(tags=["投票点赞"])

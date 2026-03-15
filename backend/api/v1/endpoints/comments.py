@@ -16,7 +16,7 @@ from core.audit import create_audit_log
 from models.audit_log import ActionType, TargetType
 from tortoise import connections
 from schemas import comment as schemas
-from core.redis_service import comment_cache_service
+from services.redis_service import comment_cache_service
 
 router = APIRouter(tags=["评论相关"])
 

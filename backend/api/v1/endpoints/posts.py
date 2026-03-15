@@ -15,8 +15,8 @@ from core.security import get_current_user, get_current_user_optional
 from core.permissions import can_post_in_community, can_moderate_post, require_superuser, get_community_moderator
 from core.audit import create_audit_log
 from core.cache import get_redis
-from core.bookmark_service import bookmark_service
-from core.vote_service import vote_service
+from services.bookmark_service import bookmark_service
+from services.vote_service import vote_service
 from models.audit_log import ActionType, TargetType
 from schemas import post as schemas
 from models import post as models
@@ -270,7 +270,7 @@ async def get_hot_posts(
 
     使用 Redis ZSET 缓存热门帖子，避免频繁查询数据库
     """
-    from core.redis_service import hot_rank_service, post_cache_service
+    from services.redis_service import hot_rank_service, post_cache_service
 
     # 1. 从 Redis ZSET 获取热门 post_ids
     post_ids = await hot_rank_service.get_hot_post_ids(
@@ -421,7 +421,7 @@ async def get_post(
     redis: Redis = Depends(get_redis),
 ):
     """获取单个帖子详情（Pgpool 自动路由，包含用户状态）"""
-    from core.redis_service import hot_rank_service
+    from services.redis_service import hot_rank_service
 
     # Pgpool 自动路由，无需应用层判断
     post = await models.Post.get_or_none(id=post_id).select_related('author', 'community').prefetch_related('attachments')
@@ -512,8 +512,8 @@ async def update_post(
     redis: Redis = Depends(get_redis),
 ):
     """编辑帖子（仅作者）"""
-    from core.redis_service import post_cache_service
-    from core.minio_service import minio_service
+    from services.redis_service import post_cache_service
+    from services.minio_service import minio_service
 
     post = await models.Post.get_or_none(id=post_id)
 
@@ -598,7 +598,7 @@ async def delete_post(
 ):
     """软删除帖子（作者或管理员）"""
     from tortoise import transactions
-    from core.minio_service import minio_service
+    from services.minio_service import minio_service
 
     post = await models.Post.get_or_none(id=post_id)
 
@@ -648,7 +648,7 @@ async def delete_post(
         await minio_service.delete_file(attachment.file_url)
 
     # 从 Redis 热门榜中移除（异步执行，不阻塞响应）
-    from core.redis_service import hot_rank_service, post_cache_service
+    from services.redis_service import hot_rank_service, post_cache_service
     redis_dep = get_redis()
     redis = await redis_dep.__anext__()
     try:

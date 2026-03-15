@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from models.user import User
 from models.post_attachment import PostAttachment, AttachmentType
 from core.security import get_current_user
-from core.minio_service import minio_service
+from services.minio_service import minio_service
 
 router = APIRouter(prefix="/uploads", tags=["文件上传"])
 
