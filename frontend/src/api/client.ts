@@ -116,18 +116,27 @@ const createInterceptor = (): Middleware => {
       // 成功处理
       if (status >= 200 && status < 300) {
         console.log(`[API Client] 成功响应 ${status}:`, url);
-        try {
-          const body = await response.clone().json();
-          console.log('[API Client] 响应数据:', body);
-          if (body?.message) {
-            ElMessage.success(body.message);
+
+        // 投票和收藏接口使用静默模式（不显示成功提示）
+        // 这些操作已有乐观更新 + 视觉反馈，不需要额外的 Toast 提示
+        const isSilentEndpoint =
+          url.includes('/vote') ||
+          url.includes('/bookmark')
+
+        if (!isSilentEndpoint) {
+          try {
+            const body = await response.clone().json();
+            console.log('[API Client] 响应数据:', body);
+            if (body?.message) {
+              ElMessage.success(body.message);
+            }
+            if (body?.msg) {
+              ElMessage.success(body.msg);
+            }
+          } catch (e) {
+            console.log('[API Client] 响应不是 JSON 格式');
+            // JSON 解析失败，忽略
           }
-          if (body?.msg) {
-            ElMessage.success(body.msg);
-          }
-        } catch (e) {
-          console.log('[API Client] 响应不是 JSON 格式');
-          // JSON 解析失败，忽略
         }
       }
 

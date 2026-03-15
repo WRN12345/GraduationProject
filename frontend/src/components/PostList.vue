@@ -46,25 +46,36 @@
 
           <!-- 底部操作区 -->
           <div class="post-footer" @click.stop>
-            <!-- 左侧：点赞点踩 -->
+            <!-- 左侧：点赞点踩 收藏 -->
             <div class="footer-left">
-              <button class="vote-action-btn" :class="{ active: post.upvotes > 0 }">
-                <ThumbsUp :size="18" />
-                <span>{{ post.upvotes || 0 }}</span>
-              </button>
-              <button class="vote-action-btn">
-                <ThumbsDown :size="18" />
-              </button>
+              <!-- 投票按钮 -->
+              <VoteButtons
+                :target-type="'post'"
+                :target-id="post.id"
+                :upvotes="post.upvotes || 0"
+                :downvotes="post.downvotes || 0"
+                :user-vote="post.user_vote || 0"
+                :show-count="true"
+                :icon-size="16"
+                @vote-change="(state) => updatePostVote(post.id, state)"
+              />
+
+              <!-- 收藏按钮 -->
+              <BookmarkButton
+                :post-id="post.id"
+                :bookmarked="post.bookmarked || false"
+                :count="post.bookmark_count || 0"
+                :show-count="true"
+                :icon-size="16"
+                @bookmark-change="(b, c) => updatePostBookmark(post.id, b, c)"
+              />
             </div>
 
-            <!-- 右侧：评论收藏转发 -->
+            <!-- 右侧：评论 转发 -->
             <div class="footer-right">
-              <button class="action-btn" title="评论">
+              <button class="action-btn" title="评论" @click.stop="goToPost(post.id)">
                 <MessageCircle :size="18" />
                 <span>{{ post.comment_count || 0 }}</span>
-              </button>
-              <button class="action-btn" title="收藏">
-                <Bookmark :size="18" />
               </button>
               <button class="action-btn" title="转发">
                 <Share2 :size="18" />
@@ -122,6 +133,8 @@ import {
 } from 'lucide-vue-next'
 import { client } from '@/api/client'
 import { marked } from 'marked'
+import VoteButtons from '@/components/VoteButtons.vue'
+import BookmarkButton from '@/components/BookmarkButton.vue'
 
 const props = defineProps({
   communityId: {
@@ -248,6 +261,26 @@ const goToPost = (postId) => {
 const goToCommunity = (communityId) => {
   // 跳转到社区详情页
   router.push(`/community/${communityId}`)
+}
+
+// 更新帖子投票状态
+const updatePostVote = (postId, state) => {
+  const post = posts.value.find(p => p.id === postId)
+  if (post) {
+    post.upvotes = state.upvotes
+    post.downvotes = state.downvotes
+    post.user_vote = state.userVote
+    post.score = state.upvotes - state.downvotes
+  }
+}
+
+// 更新帖子收藏状态
+const updatePostBookmark = (postId, bookmarked, count) => {
+  const post = posts.value.find(p => p.id === postId)
+  if (post) {
+    post.bookmarked = bookmarked
+    post.bookmark_count = count
+  }
 }
 
 // 加载更多

@@ -4,16 +4,18 @@
 @Des: hash加密与安全认证
 """
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from tortoise.exceptions import DoesNotExist
 from core.config import settings
-from models.user import User 
+from models.user import User
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/v1/login", auto_error=False)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -134,7 +136,7 @@ async def get_current_admin(current_user: User = Depends(get_current_user)) -> U
     return current_user
 
 
-async def get_current_user_optional(token: str = Depends(lambda: None)) -> User | None:
+async def get_current_user_optional(token: Optional[str] = Depends(oauth2_scheme_optional)) -> Optional[User]:
     """
     依赖项：可选认证，如果提供了 token 则验证，否则返回 None
     用于公开内容但支持用户信息的接口

@@ -59,7 +59,7 @@ def db_retry(config: RetryConfig = None):
                 except (
                     asyncpg.exceptions.ConnectionDoesNotExistError,
                     asyncpg.exceptions.InterfaceError,
-                    asyncpg.exceptions.OperationalError,
+                    asyncpg.exceptions.PostgresConnectionError,
                     DBConnectionError,
                     OperationalError,
                 ) as e:

@@ -51,6 +51,19 @@ class Settings(BaseSettings):
     HOT_SHARE_WEIGHT: int = int(os.getenv("HOT_SHARE_WEIGHT", "5"))  # 分享权重
     HOT_VOTE_WEIGHT: int = int(os.getenv("HOT_VOTE_WEIGHT", "10"))  # 投票权重
 
+    # --- 投票和收藏同步配置 ---
+    VOTE_SYNC_INTERVAL: int = int(os.getenv("VOTE_SYNC_INTERVAL", "300"))  # 投票同步间隔（秒）
+    BOOKMARK_SYNC_INTERVAL: int = int(os.getenv("BOOKMARK_SYNC_INTERVAL", "300"))  # 收藏同步间隔（秒）
+
+    # --- 投票 Redis TTL 配置 ---
+    REDIS_VOTE_COUNTS_TTL: int = int(os.getenv("REDIS_VOTE_COUNTS_TTL", "3600"))  # 投票计数 TTL (1小时)
+    REDIS_USER_VOTE_TTL: int = int(os.getenv("REDIS_USER_VOTE_TTL", "86400"))  # 用户投票记录 TTL (24小时)
+    REDIS_VOTERS_LIST_TTL: int = int(os.getenv("REDIS_VOTERS_LIST_TTL", "604800"))  # 投票用户列表 TTL (7天)
+
+    # --- 收藏 Redis TTL 配置 ---
+    REDIS_BOOKMARK_COUNT_TTL: int = int(os.getenv("REDIS_BOOKMARK_COUNT_TTL", "3600"))  # 收藏计数 TTL (1小时)
+    REDIS_BOOKMARK_DETAILS_TTL: int = int(os.getenv("REDIS_BOOKMARK_DETAILS_TTL", "86400"))  # 收藏详情 TTL (24小时)
+
     # --- Redis 评论缓存配置 ---
     REDIS_COMMENT_TTL: int = int(os.getenv("REDIS_COMMENT_TTL", "3600"))  # 评论缓存 TTL (1小时)
     REDIS_COMMENT_META_TTL: int = int(os.getenv("REDIS_COMMENT_META_TTL", "600"))  # 评论元数据 TTL (10分钟)

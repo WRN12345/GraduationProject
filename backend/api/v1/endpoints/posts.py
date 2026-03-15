@@ -4,22 +4,102 @@
 @Des: 帖子路由
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timezone
 from pydantic import BaseModel
 from redis.asyncio import Redis
 from models.user import User
 from models.community import Community
 from models.post_attachment import PostAttachment
-from core.security import get_current_user
+from core.security import get_current_user, get_current_user_optional
 from core.permissions import can_post_in_community, can_moderate_post, require_superuser, get_community_moderator
 from core.audit import create_audit_log
 from core.cache import get_redis
+from core.bookmark_service import bookmark_service
+from core.vote_service import vote_service
 from models.audit_log import ActionType, TargetType
 from schemas import post as schemas
 from models import post as models
 
 router = APIRouter(tags=["帖子相关"])
+
+
+async def _enrich_post_with_user_state(
+    post: models.Post,
+    current_user: Optional[User],
+    redis: Redis
+) -> dict:
+    """
+    为帖子对象添加用户状态字段
+
+    Returns:
+        dict: 包含用户状态的帖子字典
+    """
+    post_dict = {
+        "id": post.id,
+        "title": post.title,
+        "content": post.content,
+        "score": post.score,
+        "hot_rank": post.hot_rank,
+        "author_id": post.author_id,
+        "community_id": post.community_id,
+        "author": {
+            "id": post.author.id,
+            "username": post.author.username,
+        } if post.author else None,
+        "community": {
+            "id": post.community.id,
+            "name": post.community.name,
+        } if post.community else None,
+        "attachments": [
+            {
+                "id": a.id,
+                "attachment_type": a.attachment_type,
+                "file_name": a.file_name,
+                "file_url": a.file_url,
+                "file_size": a.file_size,
+                "mime_type": a.mime_type,
+                "sort_order": a.sort_order,
+            }
+            for a in post.attachments
+        ],
+        "is_edited": post.is_edited,
+        "is_locked": post.is_locked,
+        "is_highlighted": post.is_highlighted,
+        "is_pinned": post.is_pinned,
+        "deleted_by_id": post.deleted_by_id,
+        "deleted_at": post.deleted_at.isoformat() if post.deleted_at else None,
+        "created_at": post.created_at.isoformat(),
+        "updated_at": post.updated_at.isoformat() if post.updated_at else None,
+    }
+
+    # 从 Redis 获取最新投票数
+    upvotes, downvotes, score = await vote_service.get_vote_counts(redis, 'post', post.id)
+    post_dict["upvotes"] = upvotes
+    post_dict["downvotes"] = downvotes
+    post_dict["score"] = score
+
+    # 添加用户状态字段
+    if current_user:
+        # 获取投票状态
+        post_dict["user_vote"] = await vote_service.get_user_vote_status(
+            redis, current_user.id, 'post', post.id
+        )
+
+        # 获取收藏状态
+        post_dict["bookmarked"] = await bookmark_service.is_bookmarked(
+            redis, current_user.id, post.id
+        )
+    else:
+        post_dict["user_vote"] = 0
+        post_dict["bookmarked"] = False
+
+    # 获取收藏数（公开数据）
+    post_dict["bookmark_count"] = await bookmark_service.get_bookmark_count(
+        redis, post.id
+    )
+
+    return post_dict
 
 
 async def _get_paginated_posts(
@@ -28,6 +108,8 @@ async def _get_paginated_posts(
     skip: int = 0,
     limit: int = 20,
     include_deleted: bool = False,
+    current_user: Optional[User] = None,
+    redis: Redis = None,
 ):
     """
     通用的分页帖子查询函数
@@ -38,6 +120,8 @@ async def _get_paginated_posts(
         skip: 跳过条数
         limit: 返回条数
         include_deleted: 是否包含已删除帖子
+        current_user: 当前登录用户（可选）
+        redis: Redis 客户端
     """
     # 构建查询（Pgpool 自动路由）
     query = models.Post.all().order_by(order_by)
@@ -56,7 +140,84 @@ async def _get_paginated_posts(
     total = await query.count()
 
     # 获取当前页数据
-    items = await query.offset(skip).limit(limit)
+    items_orm = await query.offset(skip).limit(limit)
+
+    # 为每个帖子添加用户状态（如果有 Redis）
+    items = []
+    if redis and current_user:
+        # 批量获取用户状态以提高性能
+        post_ids = [p.id for p in items_orm]
+
+        # 批量获取投票状态
+        vote_statuses = await vote_service.batch_get_vote_statuses(
+            redis, current_user.id, [('post', pid) for pid in post_ids]
+        )
+
+        # 批量获取收藏状态
+        bookmark_statuses = await bookmark_service.batch_check_bookmarked(
+            redis, current_user.id, post_ids
+        )
+
+        # 批量获取收藏数
+        bookmark_counts = await bookmark_service.batch_get_bookmark_counts(
+            redis, post_ids
+        )
+
+        # 构建响应数据
+        for post in items_orm:
+            post_dict = {
+                "id": post.id,
+                "title": post.title,
+                "content": post.content,
+                "score": post.score,
+                "hot_rank": post.hot_rank,
+                "author_id": post.author_id,
+                "community_id": post.community_id,
+                "author": {
+                    "id": post.author.id,
+                    "username": post.author.username,
+                } if post.author else None,
+                "community": {
+                    "id": post.community.id,
+                    "name": post.community.name,
+                } if post.community else None,
+                "attachments": [
+                    {
+                        "id": a.id,
+                        "attachment_type": a.attachment_type,
+                        "file_name": a.file_name,
+                        "file_url": a.file_url,
+                        "file_size": a.file_size,
+                        "mime_type": a.mime_type,
+                        "sort_order": a.sort_order,
+                    }
+                    for a in post.attachments
+                ],
+                "is_edited": post.is_edited,
+                "is_locked": post.is_locked,
+                "is_highlighted": post.is_highlighted,
+                "is_pinned": post.is_pinned,
+                "deleted_by_id": post.deleted_by_id,
+                "deleted_at": post.deleted_at.isoformat() if post.deleted_at else None,
+                "created_at": post.created_at.isoformat(),
+                "updated_at": post.updated_at.isoformat() if post.updated_at else None,
+                # 用户状态字段
+                "user_vote": vote_statuses.get(('post', post.id), 0),
+                "bookmarked": bookmark_statuses.get(post.id, False),
+                "bookmark_count": bookmark_counts.get(post.id, 0),
+            }
+
+            # 从 Redis 获取最新投票数
+            upvotes, downvotes, score = await vote_service.get_vote_counts(redis, 'post', post.id)
+            post_dict["upvotes"] = upvotes
+            post_dict["downvotes"] = downvotes
+            post_dict["score"] = score
+
+            items.append(post_dict)
+    else:
+        # 无用户或无Redis，返回默认状态
+        for post in items_orm:
+            items.append(schemas.PostOut.model_validate(post))
 
     # 计算是否有更多数据
     has_more = skip + limit < total
@@ -77,9 +238,11 @@ async def list_posts(
     skip: int = 0,
     limit: int = Query(20, ge=1, le=100), # 限制每页最多 100 条
     include_deleted: bool = False,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    redis: Redis = Depends(get_redis)
 ):
     """
-    获取帖子列表（分页）
+    获取帖子列表（分页，包含用户状态）
 
     返回分页信息，前端可根据 total 计算总页数
     """
@@ -88,7 +251,9 @@ async def list_posts(
         community_id=community_id,
         skip=skip,
         limit=limit,
-        include_deleted=include_deleted
+        include_deleted=include_deleted,
+        current_user=current_user,
+        redis=redis
     )
 
 
@@ -168,8 +333,6 @@ async def get_hot_posts(
                     }
                     for a in post.attachments
                 ],
-                "upvotes": post.upvotes,
-                "downvotes": post.downvotes,
                 "is_edited": post.is_edited,
                 "is_locked": post.is_locked,
                 "is_highlighted": post.is_highlighted,
@@ -179,6 +342,13 @@ async def get_hot_posts(
                 "created_at": post.created_at.isoformat(),
                 "updated_at": post.updated_at.isoformat() if post.updated_at else None,
             }
+
+            # 从 Redis 获取最新投票数
+            upvotes, downvotes, score = await vote_service.get_vote_counts(redis, 'post', post.id)
+            post_dict["upvotes"] = upvotes
+            post_dict["downvotes"] = downvotes
+            post_dict["score"] = score
+
             cached_posts[post.id] = post_dict
             # 异步回填缓存（不阻塞响应）
             await post_cache_service.cache_post(redis, post.id, post_dict)
@@ -247,9 +417,10 @@ async def create_post(
 
 async def get_post(
     post_id: int,
+    current_user: Optional[User] = Depends(get_current_user_optional),
     redis: Redis = Depends(get_redis),
 ):
-    """获取单个帖子详情（Pgpool 自动路由）"""
+    """获取单个帖子详情（Pgpool 自动路由，包含用户状态）"""
     from core.redis_service import hot_rank_service
 
     # Pgpool 自动路由，无需应用层判断
@@ -265,7 +436,72 @@ async def get_post(
         created_at=post.created_at
     )
 
-    return post
+    # 为帖子添加用户状态
+    post_dict = {
+        "id": post.id,
+        "title": post.title,
+        "content": post.content,
+        "score": post.score,
+        "hot_rank": post.hot_rank,
+        "author_id": post.author_id,
+        "community_id": post.community_id,
+        "author": {
+            "id": post.author.id,
+            "username": post.author.username,
+        } if post.author else None,
+        "community": {
+            "id": post.community.id,
+            "name": post.community.name,
+        } if post.community else None,
+        "attachments": [
+            {
+                "id": a.id,
+                "attachment_type": a.attachment_type,
+                "file_name": a.file_name,
+                "file_url": a.file_url,
+                "file_size": a.file_size,
+                "mime_type": a.mime_type,
+                "sort_order": a.sort_order,
+            }
+            for a in post.attachments
+        ],
+        "is_edited": post.is_edited,
+        "is_locked": post.is_locked,
+        "is_highlighted": post.is_highlighted,
+        "is_pinned": post.is_pinned,
+        "deleted_by_id": post.deleted_by_id,
+        "deleted_at": post.deleted_at.isoformat() if post.deleted_at else None,
+        "created_at": post.created_at.isoformat(),
+        "updated_at": post.updated_at.isoformat() if post.updated_at else None,
+    }
+
+    # 从 Redis 获取最新投票数
+    upvotes, downvotes, score = await vote_service.get_vote_counts(redis, 'post', post.id)
+    post_dict["upvotes"] = upvotes
+    post_dict["downvotes"] = downvotes
+    post_dict["score"] = score
+
+    # 添加用户状态字段
+    if current_user:
+        # 获取投票状态
+        post_dict["user_vote"] = await vote_service.get_user_vote_status(
+            redis, current_user.id, 'post', post.id
+        )
+
+        # 获取收藏状态
+        post_dict["bookmarked"] = await bookmark_service.is_bookmarked(
+            redis, current_user.id, post.id
+        )
+    else:
+        post_dict["user_vote"] = 0
+        post_dict["bookmarked"] = False
+
+    # 获取收藏数（公开数据）
+    post_dict["bookmark_count"] = await bookmark_service.get_bookmark_count(
+        redis, post.id
+    )
+
+    return post_dict
 
 @router.put("/posts/{post_id}", response_model=schemas.PostOut, summary="编辑帖子" )
 

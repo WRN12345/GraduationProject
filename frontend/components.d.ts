@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     Aside: typeof import('./src/components/Aside.vue')['default']
+    BookmarkButton: typeof import('./src/components/BookmarkButton.vue')['default']
     CommentActions: typeof import('./src/components/comment/CommentActions.vue')['default']
     CommentContent: typeof import('./src/components/comment/CommentContent.vue')['default']
     CommentEditor: typeof import('./src/components/comment/CommentEditor.vue')['default']
@@ -46,5 +47,6 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     VoteButton: typeof import('./src/components/comment/VoteButton.vue')['default']
+    VoteButtons: typeof import('./src/components/VoteButtons.vue')['default']
   }
 }

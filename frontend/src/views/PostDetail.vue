@@ -80,6 +80,30 @@
             </div>
           </div>
         </div>
+
+        <!-- 投票和收藏操作区 -->
+        <div class="post-actions">
+          <VoteButtons
+            v-if="post"
+            :target-type="'post'"
+            :target-id="post.id"
+            :upvotes="post.upvotes || 0"
+            :downvotes="post.downvotes || 0"
+            :user-vote="post.user_vote || 0"
+            :show-count="true"
+            :icon-size="18"
+            @vote-change="handleVoteChange"
+          />
+
+          <BookmarkButton
+            v-if="post"
+            :post-id="post.id"
+            :bookmarked="post.bookmarked || false"
+            :count="post.bookmark_count || 0"
+            :show-count="false"
+            :icon-size="18"
+          />
+        </div>
       </div>
 
       <!-- 评论区 -->
@@ -100,6 +124,8 @@ import { useRoute } from 'vue-router'
 import { client } from '@/api/client'
 import { marked } from 'marked'
 import CommentTree from '@/components/comment/CommentTree.vue'
+import VoteButtons from '@/components/VoteButtons.vue'
+import BookmarkButton from '@/components/BookmarkButton.vue'
 
 const route = useRoute()
 
@@ -158,6 +184,16 @@ const downloadFile = (attachment) => {
   link.href = attachment.file_url
   link.download = attachment.file_name
   link.click()
+}
+
+// 处理投票状态变化
+const handleVoteChange = (state) => {
+  if (post.value) {
+    post.value.upvotes = state.upvotes
+    post.value.downvotes = state.downvotes
+    post.value.user_vote = state.userVote
+    post.value.score = state.upvotes - state.downvotes
+  }
 }
 
 // 加载帖子详情
@@ -315,6 +351,30 @@ onMounted(() => {
   border: none;
   border-top: 1px solid #edeff1;
   margin: 16px 0;
+}
+
+/* 操作按钮区 */
+.post-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  margin: 20px 0;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.post-actions:hover {
+  border-color: #dee2e6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.post-actions > * {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .content-body {
@@ -542,6 +602,12 @@ onMounted(() => {
 
   .content-body {
     font-size: 15px;
+  }
+
+  .post-actions {
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 8px;
   }
 }
 </style>
