@@ -6,7 +6,6 @@
 
 from .login import login
 from .user import user, user_public
-from .movies import movies
 from .posts import router as posts
 from .comments import router as comments
 from .communities import router as communities
