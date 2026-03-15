@@ -4,7 +4,7 @@
 @Des: 登录注册路由
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from schemas import UserCreate
@@ -94,6 +94,6 @@ async def refresh_token(refresh_request: TokenRefresh):
 
 # --- 登出接口 ---
 @login.post("/logout", summary="用户登出")
-async def logout():
-    """登出接口（客户端应删除存储的令牌）"""
-    return await auth_service.logout()
+async def logout(authorization: str = Header(None)):
+    """登出接口，将 Token 加入黑名单"""
+    return await auth_service.logout(authorization=authorization)
