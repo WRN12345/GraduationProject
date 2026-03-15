@@ -56,7 +56,10 @@ const navigateTo = (path) => {
         <TrendingUp :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">受欢迎</span>
       </div>
-
+      <div class="nav-item" @click="navigateTo('/bookmarks')">
+        <Bookmark :size="20" class="icon" />
+        <span v-if="!isCollapsed" class="text">收藏夹</span>
+      </div>
     </nav>
 
     <div class="divider" v-if="!isCollapsed"></div>
@@ -71,9 +74,15 @@ const navigateTo = (path) => {
         <Compass :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">全部社区</span>
       </div>
+    </nav>
+
+    <div class="divider" v-if="!isCollapsed"></div>
+
+    <div class="section-title" v-if="!isCollapsed">设置</div>
+    <nav class="nav-group">
       <div class="nav-item">
         <Settings :size="20" class="icon" />
-        <span v-if="!isCollapsed" class="text">设置</span>
+        <span v-if="!isCollapsed" class="text">系统设置</span>
       </div>
     </nav>
 
@@ -92,10 +101,6 @@ const navigateTo = (path) => {
       <div class="nav-item">
         <Eye :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">历史记录</span>
-      </div>
-      <div class="nav-item">
-        <Bookmark :size="20" class="icon" />
-        <span v-if="!isCollapsed" class="text">收藏夹</span>
       </div>
     </nav>
     <div class="divider" v-if="!isCollapsed"></div>

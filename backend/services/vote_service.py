@@ -207,7 +207,9 @@ class VoteService:
                 current = tonumber(current)
                 if current <= 0 then
                     redis.call('HSET', KEYS[1], 'upvotes', 0)
-                    redis.call('HSET', KEYS[1], 'score', tonumber(redis.call('HGET', KEYS[1], 'downvotes')) * -1)
+                    local downvotes = redis.call('HGET', KEYS[1], 'downvotes')
+                    if downvotes == false then downvotes = 0 end
+                    redis.call('HSET', KEYS[1], 'score', tonumber(downvotes) * -1)
                 else
                     redis.call('HINCRBY', KEYS[1], 'upvotes', -1)
                     redis.call('HINCRBY', KEYS[1], 'score', ARGV[1])
@@ -222,7 +224,9 @@ class VoteService:
                 current = tonumber(current)
                 if current <= 0 then
                     redis.call('HSET', KEYS[1], 'downvotes', 0)
-                    redis.call('HSET', KEYS[1], 'score', tonumber(redis.call('HGET', KEYS[1], 'upvotes')))
+                    local upvotes = redis.call('HGET', KEYS[1], 'upvotes')
+                    if upvotes == false then upvotes = 0 end
+                    redis.call('HSET', KEYS[1], 'score', tonumber(upvotes))
                 else
                     redis.call('HINCRBY', KEYS[1], 'downvotes', -1)
                     redis.call('HINCRBY', KEYS[1], 'score', ARGV[1])

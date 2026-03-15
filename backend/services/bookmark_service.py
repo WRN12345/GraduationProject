@@ -257,6 +257,108 @@ class BookmarkService:
             "has_more": skip + limit < total
         }
 
+    async def get_user_bookmarked_posts(
+        self,
+        redis: Redis,
+        user_id: int,
+        skip: int = 0,
+        limit: int = 20,
+        current_user: Optional[User] = None
+    ) -> dict:
+        """
+        获取用户收藏的帖子列表（完整 PostOut 格式）
+
+        Args:
+            redis: Redis 客户端
+            user_id: 用户 ID
+            skip: 跳过条数
+            limit: 返回条数
+            current_user: 当前用户（用于添加用户状态）
+
+        Returns:
+            dict: 分页帖子列表（PostOut 格式）
+        """
+        # 延迟导入避免循环依赖
+        from services.vote_service import vote_service
+        from services.post_service import post_service
+
+        # 1. 从 Redis ZSET 获取收藏的 post_ids（倒序，按收藏时间）
+        bookmarks_key = self._get_user_bookmarks_key(user_id)
+        total = await redis.zcard(bookmarks_key)
+
+        if total == 0:
+            return {
+                "items": [],
+                "total": 0,
+                "skip": skip,
+                "limit": limit,
+                "has_more": False
+            }
+
+        post_ids = await redis.zrevrange(
+            bookmarks_key,
+            start=skip,
+            end=skip + limit - 1
+        )
+
+        if not post_ids:
+            return {
+                "items": [],
+                "total": total,
+                "skip": skip,
+                "limit": limit,
+                "has_more": False
+            }
+
+        post_ids = [int(pid) for pid in post_ids]
+
+        # 2. 从数据库获取完整的帖子信息
+        posts = await Post.filter(
+            id__in=post_ids,
+            deleted_at__isnull=True
+        ).select_related('author', 'community').prefetch_related('attachments')
+
+        # 3. 按 Redis 中的顺序重新排序（保持收藏时间倒序）
+        post_dict = {post.id: post for post in posts}
+        sorted_posts = [post_dict[pid] for pid in post_ids if pid in post_dict]
+
+        # 4. 构建响应数据（使用 post_service 的 _build_post_dict 方法）
+        items = []
+        for post in sorted_posts:
+            post_dict_data = post_service._build_post_dict(post)
+
+            # 添加投票数据
+            upvotes, downvotes, score = await vote_service.get_vote_counts(
+                redis, 'post', post.id
+            )
+            post_dict_data["upvotes"] = upvotes
+            post_dict_data["downvotes"] = downvotes
+            post_dict_data["score"] = score
+
+            # 添加用户状态字段
+            if current_user:
+                user_state = await post_service._get_user_state(
+                    redis, post.id, current_user
+                )
+                post_dict_data.update(user_state)
+            else:
+                post_dict_data["user_vote"] = 0
+                post_dict_data["bookmarked"] = True  # 列表中的都是已收藏的
+                post_dict_data["bookmark_count"] = await self.get_bookmark_count(redis, post.id)
+
+            items.append(post_dict_data)
+
+        # 5. 计算是否有更多数据
+        has_more = skip + limit < total
+
+        return {
+            "items": items,
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+            "has_more": has_more
+        }
+
     async def batch_check_bookmarked(
         self,
         redis: Redis,
