@@ -66,6 +66,12 @@ const routes = [
         name: 'CommunityDetail',
         component: () => import('../views/CommunityDetail.vue'),
         meta: { title: '社区详情' }
+      },
+      {
+        path: 'trending',
+        name: 'Trending',
+        component: () => import('../views/Trending.vue'),
+        meta: { title: '热门内容' }
       }
     ]
   }

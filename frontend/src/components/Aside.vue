@@ -52,7 +52,7 @@ const navigateTo = (path) => {
         <Home :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">主页</span>
       </div>
-      <div class="nav-item">
+      <div class="nav-item" @click="navigateTo('/trending')">
         <TrendingUp :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">受欢迎</span>
       </div>
