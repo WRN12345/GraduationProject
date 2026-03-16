@@ -279,8 +279,8 @@ class BookmarkService:
             dict: 分页帖子列表（PostOut 格式）
         """
         # 延迟导入避免循环依赖
-        from services.vote_service import vote_service
-        from services.post_service import post_service
+        from core.services.content.vote_service import vote_service
+        from core.services.content.post_service import post_service
 
         # 1. 从 Redis ZSET 获取收藏的 post_ids（倒序，按收藏时间）
         bookmarks_key = self._get_user_bookmarks_key(user_id)

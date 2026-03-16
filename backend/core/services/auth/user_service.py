@@ -8,7 +8,7 @@ from models.user import User
 from models.post import Post
 from models.comment import Comment
 from core.security import get_password_hash, verify_password
-from services.minio_service import minio_service
+from core.services.infrastructure.minio_service import minio_service
 import logging
 
 logger = logging.getLogger(__name__)

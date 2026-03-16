@@ -14,7 +14,7 @@ from core.permissions import can_comment_on_post, get_community_moderator
 from core.audit import create_audit_log
 from models.audit_log import ActionType, TargetType
 from schemas import comment as schemas
-from services.comment_service import comment_service
+from core.services import comment_service
 
 router = APIRouter(tags=["评论相关"])
 

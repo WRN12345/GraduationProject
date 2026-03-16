@@ -9,7 +9,7 @@ from typing import Optional
 import asyncio
 from models.user import User
 from schemas import search as search_schemas
-from services.search_service import search_service
+from core.services import search_service
 
 router = APIRouter(tags=["搜索"])
 

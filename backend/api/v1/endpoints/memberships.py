@@ -9,7 +9,7 @@ from models.membership import CommunityMembership, MembershipRole
 from models.post import Post
 from core.security import get_current_user
 from core.permissions import get_community_moderator, get_community_owner, get_current_member
-from services.membership_service import membership_service
+from core.services import membership_service
 
 router = APIRouter(prefix="/memberships", tags=["社区成员管理"])
 

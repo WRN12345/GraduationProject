@@ -10,10 +10,10 @@ from models.user import User
 from models.community import Community
 from models.post_attachment import PostAttachment
 from models import post as models
-from services.bookmark_service import bookmark_service
-from services.vote_service import vote_service
-from services.redis_service import hot_rank_service, post_cache_service
-from services.minio_service import minio_service
+from core.services.content.bookmark_service import bookmark_service
+from core.services.content.vote_service import vote_service
+from core.services.infrastructure.redis_service import hot_rank_service, post_cache_service
+from core.services.infrastructure.minio_service import minio_service
 from core.cache import get_redis
 from schemas import post as schemas
 from tortoise import transactions

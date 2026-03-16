@@ -9,7 +9,7 @@ from models.user import User
 from schemas import UserUpdate
 from schemas.user import UserProfile, UserActivity, UserInfo, UsernameUpdate, PasswordUpdate, UserProfileUpdate
 from core.security import get_current_user
-from services.user_service import user_service
+from core.services import user_service
 
 # 鉴权
 user = APIRouter(tags=["用户相关"], dependencies=[Depends(get_current_user)])

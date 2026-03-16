@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Header
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from schemas import UserCreate
-from services.auth_service import auth_service
+from core.services import auth_service
 
 login = APIRouter(tags=["认证相关"])
 

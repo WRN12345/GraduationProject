@@ -6,7 +6,7 @@ from typing import List
 from pydantic import BaseModel
 
 from models.post_attachment import PostAttachment
-from services.attachment_service import attachment_service
+from core.services import attachment_service
 
 router = APIRouter(prefix="/attachments", tags=["附件访问"])
 

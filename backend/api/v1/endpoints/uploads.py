@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from models.user import User
 from core.security import get_current_user
-from services.upload_service import upload_service
+from core.services import upload_service
 
 router = APIRouter(prefix="/uploads", tags=["文件上传"])
 

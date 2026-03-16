@@ -8,7 +8,7 @@ import logging
 from typing import Optional
 logger = logging.getLogger(__name__)
 from core.cache import get_redis
-from services.redis_service import hot_rank_service
+from core.services.infrastructure.redis_service import hot_rank_service
 from models.post import Post
 from core.config import settings
 from core.database import db_retry, check_db_connection, ensure_connection
