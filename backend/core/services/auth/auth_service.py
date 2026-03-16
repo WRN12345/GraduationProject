@@ -8,7 +8,7 @@ from models.user import User
 from core.security import verify_password, get_password_hash, create_access_token, create_refresh_token, verify_refresh_token
 from core.config import settings
 from tortoise.expressions import Q
-from services.token_blacklist_service import token_blacklist_service
+from core.services.auth.token_blacklist_service import token_blacklist_service
 import logging
 
 logger = logging.getLogger(__name__)

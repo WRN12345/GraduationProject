@@ -9,7 +9,7 @@ from redis.asyncio import Redis
 from models.user import User
 from models.comment import Comment
 from models.post import Post
-from services.redis_service import comment_cache_service
+from core.services.infrastructure.redis_service import comment_cache_service
 from core.config import settings
 import logging
 

@@ -11,7 +11,7 @@ from core.security import get_current_user, get_current_user_optional
 from core.permissions import can_post_in_community, require_superuser
 from core.cache import get_redis
 from schemas import post as schemas
-from services.post_service import post_service
+from core.services import post_service
 
 router = APIRouter(tags=["帖子相关"])
 

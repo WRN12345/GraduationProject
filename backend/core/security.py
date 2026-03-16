@@ -94,7 +94,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     )
 
     # 延迟导入避免循环依赖
-    from services.token_blacklist_service import token_blacklist_service
+    from core.services.auth.token_blacklist_service import token_blacklist_service
 
     # 1. 首先检查黑名单
     is_blacklisted = await token_blacklist_service.is_blacklisted(token)

@@ -6,7 +6,7 @@
 from typing import List, Tuple
 from models.user import User
 from models.post_attachment import PostAttachment, AttachmentType
-from services.minio_service import minio_service
+from core.services.infrastructure.minio_service import minio_service
 import logging
 
 logger = logging.getLogger(__name__)

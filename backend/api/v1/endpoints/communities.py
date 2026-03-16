@@ -9,7 +9,7 @@ from core.security import get_current_user
 from models.user import User
 from models.membership import CommunityMembership, MembershipRole
 from schemas.community import CommunityCreate, CommunityOut, CommunityRecommendation
-from services.community_service import community_service
+from core.services import community_service
 
 router = APIRouter(prefix="/communities", tags=["社区板块"])
 
@@ -48,7 +48,7 @@ async def join_community(
     current_user: User = Depends(get_current_user),
 ):
     """加入指定社区"""
-    from services.membership_service import membership_service
+    from core.services import membership_service
 
     result = await membership_service.join_community(current_user, community_id)
 

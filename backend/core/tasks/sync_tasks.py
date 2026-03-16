@@ -15,8 +15,8 @@ from models.vote import Vote
 from models.post import Post
 from models.comment import Comment
 from models.bookmark import Bookmark
-from services.vote_service import vote_service
-from services.bookmark_service import bookmark_service
+from core.services.content.vote_service import vote_service
+from core.services.content.bookmark_service import bookmark_service
 
 logger = logging.getLogger(__name__)
 
