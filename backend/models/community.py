@@ -16,6 +16,8 @@ class Community(models.Model):
 
     # 统计字段（冗余，提升查询性能）
     member_count = fields.IntField(default=0, description="成员数量")
+    post_count = fields.IntField(default=0, description="帖子数量")
+    last_active_at = fields.DatetimeField(null=True, description="最后活跃时间")
 
     created_at = fields.DatetimeField(auto_now_add=True)
 

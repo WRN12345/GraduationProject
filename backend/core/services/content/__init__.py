@@ -8,6 +8,7 @@ from .bookmark_service import bookmark_service
 from .community_service import community_service
 from .membership_service import membership_service
 from .search_service import search_service
+from .hot_content_service import hot_content_service
 
 __all__ = [
     "post_service",
@@ -17,4 +18,5 @@ __all__ = [
     "community_service",
     "membership_service",
     "search_service",
+    "hot_content_service",
 ]
