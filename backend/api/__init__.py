@@ -33,6 +33,10 @@ async def lifespan(app: FastAPI):
     from core.tasks.sync_tasks import start_sync_tasks
     await start_sync_tasks()
 
+    # 启动统计同步任务
+    from core.tasks.stats_tasks import start_stats_tasks
+    await start_stats_tasks()
+
     yield # 应用运行期间
 
     # [关闭时执行]

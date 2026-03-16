@@ -8,6 +8,7 @@ from .endpoints import memberships
 from .endpoints import *
 from .endpoints import uploads
 from .endpoints import attachments
+from .endpoints import hot
 
 
 
@@ -25,3 +26,4 @@ v1.include_router(bookmarks)
 v1.include_router(memberships.router)
 v1.include_router(uploads.router)
 v1.include_router(attachments.router)
+v1.include_router(hot.router)

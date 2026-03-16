@@ -13,12 +13,18 @@ from datetime import timezone
 
 
 class HotRankService:
-    """热度排行服务 - 使用 Redis ZSET 管理热门帖子"""
+    """热度排行服务 - 使用 Redis ZSET 管理热门帖子、社区、用户"""
 
     # Redis Key 前缀
     HOT_POSTS_GLOBAL = "hot:posts:global"
     HOT_POSTS_COMMUNITY = "hot:posts:community"
     POST_INTERACTIONS = "post:interactions"  # Hash 存储交互计数
+
+    # 新增：社区和用户热度相关
+    HOT_COMMUNITIES_GLOBAL = "hot:communities:global"
+    HOT_USERS_GLOBAL = "hot:users:global"
+    COMMUNITY_STATS_PREFIX = "community:stats"
+    USER_STATS_PREFIX = "user:stats"
 
     @staticmethod
     def _get_post_interaction_key(post_id: int) -> str:
@@ -195,6 +201,214 @@ class HotRankService:
 
         # 清理交互计数
         await redis.delete(self._get_post_interaction_key(post_id))
+
+    # ==================== 社区热度相关方法 ====================
+
+    @staticmethod
+    def _get_community_stats_key(community_id: int) -> str:
+        """获取社区统计 key"""
+        return f"{HotRankService.COMMUNITY_STATS_PREFIX}:{community_id}"
+
+    @staticmethod
+    def _calculate_community_hot_rank(
+        member_count: int,
+        post_count: int,
+        recent_posts: int,  # 近7天帖子数
+        created_at: datetime
+    ) -> float:
+        """
+        计算社区热度分数
+
+        公式: 成员权重 + 帖子权重 + 活跃度权重 + 时间衰减
+        """
+        # 成员对数权重（每10个成员+1分，最多5分）
+        member_score = min(math.log10(max(member_count, 1)), 5)
+
+        # 帖子数量对数权重
+        post_score = min(math.log10(max(post_count, 1)), 5)
+
+        # 近期活跃度（近7天帖子，权重更高）
+        activity_score = min(recent_posts * 0.5, 3)
+
+        # 时间衰减（社区越老，优势越小）
+        epoch_seconds = int(created_at.timestamp())
+        time_decay = (epoch_seconds / 45000) * 0.1
+
+        return round(member_score + post_score + activity_score + time_decay, 7)
+
+    async def sync_community_rank_from_db(
+        self,
+        redis: Redis,
+        community_id: int,
+        member_count: int,
+        post_count: int,
+        recent_posts: int,
+        created_at: datetime
+    ):
+        """
+        从数据库同步社区热度到 Redis
+
+        用于初始化或定时同步
+        """
+        hot_rank = self._calculate_community_hot_rank(
+            member_count=member_count,
+            post_count=post_count,
+            recent_posts=recent_posts,
+            created_at=created_at
+        )
+
+        # 更新全局热门社区 ZSET
+        await redis.zadd(self.HOT_COMMUNITIES_GLOBAL, {str(community_id): hot_rank})
+
+        # 缓存社区统计详情
+        stats_key = self._get_community_stats_key(community_id)
+        await redis.hset(stats_key, mapping={
+            'member_count': member_count,
+            'post_count': post_count,
+            'recent_posts': recent_posts,
+            'hot_rank': str(hot_rank)
+        })
+        await redis.expire(stats_key, 3600)  # 1小时过期
+
+    async def get_hot_community_ids(
+        self,
+        redis: Redis,
+        limit: int = 20,
+        offset: int = 0
+    ) -> List[int]:
+        """
+        获取热门社区 ID 列表
+
+        Args:
+            redis: Redis 客户端
+            limit: 返回数量
+            offset: 偏移量
+
+        Returns:
+            社区 ID 列表（按热度降序）
+        """
+        # ZREVRANGE 返回有序集合中指定范围的成员（分数从高到低）
+        community_ids = await redis.zrevrange(
+            self.HOT_COMMUNITIES_GLOBAL,
+            start=offset,
+            end=offset + limit - 1,
+        )
+
+        return [int(cid) for cid in community_ids]
+
+    async def remove_community(self, redis: Redis, community_id: int):
+        """从热门榜中移除社区（删除时调用）"""
+        await redis.zrem(self.HOT_COMMUNITIES_GLOBAL, str(community_id))
+        await redis.delete(self._get_community_stats_key(community_id))
+
+    # ==================== 用户活跃度相关方法 ====================
+
+    @staticmethod
+    def _get_user_stats_key(user_id: int) -> str:
+        """获取用户统计 key"""
+        return f"{HotRankService.USER_STATS_PREFIX}:{user_id}"
+
+    @staticmethod
+    def _calculate_user_hot_rank(
+        karma: int,
+        post_count: int,
+        comment_count: int,
+        recent_activity: int,  # 近7天发帖+评论数
+        last_login: Optional[datetime],
+        created_at: datetime
+    ) -> float:
+        """
+        计算用户活跃度分数
+
+        公式: Karma权重 + 贡献权重 + 近期活跃 + 登录新鲜度
+        """
+        # Karma 对数权重
+        karma_score = min(math.log10(max(abs(karma), 1)), 5)
+
+        # 贡献数量（发帖+评论）
+        contribution_score = min(math.log10(max(post_count + comment_count, 1)), 3)
+
+        # 近期活跃度（近7天）
+        activity_score = min(recent_activity * 0.3, 2)
+
+        # 登录新鲜度（最近登录的用户得分更高）
+        if last_login:
+            login_freshness = (int(last_login.timestamp()) / 45000) * 0.5
+        else:
+            login_freshness = 0
+
+        return round(karma_score + contribution_score + activity_score + login_freshness, 7)
+
+    async def sync_user_rank_from_db(
+        self,
+        redis: Redis,
+        user_id: int,
+        karma: int,
+        post_count: int,
+        comment_count: int,
+        recent_activity: int,
+        last_login: Optional[datetime],
+        created_at: datetime
+    ):
+        """
+        从数据库同步用户活跃度到 Redis
+
+        用于初始化或定时同步
+        """
+        hot_rank = self._calculate_user_hot_rank(
+            karma=karma,
+            post_count=post_count,
+            comment_count=comment_count,
+            recent_activity=recent_activity,
+            last_login=last_login,
+            created_at=created_at
+        )
+
+        # 更新全局活跃用户 ZSET
+        await redis.zadd(self.HOT_USERS_GLOBAL, {str(user_id): hot_rank})
+
+        # 缓存用户统计详情
+        stats_key = self._get_user_stats_key(user_id)
+        stats_data = {
+            'karma': karma,
+            'post_count': post_count,
+            'comment_count': comment_count,
+            'recent_activity': recent_activity,
+            'hot_rank': str(hot_rank)
+        }
+        await redis.hset(stats_key, mapping=stats_data)
+        await redis.expire(stats_key, 3600)  # 1小时过期
+
+    async def get_hot_user_ids(
+        self,
+        redis: Redis,
+        limit: int = 20,
+        offset: int = 0
+    ) -> List[int]:
+        """
+        获取活跃用户 ID 列表
+
+        Args:
+            redis: Redis 客户端
+            limit: 返回数量
+            offset: 偏移量
+
+        Returns:
+            用户 ID 列表（按活跃度降序）
+        """
+        # ZREVRANGE 返回有序集合中指定范围的成员（分数从高到低）
+        user_ids = await redis.zrevrange(
+            self.HOT_USERS_GLOBAL,
+            start=offset,
+            end=offset + limit - 1,
+        )
+
+        return [int(uid) for uid in user_ids]
+
+    async def remove_user(self, redis: Redis, user_id: int):
+        """从热门榜中移除用户（删除时调用）"""
+        await redis.zrem(self.HOT_USERS_GLOBAL, str(user_id))
+        await redis.delete(self._get_user_stats_key(user_id))
 
 
 class PostCacheService:
