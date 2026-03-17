@@ -148,6 +148,10 @@ const props = defineProps({
     type: Number,
     default: null  // null 表示获取所有帖子
   },
+  apiEndpoint: {
+    type: String,
+    default: '/v1/posts'  // 默认端点
+  },
   emptyTitle: {
     type: String,
     default: '还没有帖子'
@@ -246,7 +250,7 @@ const loadPosts = async (reset = false) => {
       params.query.community_id = props.communityId
     }
 
-    const response = await client.GET('/v1/posts', { params })
+    const response = await client.GET(props.apiEndpoint, { params })
 
     if (response.data) {
       console.log('[PostList] 加载成功，帖子数量:', response.data.items?.length || 0)

@@ -12,6 +12,7 @@ import {
   Shield,
   Eye,
   Bookmark,
+  FileText,
   X
 } from 'lucide-vue-next'
 
@@ -59,6 +60,10 @@ const navigateTo = (path) => {
       <div class="nav-item" @click="navigateTo('/bookmarks')">
         <Bookmark :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">收藏夹</span>
+      </div>
+      <div class="nav-item" @click="navigateTo('/my-posts')">
+        <FileText :size="20" class="icon" />
+        <span v-if="!isCollapsed" class="text">我的帖子</span>
       </div>
     </nav>
 
