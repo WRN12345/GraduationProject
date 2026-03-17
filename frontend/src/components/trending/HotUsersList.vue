@@ -18,7 +18,7 @@ const router = useRouter()
 
 // 跳转到用户资料（如果有的话）
 const goToUser = (username) => {
-  router.push(`/users/${username}`)
+  router.push(`/user/${username}`)
 }
 
 // 格式化数字

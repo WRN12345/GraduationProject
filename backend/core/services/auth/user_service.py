@@ -7,6 +7,7 @@ from typing import Optional, Dict, Any
 from models.user import User
 from models.post import Post
 from models.comment import Comment
+from models.vote import Vote
 from core.security import get_password_hash, verify_password
 from core.services.infrastructure.minio_service import minio_service
 import logging
@@ -273,9 +274,44 @@ class UserService:
         posts = await Post.filter(
             author=user,
             deleted_at__isnull=True
-        ).order_by("-created_at").offset(skip).limit(limit)
+        ).order_by("-created_at").offset(skip).limit(limit).prefetch_related('author', 'community')
 
-        return posts
+        # 手动序列化，确保包含关联对象
+        result = []
+        for post in posts:
+            result.append({
+                "id": post.id,
+                "title": post.title,
+                "content": post.content,
+                "score": post.score,
+                "hot_rank": post.hot_rank,
+                "author_id": post.author_id,
+                "community_id": post.community_id,
+                "author": {
+                    "id": post.author.id,
+                    "username": post.author.username,
+                    "avatar": post.author.avatar
+                } if post.author else None,
+                "community": {
+                    "id": post.community.id,
+                    "name": post.community.name
+                } if post.community else None,
+                "upvotes": post.upvotes,
+                "downvotes": post.downvotes,
+                "comment_count": getattr(post, 'comment_count', 0),
+                "user_vote": 0,
+                "bookmarked": False,
+                "bookmark_count": 0,
+                "is_edited": post.is_edited,
+                "is_locked": post.is_locked,
+                "is_highlighted": post.is_highlighted,
+                "is_pinned": post.is_pinned,
+                "deleted_at": post.deleted_at,
+                "created_at": post.created_at,
+                "updated_at": post.updated_at
+            })
+
+        return result
 
     async def get_user_comments(
         self,
@@ -304,9 +340,37 @@ class UserService:
         comments = await Comment.filter(
             author=user,
             deleted_at__isnull=True
-        ).order_by("-created_at").offset(skip).limit(limit)
+        ).order_by("-created_at").offset(skip).limit(limit).prefetch_related('author', 'post')
 
-        return comments
+        # 手动序列化，确保包含关联对象
+        result = []
+        for comment in comments:
+            result.append({
+                "id": comment.id,
+                "content": comment.content,
+                "author_id": comment.author_id,
+                "author": {
+                    "id": comment.author.id,
+                    "username": comment.author.username,
+                    "avatar": comment.author.avatar,
+                    "nickname": comment.author.nickname
+                } if comment.author else None,
+                "post_id": comment.post_id,
+                "post": {
+                    "id": comment.post.id,
+                    "title": comment.post.title
+                } if comment.post else None,
+                "parent_id": comment.parent_id,
+                "upvotes": comment.upvotes,
+                "downvotes": comment.downvotes,
+                "score": comment.score,
+                "is_edited": comment.is_edited,
+                "deleted_at": comment.deleted_at,
+                "created_at": comment.created_at,
+                "updated_at": comment.updated_at
+            })
+
+        return result
 
     async def get_user_activity(
         self,
@@ -350,6 +414,128 @@ class UserService:
             "total_posts": total_posts,
             "total_comments": total_comments,
         }
+
+    async def get_user_upvoted(
+        self,
+        username: str,
+        skip: int = 0,
+        limit: int = 20
+    ) -> dict:
+        """
+        获取用户点赞的内容（帖子和评论）
+
+        Args:
+            username: 用户名
+            skip: 跳过条数
+            limit: 返回条数
+
+        Returns:
+            dict: 用户点赞的内容列表
+
+        Raises:
+            Returns {"error": "..."} on failure
+        """
+        user = await User.get_or_none(username=username)
+        if not user:
+            return {"error": "用户不存在"}
+
+        # 获取用户点赞的记录（direction = 1），按 id 降序排序
+        votes = await Vote.filter(
+            user=user,
+            direction=1
+        ).order_by("-id").offset(skip).limit(limit).prefetch_related('post', 'comment')
+
+        # 整理结果
+        result = []
+        for vote in votes:
+            if vote.post:
+                result.append({
+                    "id": vote.post.id,
+                    "type": "post",
+                    "post_id": vote.post.id,
+                    "title": vote.post.title,
+                    "content": vote.post.content,
+                    "created_at": vote.post.created_at,
+                    "upvotes": vote.post.upvotes,
+                    "downvotes": vote.post.downvotes,
+                })
+            elif vote.comment:
+                result.append({
+                    "id": vote.comment.id,
+                    "type": "comment",
+                    "post_id": vote.comment.post_id,
+                    "content": vote.comment.content,
+                    "created_at": vote.comment.created_at,
+                    "upvotes": vote.comment.upvotes,
+                    "downvotes": vote.comment.downvotes,
+                    "post": {
+                        "id": vote.comment.post_id,
+                        "title": vote.comment.post.title if vote.comment.post else "未知帖子"
+                    } if vote.comment.post else None
+                })
+
+        return result
+
+    async def get_user_downvoted(
+        self,
+        username: str,
+        skip: int = 0,
+        limit: int = 20
+    ) -> dict:
+        """
+        获取用户点踩的内容（帖子和评论）
+
+        Args:
+            username: 用户名
+            skip: 跳过条数
+            limit: 返回条数
+
+        Returns:
+            dict: 用户点踩的内容列表
+
+        Raises:
+            Returns {"error": "..."} on failure
+        """
+        user = await User.get_or_none(username=username)
+        if not user:
+            return {"error": "用户不存在"}
+
+        # 获取用户点踩的记录（direction = -1），按 id 降序排序
+        votes = await Vote.filter(
+            user=user,
+            direction=-1
+        ).order_by("-id").offset(skip).limit(limit).prefetch_related('post', 'comment')
+
+        # 整理结果
+        result = []
+        for vote in votes:
+            if vote.post:
+                result.append({
+                    "id": vote.post.id,
+                    "type": "post",
+                    "post_id": vote.post.id,
+                    "title": vote.post.title,
+                    "content": vote.post.content,
+                    "created_at": vote.post.created_at,
+                    "upvotes": vote.post.upvotes,
+                    "downvotes": vote.post.downvotes,
+                })
+            elif vote.comment:
+                result.append({
+                    "id": vote.comment.id,
+                    "type": "comment",
+                    "post_id": vote.comment.post_id,
+                    "content": vote.comment.content,
+                    "created_at": vote.comment.created_at,
+                    "upvotes": vote.comment.upvotes,
+                    "downvotes": vote.comment.downvotes,
+                    "post": {
+                        "id": vote.comment.post_id,
+                        "title": vote.comment.post.title if vote.comment.post else "未知帖子"
+                    } if vote.comment.post else None
+                })
+
+        return result
 
 
 # 导出服务实例

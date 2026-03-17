@@ -78,6 +78,18 @@ const routes = [
         name: 'Trending',
         component: () => import('../views/Trending.vue'),
         meta: { title: '热门内容' }
+      },
+      {
+        path: 'search',
+        name: 'SearchResults',
+        component: () => import('../views/SearchResults.vue'),
+        meta: { title: '搜索结果' }
+      },
+      {
+        path: 'user/:username',
+        name: 'UserDetail',
+        component: () => import('../views/UserDetail.vue'),
+        meta: { title: '用户详情' }
       }
     ]
   }
