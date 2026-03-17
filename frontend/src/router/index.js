@@ -78,6 +78,12 @@ const routes = [
         name: 'Trending',
         component: () => import('../views/Trending.vue'),
         meta: { title: '热门内容' }
+      },
+      {
+        path: 'search',
+        name: 'SearchResults',
+        component: () => import('../views/SearchResults.vue'),
+        meta: { title: '搜索结果' }
       }
     ]
   }

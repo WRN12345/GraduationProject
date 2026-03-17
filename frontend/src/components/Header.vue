@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Search,
@@ -7,10 +7,8 @@ import {
   Plus,
   Bell,
   X,
-  TrendingUp,
   Shirt,
   FileText,
-  Trophy,
   LogOut,
   Settings,
   ChevronDown,
@@ -21,6 +19,8 @@ import {
 import { useUserStore } from '@/stores/user'
 import ProfileEditDialog from '@/components/user/ProfileEditDialog.vue'
 import PasswordEditDialog from '@/components/user/PasswordEditDialog.vue'
+import SearchSuggestions from '@/components/search/SearchSuggestions.vue'
+import { useSearch } from '@/composables/useSearch'
 import defaultAvatar from '@/assets/image/wrn.png'
 
 // 默认头像
@@ -32,21 +32,71 @@ const emit = defineEmits(['open-mobile-sidebar'])
 // 路由
 const router = useRouter()
 
-// --- 搜索相关逻辑 (保留之前的) ---
+// --- 搜索相关逻辑 ---
 const searchText = ref('')
 const isSearchFocused = ref(false)
-const trendingList = ref([
-  { id: 1, title: 'TGA 2025 Winners', desc: '年度游戏大奖公布', icon: 'Trophy' },
-  { id: 2, title: 'Vue.js 3.5 Release', desc: '前端框架新版本', icon: 'TrendingUp' },
-  { id: 3, title: 'GTA VI Leak', desc: '侠盗猎车手6最新泄露', icon: 'Gamepad2' },
-])
 
+// 使用搜索 composable
+const {
+  suggestionPosts,
+  suggestionUsers,
+  suggestionsLoading,
+  debouncedFetchSuggestions,
+  clearSuggestions,
+  hotPosts,
+  hotUsers,
+  hotLoading,
+  fetchHotContent,
+  clearHotContent
+} = useSearch()
+
+// 监听搜索文本变化，触发搜索建议
+watch(searchText, (newVal) => {
+  if (newVal && newVal.trim().length >= 1 && isSearchFocused.value) {
+    // 有搜索词时，显示搜索建议
+    debouncedFetchSuggestions(newVal)
+  } else {
+    // 搜索框为空时，清除搜索建议
+    clearSuggestions()
+  }
+})
+
+// 搜索框失去焦点
 const handleSearchBlur = () => {
   setTimeout(() => { isSearchFocused.value = false }, 200)
 }
-const handleSearchResultSelect = (item) => {
-  searchText.value = item.title
+
+// 搜索框获得焦点
+const handleSearchFocus = () => {
+  isSearchFocused.value = true
+
+  // 如果有搜索词，触发搜索建议
+  if (searchText.value && searchText.value.trim().length >= 1) {
+    debouncedFetchSuggestions(searchText.value)
+  } else {
+    // 搜索框为空，加载热搜内容
+    fetchHotContent(5)
+  }
+}
+
+// 按 Enter 键搜索
+const handleSearchKeydown = (event) => {
+  if (event.key === 'Enter' && searchText.value && searchText.value.trim().length >= 1) {
+    isSearchFocused.value = false
+    router.push({ path: '/search', query: { q: searchText.value.trim() } })
+  }
+}
+
+// 清除搜索
+const clearSearch = () => {
+  searchText.value = ''
+  clearSuggestions()
+}
+
+// 选择搜索建议
+const handleSuggestionSelect = () => {
   isSearchFocused.value = false
+  clearSuggestions()
 }
 
 // --- 个人菜单相关逻辑  ---
@@ -131,16 +181,6 @@ const goToHome = () => {
   router.push('/')
 }
 
-// 获取图标组件
-const getIcon = (iconName) => {
-  const icons = {
-    Trophy,
-    TrendingUp,
-    Gamepad2: Trophy, // Fallback to Trophy
-  }
-  return icons[iconName] || Trophy
-}
-
 // 打开个人资料编辑
 const openProfileEdit = () => {
   isProfileOpen.value = false
@@ -201,27 +241,26 @@ const handlePasswordUpdate = async () => {
             type="text"
             placeholder="查找所需一切信息"
             v-model="searchText"
-            @focus="isSearchFocused = true"
+            @focus="handleSearchFocus"
             @blur="handleSearchBlur"
+            @keydown="handleSearchKeydown"
           />
-          <X v-if="searchText" :size="16" class="clear-icon" @click="searchText = ''" />
+          <X v-if="searchText" :size="16" class="clear-icon" @click="clearSearch" />
         </div>
-        <!-- 搜索下拉 (保留之前的代码) -->
-        <div class="search-dropdown" v-if="isSearchFocused">
-          <div class="dropdown-header">
-            <TrendingUp :size="14" />
-            <span>热门趋势</span>
-          </div>
-          <ul class="trending-list">
-            <li v-for="item in trendingList" :key="item.id" class="trending-item" @click="handleSearchResultSelect(item)">
-              <component :is="getIcon(item.icon)" :size="20" class="trend-icon" />
-              <div class="trend-info">
-                <div class="trend-title">{{ item.title }}</div>
-                <div class="trend-desc">{{ item.desc }}</div>
-              </div>
-            </li>
-          </ul>
-        </div>
+        <!-- 搜索建议下拉 -->
+        <SearchSuggestions
+          v-if="isSearchFocused"
+          :posts="suggestionPosts"
+          :users="suggestionUsers"
+          :loading="suggestionsLoading"
+          :query="searchText"
+          :hotPosts="hotPosts"
+          :hotUsers="hotUsers"
+          :hotLoading="hotLoading"
+          :showHot="!searchText"
+          @select="handleSuggestionSelect"
+          @close="isSearchFocused = false"
+        />
       </div>
     </div>
 
