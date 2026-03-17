@@ -62,6 +62,12 @@ const routes = [
         meta: { title: '我的收藏' }
       },
       {
+        path: 'my-posts',
+        name: 'MyPosts',
+        component: () => import('../views/MyPosts.vue'),
+        meta: { title: '我的帖子' }
+      },
+      {
         path: 'community/:id',
         name: 'CommunityDetail',
         component: () => import('../views/CommunityDetail.vue'),

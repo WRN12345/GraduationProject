@@ -137,6 +137,58 @@ class PostService:
             "has_more": has_more
         }
 
+    async def get_my_posts(
+        self,
+        redis: Redis,
+        user: User,
+        skip: int = 0,
+        limit: int = 20,
+        is_highlighted: Optional[bool] = None
+    ) -> dict:
+        """
+        获取当前用户的帖子列表（分页）
+
+        Args:
+            redis: Redis 客户端
+            user: 当前用户
+            skip: 跳过条数
+            limit: 返回条数
+            is_highlighted: 是否只返回精华帖子（None=全部）
+
+        Returns:
+            dict: 分页帖子列表
+        """
+        # 构建基础查询：只获取当前用户的未删除帖子
+        query = models.Post.filter(
+            author_id=user.id,
+            deleted_at__isnull=True
+        ).order_by("-created_at")
+
+        # 添加精华筛选
+        if is_highlighted is not None:
+            query = query.filter(is_highlighted=is_highlighted)
+
+        # 预加载关联
+        query = query.select_related('author', 'community').prefetch_related('attachments')
+
+        # 获取总数和分页数据
+        total = await query.count()
+        items_orm = await query.offset(skip).limit(limit)
+
+        # 批量添加用户状态
+        items = await self._enrich_posts_with_user_state(redis, items_orm, user)
+
+        # 计算是否有更多数据
+        has_more = skip + limit < total
+
+        return {
+            "items": items,
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+            "has_more": has_more
+        }
+
     async def get_hot_posts(
         self,
         redis: Redis,
