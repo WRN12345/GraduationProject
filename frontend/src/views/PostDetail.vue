@@ -20,7 +20,7 @@
         <h1 class="post-title">{{ post.title }}</h1>
 
         <!-- 作者信息 -->
-        <div class="author-info">
+        <div class="author-info" @click="goToAuthorProfile">
           <img
             v-if="post.author?.avatar"
             :src="post.author.avatar"
@@ -126,7 +126,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { client } from '@/api/client'
 import { marked } from 'marked'
 import CommentTree from '@/components/comment/CommentTree.vue'
@@ -134,6 +134,7 @@ import VoteButtons from '@/components/VoteButtons.vue'
 import BookmarkButton from '@/components/BookmarkButton.vue'
 
 const route = useRoute()
+const router = useRouter()
 
 const post = ref(null)
 const loading = ref(true)
@@ -165,6 +166,13 @@ const avatarText = computed(() => {
 const handleAvatarError = (event) => {
   // 图片加载失败时隐藏img元素，会自动显示首字母头像
   event.target.style.display = 'none'
+}
+
+// 跳转到作者主页
+const goToAuthorProfile = () => {
+  if (post.value?.author?.username) {
+    router.push(`/user/${post.value.author.username}`)
+  }
 }
 
 // 格式化时间
@@ -334,6 +342,12 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   margin-bottom: 16px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.author-info:hover {
+  opacity: 0.8;
 }
 
 .author-avatar {
@@ -363,6 +377,12 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 600;
   color: #1c1c1c;
+  transition: color 0.2s;
+}
+
+.author-name:hover {
+  color: #0079d3;
+  text-decoration: underline;
 }
 
 .post-meta {

@@ -55,6 +55,7 @@ declare module 'vue' {
     SearchSuggestions: typeof import('./src/components/search/SearchSuggestions.vue')['default']
     SearchTabs: typeof import('./src/components/search/SearchTabs.vue')['default']
     UserListItem: typeof import('./src/components/search/UserListItem.vue')['default']
+    UserTabs: typeof import('./src/components/user/UserTabs.vue')['default']
     VoteButton: typeof import('./src/components/comment/VoteButton.vue')['default']
     VoteButtons: typeof import('./src/components/VoteButtons.vue')['default']
   }

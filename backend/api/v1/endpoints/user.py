@@ -160,6 +160,36 @@ async def get_user_activity(username: str):
     return result
 
 
+@user_public.get("/users/{username}/upvoted", summary="获取用户点赞的内容")
+async def get_user_upvoted(
+    username: str,
+    skip: int = 0,
+    limit: int = 20,
+):
+    """获取用户点赞的内容（帖子和评论）"""
+    result = await user_service.get_user_upvoted(username, skip, limit)
+
+    if isinstance(result, dict) and "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+
+    return result
+
+
+@user_public.get("/users/{username}/downvoted", summary="获取用户点踩的内容")
+async def get_user_downvoted(
+    username: str,
+    skip: int = 0,
+    limit: int = 20,
+):
+    """获取用户点踩的内容（帖子和评论）"""
+    result = await user_service.get_user_downvoted(username, skip, limit)
+
+    if isinstance(result, dict) and "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+
+    return result
+
+
 __all__ = [
     "user",
     "user_public"

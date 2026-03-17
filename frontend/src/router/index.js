@@ -84,6 +84,12 @@ const routes = [
         name: 'SearchResults',
         component: () => import('../views/SearchResults.vue'),
         meta: { title: '搜索结果' }
+      },
+      {
+        path: 'user/:username',
+        name: 'UserDetail',
+        component: () => import('../views/UserDetail.vue'),
+        meta: { title: '用户详情' }
       }
     ]
   }
