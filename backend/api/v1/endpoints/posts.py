@@ -37,6 +37,24 @@ async def list_posts(
     )
 
 
+@router.get("/posts/my", response_model=schemas.PaginatedPostResponse, summary="获取我的帖子列表")
+async def get_my_posts(
+    skip: int = 0,
+    limit: int = Query(20, ge=1, le=100),
+    is_highlighted: Optional[bool] = Query(None, description="筛选精华帖子"),
+    current_user: User = Depends(get_current_user),
+    redis: Redis = Depends(get_redis)
+):
+    """获取当前登录用户的帖子列表（分页）"""
+    return await post_service.get_my_posts(
+        redis=redis,
+        user=current_user,
+        skip=skip,
+        limit=limit,
+        is_highlighted=is_highlighted
+    )
+
+
 @router.get("/posts/hot", response_model=schemas.PaginatedPostResponse, summary="获取热门帖子列表")
 async def get_hot_posts(
     community_id: Optional[int] = None,
