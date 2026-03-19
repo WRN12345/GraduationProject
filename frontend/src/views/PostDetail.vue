@@ -16,8 +16,20 @@
           <span class="post-time">{{ formatTime(post.created_at) }}</span>
         </div>
 
-        <!-- 标题 -->
-        <h1 class="post-title">{{ post.title }}</h1>
+        <!-- 标题和状态 -->
+        <div class="post-title-section">
+          <div class="status-badges" v-if="post.is_pinned || post.is_highlighted">
+            <span v-if="post.is_pinned" class="status-badge pinned-badge">
+              <Pin :size="16" />
+              <span>置顶</span>
+            </span>
+            <span v-if="post.is_highlighted" class="status-badge highlighted-badge">
+              <Star :size="16" />
+              <span>精华</span>
+            </span>
+          </div>
+          <h1 class="post-title">{{ post.title }}</h1>
+        </div>
 
         <!-- 作者信息 -->
         <div class="author-info" @click="goToAuthorProfile">
@@ -122,6 +134,35 @@
             <span>删除帖子</span>
           </button>
         </div>
+
+        <!-- 版主操作区 -->
+        <div v-if="isModerator" class="moderator-actions">
+          <div class="moderator-actions-header">
+            <h3>版主操作</h3>
+          </div>
+          <div class="moderator-actions-buttons">
+            <button
+              class="moderator-btn pin-btn"
+              :class="{ active: post.is_pinned }"
+              :disabled="loadingPin"
+              @click="handleTogglePin"
+            >
+              <Pin :size="16" />
+              <span v-if="!loadingPin">{{ post.is_pinned ? '取消置顶' : '置顶帖子' }}</span>
+              <span v-else>处理中...</span>
+            </button>
+            <button
+              class="moderator-btn highlight-btn"
+              :class="{ active: post.is_highlighted }"
+              :disabled="loadingHighlight"
+              @click="handleToggleHighlight"
+            >
+              <Star :size="16" />
+              <span v-if="!loadingHighlight">{{ post.is_highlighted ? '取消精华' : '设为精华' }}</span>
+              <span v-else>处理中...</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- 评论区 -->
@@ -139,7 +180,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Edit2, Trash2 } from 'lucide-vue-next'
+import { Edit2, Trash2, Pin, Star } from 'lucide-vue-next'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { client } from '@/api/client'
 import { marked } from 'marked'
@@ -154,6 +195,9 @@ const userStore = useUserStore()
 
 const post = ref(null)
 const loading = ref(true)
+const membership = ref(null)  // 用户在社区的成员信息
+const loadingPin = ref(false)  // 置顶操作加载状态
+const loadingHighlight = ref(false)  // 精华操作加载状态
 
 // 配置 marked
 marked.setOptions({
@@ -186,6 +230,11 @@ const canEdit = computed(() =>
 const canDelete = computed(() =>
   post.value && userStore.userId === post.value.author_id
 )
+
+// 版主权限检查（owner或admin）
+const isModerator = computed(() => {
+  return membership.value?.role === 2 || membership.value?.role === 1
+})
 
 // 头像加载失败处理
 const handleAvatarError = (event) => {
@@ -282,6 +331,62 @@ const handleEdit = () => {
   router.push(`/post/${post.value.id}/edit`)
 }
 
+// 置顶/取消置顶帖子
+const handleTogglePin = async () => {
+  if (!post.value) return
+
+  const newState = !post.value.is_pinned
+  loadingPin.value = true
+
+  try {
+    const response = await client.PATCH('/v1/posts/{post_id}/pin', {
+      params: {
+        path: { post_id: post.value.id },
+        query: { is_pinned: newState }
+      }
+    })
+
+    if (response.data) {
+      // 更新本地状态
+      post.value.is_pinned = newState
+      ElMessage.success(newState ? '帖子已置顶' : '已取消置顶')
+    }
+  } catch (error) {
+    console.error('置顶操作失败:', error)
+    ElMessage.error('操作失败，请稍后重试')
+  } finally {
+    loadingPin.value = false
+  }
+}
+
+// 精华/取消精华帖子
+const handleToggleHighlight = async () => {
+  if (!post.value) return
+
+  const newState = !post.value.is_highlighted
+  loadingHighlight.value = true
+
+  try {
+    const response = await client.PATCH('/v1/posts/{post_id}/highlight', {
+      params: {
+        path: { post_id: post.value.id },
+        query: { is_highlighted: newState }
+      }
+    })
+
+    if (response.data) {
+      // 更新本地状态
+      post.value.is_highlighted = newState
+      ElMessage.success(newState ? '已设置精华' : '已取消精华')
+    }
+  } catch (error) {
+    console.error('精华操作失败:', error)
+    ElMessage.error('操作失败，请稍后重试')
+  } finally {
+    loadingHighlight.value = false
+  }
+}
+
 // 加载帖子详情
 const loadPost = async () => {
   const postId = route.params.id
@@ -305,6 +410,22 @@ const loadPost = async () => {
 
     if (response.data) {
       post.value = response.data
+
+      // 获取用户在该社区的角色信息
+      if (userStore.isLoggedIn) {
+        try {
+          const myCommunitiesResponse = await client.GET('/v1/memberships/my-communities')
+          if (myCommunitiesResponse.data) {
+            const found = myCommunitiesResponse.data.find(c => c.id === post.value.community_id)
+            if (found) {
+              membership.value = { role: found.role }
+            }
+          }
+        } catch (err) {
+          console.error('[PostDetail] 获取社区角色失败:', err)
+        }
+      }
+
       console.log('[PostDetail] 加载成功')
     } else {
       console.log('[PostDetail] 帖子不存在')
@@ -389,11 +510,44 @@ onMounted(() => {
   color: #878a8c;
 }
 
+.post-title-section {
+  margin-bottom: 20px;
+}
+
+.status-badges {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.pinned-badge {
+  background: #fff5f5;
+  color: #ff4500;
+  border: 1px solid #ffccc7;
+}
+
+.highlighted-badge {
+  background: #fffff0;
+  color: #ffa500;
+  border: 1px solid #ffe58f;
+}
+
 .post-title {
   font-size: 28px;
   font-weight: 700;
   color: #1c1c1c;
-  margin: 0 0 20px 0;
+  margin: 0;
   line-height: 1.3;
 }
 
@@ -521,6 +675,79 @@ onMounted(() => {
 
 .delete-btn:hover {
   background: #ffcdd2;
+}
+
+/* 版主操作区 */
+.moderator-actions {
+  padding: 16px 20px;
+  margin: 20px 0;
+  background: #f0f7ff;
+  border-radius: 12px;
+  border: 1px solid #b3d9ff;
+}
+
+.moderator-actions-header {
+  margin-bottom: 12px;
+}
+
+.moderator-actions-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0052a3;
+  margin: 0;
+}
+
+.moderator-actions-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.moderator-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 2px solid;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.moderator-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pin-btn {
+  border-color: #ff4500;
+  color: #ff4500;
+}
+
+.pin-btn:hover:not(:disabled) {
+  background: #fff5f5;
+}
+
+.pin-btn.active {
+  background: #ff4500;
+  color: white;
+}
+
+.highlight-btn {
+  border-color: #ffa500;
+  color: #ffa500;
+}
+
+.highlight-btn:hover:not(:disabled) {
+  background: #fffff0;
+}
+
+.highlight-btn.active {
+  background: #ffa500;
+  color: white;
 }
 
 .content-body {

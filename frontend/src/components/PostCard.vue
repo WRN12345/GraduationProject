@@ -1,6 +1,7 @@
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { MessageCircle, Share2 } from 'lucide-vue-next'
+import { MessageCircle, Share2, Pin, Star } from 'lucide-vue-next'
 import VoteButtons from './VoteButtons.vue'
 import BookmarkButton from './BookmarkButton.vue'
 
@@ -14,6 +15,18 @@ const props = defineProps({
 const emit = defineEmits(['click'])
 
 const router = useRouter()
+
+// 计算帖子的特殊状态class
+const postCardClasses = computed(() => {
+  const classes = []
+  if (props.post.is_pinned) {
+    classes.push('is-pinned')
+  }
+  if (props.post.is_highlighted) {
+    classes.push('is-highlighted')
+  }
+  return classes
+})
 
 // 点击帖子
 const handleClick = () => {
@@ -71,7 +84,7 @@ const updateBookmark = (bookmarked, count) => {
 </script>
 
 <template>
-  <div class="post-card" @click="handleContentClick">
+  <div class="post-card" :class="postCardClasses" @click="handleContentClick">
     <!-- 帖子内容 -->
     <div class="post-content">
       <div class="post-header">
@@ -91,7 +104,20 @@ const updateBookmark = (bookmarked, count) => {
         <span class="meta-info">· 由 {{ post.author?.username || '匿名用户' }} 发布 · {{ formatTime(post.created_at) }}</span>
       </div>
 
-      <h3 class="post-title">{{ post.title }}</h3>
+      <div class="post-title-row">
+        <!-- 状态标识 -->
+        <div class="status-badges">
+          <span v-if="post.is_pinned" class="status-badge pinned-badge" title="置顶帖子">
+            <Pin :size="14" />
+            <span>置顶</span>
+          </span>
+          <span v-if="post.is_highlighted" class="status-badge highlighted-badge" title="精华帖子">
+            <Star :size="14" />
+            <span>精华</span>
+          </span>
+        </div>
+        <h3 class="post-title">{{ post.title }}</h3>
+      </div>
 
       <!-- 内容预览 -->
       <div class="post-preview" v-if="post.content">
@@ -152,6 +178,64 @@ const updateBookmark = (bookmarked, count) => {
 
 .post-card:hover {
   border-color: #0079d3;
+}
+
+/* 置顶帖子样式 */
+.post-card.is-pinned {
+  border-left: 3px solid #ff4500;
+  background: linear-gradient(to right, #fff5f5, #ffffff);
+}
+
+.post-card.is-pinned.is-highlighted {
+  background: linear-gradient(to right, #fffaf0, #ffffff);
+}
+
+/* 精华帖子样式 */
+.post-card.is-highlighted {
+  border: 2px solid #ffd700;
+  background: linear-gradient(to right, #fffff0, #ffffff);
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.15);
+}
+
+/* 状态标识 */
+.post-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.status-badges {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.pinned-badge {
+  background: linear-gradient(135deg, #ff4500, #ff6347);
+  color: white;
+  border: none;
+  box-shadow: 0 2px 4px rgba(255, 69, 0, 0.3);
+  font-weight: 700;
+}
+
+.highlighted-badge {
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  color: #8b4500;
+  border: none;
+  box-shadow: 0 2px 4px rgba(255, 215, 0, 0.4);
+  font-weight: 700;
 }
 
 .post-content {
