@@ -23,6 +23,10 @@
     <div v-else>
       <div
         class="post-card"
+        :class="{
+          'is-pinned': post.is_pinned,
+          'is-highlighted': post.is_highlighted
+        }"
         v-for="post in displayPosts"
         :key="post.id"
         @click="goToPost(post.id)"
@@ -44,7 +48,18 @@
             <span class="meta-info">· 由 {{ post.author?.username || '匿名用户' }} 发布 · {{ formatTime(post.created_at) }}</span>
           </div>
 
-          <h3 class="post-title">{{ post.title }}</h3>
+          <div class="post-title-row">
+            <!-- 状态标识 -->
+            <div class="status-badges">
+              <span v-if="post.is_pinned" class="status-badge pinned-badge">
+                📌 置顶
+              </span>
+              <span v-if="post.is_highlighted" class="status-badge highlighted-badge">
+                ⭐ 精华
+              </span>
+            </div>
+            <h3 class="post-title">{{ post.title }}</h3>
+          </div>
 
           <!-- 内容预览 -->
           <div class="post-preview" v-if="post.content">
@@ -136,7 +151,9 @@ import {
   Bookmark,
   Share2,
   Send,
-  ArrowBigUp
+  ArrowBigUp,
+  Pin,
+  Star
 } from 'lucide-vue-next'
 import { client } from '@/api/client'
 import { marked } from 'marked'
@@ -317,8 +334,23 @@ onMounted(() => {
   loadPosts(true)
 })
 
-// 计算属性
-const displayPosts = computed(() => posts.value)
+// 计算属性 - 对帖子进行排序（置顶优先，精华次之，然后按时间倒序）
+const displayPosts = computed(() => {
+  const sortedPosts = [...posts.value]
+  sortedPosts.sort((a, b) => {
+    // 置顶帖子优先
+    if (a.is_pinned && !b.is_pinned) return -1
+    if (!a.is_pinned && b.is_pinned) return 1
+
+    // 如果都是置顶或都不是置顶，精华优先
+    if (a.is_highlighted && !b.is_highlighted) return -1
+    if (!a.is_highlighted && b.is_highlighted) return 1
+
+    // 都置顶或都精华，按创建时间倒序
+    return new Date(b.created_at) - new Date(a.created_at)
+  })
+  return sortedPosts
+})
 
 // 暴露方法供父组件调用
 defineExpose({
@@ -390,7 +422,67 @@ defineExpose({
   border-radius: 8px;
   margin-bottom: 16px;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
+}
+
+/* 置顶帖子样式 */
+.post-card.is-pinned {
+  border-left: 4px solid #ff4500;
+  background: linear-gradient(to right, #fff5f5, #ffffff);
+  box-shadow: 0 2px 8px rgba(255, 69, 0, 0.1);
+}
+
+.post-card.is-pinned.is-highlighted {
+  background: linear-gradient(to right, #fffaf0, #ffffff);
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.15);
+}
+
+/* 精华帖子样式 */
+.post-card.is-highlighted {
+  border: 2px solid #ffd700;
+  background: linear-gradient(to right, #fffff0, #ffffff);
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.1);
+}
+
+/* 状态标识 */
+.post-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.status-badges {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.5px;
+}
+
+.pinned-badge {
+  background: linear-gradient(135deg, #ff4500, #ff6347);
+  color: white;
+  border: none;
+  box-shadow: 0 2px 4px rgba(255, 69, 0, 0.3);
+}
+
+.highlighted-badge {
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  color: #8b4500;
+  border: none;
+  box-shadow: 0 2px 4px rgba(255, 215, 0, 0.4);
 }
 
 .post-card:hover {
