@@ -110,6 +110,18 @@
             :icon-size="18"
           />
         </div>
+
+        <!-- 帖主操作区 -->
+        <div v-if="canEdit || canDelete" class="post-owner-actions">
+          <button v-if="canEdit" class="action-btn edit-btn" @click="handleEdit">
+            <Edit2 :size="16" />
+            <span>编辑帖子</span>
+          </button>
+          <button v-if="canDelete" class="action-btn delete-btn" @click="handleDelete">
+            <Trash2 :size="16" />
+            <span>删除帖子</span>
+          </button>
+        </div>
       </div>
 
       <!-- 评论区 -->
@@ -127,14 +139,18 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Edit2, Trash2 } from 'lucide-vue-next'
+import { ElMessageBox, ElMessage } from 'element-plus'
 import { client } from '@/api/client'
 import { marked } from 'marked'
+import { useUserStore } from '@/stores/user'
 import CommentTree from '@/components/comment/CommentTree.vue'
 import VoteButtons from '@/components/VoteButtons.vue'
 import BookmarkButton from '@/components/BookmarkButton.vue'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
 const post = ref(null)
 const loading = ref(true)
@@ -161,6 +177,15 @@ const avatarText = computed(() => {
   const name = post.value?.author?.username || 'U'
   return name.charAt(0).toUpperCase()
 })
+
+// 权限检查
+const canEdit = computed(() =>
+  post.value && userStore.userId === post.value.author_id
+)
+
+const canDelete = computed(() =>
+  post.value && userStore.userId === post.value.author_id
+)
 
 // 头像加载失败处理
 const handleAvatarError = (event) => {
@@ -220,6 +245,41 @@ const handleVoteChange = (state) => {
     post.value.user_vote = state.userVote
     post.value.score = state.upvotes - state.downvotes
   }
+}
+
+// 删除帖子
+const handleDelete = () => {
+  ElMessageBox.confirm(
+    '确定要删除这篇帖子吗？操作不可逆',
+    '确认删除',
+    {
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      center: true,
+      customClass: 'delete-confirm-box',
+      draggable: false,
+      closeOnClickModal: false,
+      closeOnPressEscape: false
+    }
+  ).then(async () => {
+    try {
+      await client.DELETE('/v1/posts/{post_id}', {
+        params: { path: { post_id: post.value.id } }
+      })
+      ElMessage.success('删除成功')
+      router.push('/')
+    } catch (error) {
+      ElMessage.error('删除失败')
+    }
+  }).catch(() => {
+    // 用户取消
+  })
+}
+
+// 编辑帖子
+const handleEdit = () => {
+  router.push(`/post/${post.value.id}/edit`)
 }
 
 // 加载帖子详情
@@ -419,6 +479,48 @@ onMounted(() => {
   display: flex;
   gap: 12px;
   align-items: center;
+}
+
+/* 帖主操作区 */
+.post-owner-actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  margin: 20px 0;
+  background: #fff8f8;
+  border-radius: 12px;
+  border: 1px solid #ffebee;
+}
+
+.post-owner-actions .action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-btn {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.edit-btn:hover {
+  background: #bbdefb;
+}
+
+.delete-btn {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.delete-btn:hover {
+  background: #ffcdd2;
 }
 
 .content-body {

@@ -448,7 +448,7 @@ class PostService:
         async with transactions.in_transaction():
             await models.Post.filter(id=post_id).update(
                 deleted_at=datetime.now(timezone.utc),
-                deleted_by=user.id
+                deleted_by_id=user.id
             )
 
             await create_audit_log(
@@ -511,7 +511,7 @@ class PostService:
         async with transactions.in_transaction():
             await models.Post.filter(id=post_id).update(
                 deleted_at=None,
-                deleted_by=None
+                deleted_by_id=None
             )
 
             await create_audit_log(
