@@ -83,3 +83,13 @@ async def read_community_by_name(name: str):
         raise HTTPException(status_code=404, detail=result["error"])
 
     return result
+
+@router.get("/id/{community_id}", response_model=CommunityOut, summary="根据ID获取社区详情")
+async def read_community_by_id(community_id: int):
+    """根据ID获取社区详情"""
+    result = await community_service.get_community_by_id(community_id)
+
+    if isinstance(result, dict) and "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+
+    return result

@@ -99,6 +99,27 @@ class CommunityService:
             return {"error": "社区不存在"}
         return community
 
+    async def get_community_by_id(
+        self,
+        community_id: int
+    ) -> Optional[Community]:
+        """
+        根据ID获取社区
+
+        Args:
+            community_id: 社区ID
+
+        Returns:
+            Optional[Community]: 社区对象
+
+        Raises:
+            Returns {"error": "..."} on failure
+        """
+        community = await Community.get_or_none(id=community_id)
+        if not community:
+            return {"error": "社区不存在"}
+        return community
+
     async def recommend_communities(
         self,
         title: str,

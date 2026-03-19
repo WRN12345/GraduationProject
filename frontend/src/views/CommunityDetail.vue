@@ -61,7 +61,7 @@ import PostList from '@/components/PostList.vue'
 const route = useRoute()
 const router = useRouter()
 
-const communityId = parseInt(route.params.id)
+const communityId = parseInt(route.params.id)  // 使用数字 ID
 const community = ref(null)
 const membership = ref(null)
 const loading = ref(true)
@@ -85,32 +85,39 @@ const loadData = async () => {
   error.value = null
 
   try {
-    // 获取社区详情
-    const communityResponse = await client.GET('/v1/communities/{name}', {
+    // 通过 ID 获取社区详情
+    const response = await client.GET('/v1/communities/id/{community_id}', {
       params: {
-        path: { name: communityId }  // 这个可能需要改为 id 查询
+        path: { community_id: communityId }
       }
     })
 
-    // 上面的路径可能不对，我们需要从 my-communities 获取的数据中找到
-    // 或者我们需要一个新的 API 端点来获取社区详情
+    if (response.data) {
+      community.value = response.data
+    } else {
+      error.value = '社区不存在'
+      loading.value = false
+      return
+    }
 
-    // 暂时使用 my-communities 的数据
+    // 检查用户是否是该社区的成员
     const myCommunitiesResponse = await client.GET('/v1/memberships/my-communities')
-
     if (myCommunitiesResponse.data) {
       const found = myCommunitiesResponse.data.find(c => c.id === communityId)
       if (found) {
-        community.value = found
         membership.value = { role: found.role }
       } else {
-        // 用户不是该社区成员
-        error.value = '你不是该社区的成员'
+        // 用户未加入该社区
+        membership.value = null
       }
     }
   } catch (err) {
     console.error('[社区详情] 加载失败:', err)
-    error.value = '加载失败，请稍后重试'
+    if (err.response?.status === 404) {
+      error.value = '社区不存在'
+    } else {
+      error.value = '加载失败，请稍后重试'
+    }
   } finally {
     loading.value = false
   }
