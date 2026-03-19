@@ -107,6 +107,9 @@ const emit = defineEmits(['update:fileList', 'upload-success', 'upload-progress'
 const uploadRef = ref(null)
 const internalFileList = ref([])
 
+// 存储文件 uid 到原始 file 对象的映射，用于后续匹配
+const fileMap = new Map()
+
 // 监听外部 fileList 变化
 watch(() => props.fileList, (newVal) => {
   internalFileList.value = [...newVal]
@@ -202,7 +205,7 @@ const beforeUpload = (file) => {
 const customRequest = async (options) => {
   const { file, onSuccess, onError } = options
 
-  console.log('[FileUploader] 开始上传:', file.name)
+  console.log('[FileUploader] 开始上传:', file.name, 'file:', file)
 
   try {
     // 创建 FormData
@@ -226,23 +229,31 @@ const customRequest = async (options) => {
     // 处理响应
     const uploadedFiles = Array.isArray(result) ? result : [result]
 
-    // 更新 internalFileList
-    uploadedFiles.forEach(item => {
-      // 检查是否已存在
-      const exists = internalFileList.value.some(f => f.name === item.file_name)
-      if (!exists) {
-        internalFileList.value.push({
-          name: item.file_name,
-          url: item.file_url,
-          size: item.file_size,
-          type: item.mime_type,
-          attachmentType: item.attachment_type,
-          attachmentId: item.id,
-          raw: file,
-          status: 'success'
-        })
-      }
-    })
+    // 通过 raw 属性找到对应的文件对象并更新，而不是 push 新对象
+    // file 是原始 File 对象，internalFileList 中的对象的 raw 属性指向它
+    const fileIndex = internalFileList.value.findIndex(f => f.raw === file)
+    console.log('[FileUploader] 查找文件对象, fileIndex:', fileIndex, 'internalFileList:', internalFileList.value.map(f => ({
+      name: f.name,
+      hasRaw: !!f.raw,
+      rawName: f.raw?.name,
+      uid: f.uid
+    })))
+
+    if (fileIndex > -1) {
+      // 更新现有文件对象的属性
+      const existingFile = internalFileList.value[fileIndex]
+      existingFile.url = uploadedFiles[0].file_url
+      existingFile.attachmentId = uploadedFiles[0].id
+      existingFile.attachmentType = uploadedFiles[0].attachment_type
+      existingFile.status = 'success'
+      existingFile.name = uploadedFiles[0].file_name
+      existingFile.size = uploadedFiles[0].file_size
+      existingFile.type = uploadedFiles[0].mime_type
+
+      console.log('[FileUploader] 更新文件对象:', existingFile)
+    } else {
+      console.warn('[FileUploader] 未找到对应的文件对象, fileName:', file.name)
+    }
 
     emit('update:fileList', internalFileList.value)
 
@@ -264,7 +275,22 @@ const customRequest = async (options) => {
 }
 
 // 文件状态改变
-const handleChange = (_, fileList) => {
+const handleChange = (file, fileList) => {
+  // 记录文件 uid 和原始 file 对象的映射
+  if (file && file.uid) {
+    fileMap.set(file.uid, file)
+  }
+
+  // 同步文件列表到 internalFileList（这是关键！）
+  internalFileList.value = [...fileList]
+
+  console.log('[FileUploader] handleChange 文件列表更新:', internalFileList.value.map(f => ({
+    name: f.name,
+    uid: f.uid,
+    url: f.url,
+    status: f.status
+  })))
+
   // 检查是否所有文件都上传完成
   const allDone = fileList.every(f => f.status === 'success')
   if (allDone && fileList.length > 0) {
@@ -274,27 +300,34 @@ const handleChange = (_, fileList) => {
 
 // 上传成功
 const handleSuccess = (response, file) => {
-  console.log('[FileUploader] 上传成功', { response, fileName: file.name, responseType: typeof response })
+  console.log('[FileUploader] handleSuccess 上传成功', { response, fileName: file.name, responseType: typeof response })
 
+  // 注意：实际的更新逻辑已经在 customRequest 中完成
+  // 这里只需要确保文件列表同步即可
   // 如果是批量上传，response 是数组
   const uploadedFiles = Array.isArray(response) ? response : [response]
-  console.log('[FileUploader] 处理上传文件:', uploadedFiles)
+  console.log('[FileUploader] handleSuccess 处理上传文件:', uploadedFiles)
 
-  uploadedFiles.forEach(item => {
-    internalFileList.value.push({
-      name: item.file_name,
-      url: item.file_url,
-      size: item.file_size,
-      type: item.mime_type,
-      attachmentType: item.attachment_type,
-      attachmentId: item.id,
-      raw: file,
-      status: 'success'
-    })
-  })
+  // 通过 raw 属性找到对应的文件对象并更新（如果 customRequest 中没有处理）
+  const fileIndex = internalFileList.value.findIndex(f => f.raw === file)
+  if (fileIndex > -1) {
+    // 更新现有文件对象的属性
+    const existingFile = internalFileList.value[fileIndex]
+    existingFile.url = uploadedFiles[0].file_url
+    existingFile.attachmentId = uploadedFiles[0].id
+    existingFile.attachmentType = uploadedFiles[0].attachment_type
+    existingFile.status = 'success'
+    existingFile.name = uploadedFiles[0].file_name
+    existingFile.size = uploadedFiles[0].file_size
+    existingFile.type = uploadedFiles[0].mime_type
 
-  console.log('[FileUploader] internalFileList:', internalFileList.value)
-  ElMessage.success('上传成功')
+    console.log('[FileUploader] handleSuccess 更新文件对象:', existingFile)
+  } else {
+    console.warn('[FileUploader] handleSuccess 未找到对应的文件对象, fileName:', file.name)
+  }
+
+  console.log('[FileUploader] handleSuccess internalFileList:', internalFileList.value)
+  // ElMessage.success('上传成功') // customRequest 中已经显示了，这里不重复显示
   emit('update:fileList', internalFileList.value)
   emit('upload-success', uploadedFiles)
 }

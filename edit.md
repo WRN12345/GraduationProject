@@ -93,3 +93,38 @@ Element Plus 2.12.0 - UI 组件
 openapi-fetch 0.15.0 - 类型安全 API 调用
 lucide-vue-next - 图标库
 
+【任务背景】
+我正在用 Vue3 开发一个前端项目，里面有一个 FileUploader.vue 组件用于上传图片到 MinIO。
+【Bug 现象】
+现在遇到了一个经典的 Bug：我只选择上传了一张图片，但页面（图片列表）上却显示了两张一模一样的图。并且提示“已选择 2 个附件”。
+【Bug 原因分析】
+我排查过 Network 面板，原因是：
+选择文件后，前端通过 URL.createObjectURL 生成了一个 blob: 的本地预览图，并 push 到了附件数组里。
+文件上传到 MinIO 成功后，后端返回了一个真实的网络地址（带有时间戳的新文件名）。
+前端拿到这个真实的 URL 后，没有去替换刚才的本地预览图对象，而是又 push 了一次到附件数组里。导致本地图和线上图同时存在。
+【修改诉求】
+请帮我修改下面这段上传逻辑的代码。
+核心要求：在上传成功后，通过某种唯一标识（比如临时 ID、uid 或 file 对象本身）找到原先那个本地预览图对应的数组项，把它的 url 替换为后端返回的真实 url，并更新其上传状态，绝对不能再 Push 新的对象进去。
+问题根源
+选择文件时，Element UI 自动在 internalFileList 中添加一个带有本地 blob: 预览图的对象
+上传成功后，代码又 push 了一个新对象到数组，导致本地预览图和线上真实图同时存在
+修复方案
+核心思路：通过 uid 唯一标识找到原文件对象，更新其属性而非添加新对象
+
+修改点：
+添加文件映射（第109行）
+
+
+const fileMap = new Map()
+记录文件 uid（handleChange 方法）
+
+在文件状态改变时记录 uid 到原始文件的映射
+修改 customRequest 方法（第201-251行）
+
+通过 file.uid 在 internalFileList 中查找对应对象
+直接更新该对象的 url、attachmentId、status 等属性
+不再 push 新对象
+修改 handleSuccess 方法（第276-311行）
+
+同样通过 uid 查找并更新对象
+不再 push 新对象
