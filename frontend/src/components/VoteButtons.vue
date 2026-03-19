@@ -83,7 +83,7 @@ watch(loading, (newLoading) => {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  border: 1px solid transparent;
+  border: none;
   background: transparent;
   border-radius: 8px;
   cursor: pointer;
@@ -96,28 +96,14 @@ watch(loading, (newLoading) => {
 
 .vote-btn:hover:not(:disabled) {
   background: #f8f9fa;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .vote-btn.upvote.active {
   color: #ff4757;
-  background: linear-gradient(135deg, #fff0f0 0%, #ffe0e0 100%);
-  border-color: #ffccd0;
-}
-
-.vote-btn.upvote.active:hover:not(:disabled) {
-  background: linear-gradient(135deg, #ffe0e0 0%, #ffd0d0 100%);
 }
 
 .vote-btn.downvote.active {
   color: #747d8c;
-  background: linear-gradient(135deg, #f7f9fa 0%, #edf2f7 100%);
-  border-color: #dfe6ed;
-}
-
-.vote-btn.downvote.active:hover:not(:disabled) {
-  background: linear-gradient(135deg, #edf2f7 0%, #e3e9ed 100%);
 }
 
 .vote-btn:disabled {
