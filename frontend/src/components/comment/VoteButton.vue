@@ -137,7 +137,7 @@ defineExpose({
   align-items: center;
   gap: 4px;
   padding: 4px 6px;
-  border: 1px solid transparent;
+  border: none;
   border-radius: 4px;
   background: transparent;
   color: #878a8c;

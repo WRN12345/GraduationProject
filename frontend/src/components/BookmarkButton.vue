@@ -1,16 +1,16 @@
 <template>
   <button
-    :class="['bookmark-btn', { active: bookmarked, loading }]"
+    :class="['bookmark-btn', { active: isBookmarked, loading }]"
     @click.stop="toggleBookmark"
     :disabled="loading"
-    :title="bookmarked ? '取消收藏' : '收藏'"
+    :title="isBookmarked ? '取消收藏' : '收藏'"
   >
     <Star
       :size="iconSize"
-      :fill="bookmarked ? 'currentColor' : 'none'"
-      :class="{ 'icon-pop': !loading && bookmarked }"
+      :fill="isBookmarked ? 'currentColor' : 'none'"
+      :class="{ 'icon-pop': !loading && isBookmarked }"
     />
-    <span v-if="showCount && count > 0" class="count">{{ count }}</span>
+    <span v-if="showCount && bookmarkCount > 0" class="count">{{ bookmarkCount }}</span>
   </button>
 </template>
 
@@ -39,16 +39,16 @@ const emit = defineEmits<{
   loadingChange: [loading: boolean]
 }>()
 
-// 使用收藏 composable
-const { bookmarked, count, loading, toggleBookmark } = useBookmark({
+// 使用收藏 composable（使用不同变量名避免与 props 冲突）
+const { bookmarked: isBookmarked, count: bookmarkCount, loading, toggleBookmark } = useBookmark({
   postId: props.postId,
   initialBookmarked: props.bookmarked,
   initialCount: props.count
 })
 
 // 监听状态变化
-watch([bookmarked, count], () => {
-  emit('bookmarkChange', bookmarked.value, count.value)
+watch([isBookmarked, bookmarkCount], () => {
+  emit('bookmarkChange', isBookmarked.value, bookmarkCount.value)
 })
 
 watch(loading, (newLoading) => {
@@ -62,7 +62,7 @@ watch(loading, (newLoading) => {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  border: 1px solid transparent;
+  border: none;
   background: transparent;
   border-radius: 8px;
   cursor: pointer;
@@ -75,22 +75,10 @@ watch(loading, (newLoading) => {
 
 .bookmark-btn:hover:not(:disabled) {
   background: #f8f9fa;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .bookmark-btn.active {
   color: #ffa502;
-  background: linear-gradient(135deg, #fff8e1 0%, #ffeaa7 100%);
-  border-color: #ffd32a;
-}
-
-.bookmark-btn.active:hover:not(:disabled) {
-  background: linear-gradient(135deg, #ffeaa7 0%, #ffd980 100%);
-}
-
-.bookmark-btn.active svg {
-  filter: drop-shadow(0 1px 2px rgba(255, 165, 2, 0.3));
 }
 
 .bookmark-btn:disabled {
