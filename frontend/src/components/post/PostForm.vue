@@ -1,7 +1,7 @@
 <template>
   <form @submit.prevent="onSubmit" class="post-form">
     <!-- 草稿恢复提示 -->
-    <div v-if="hasDraft && !draftRestored" class="draft-notice">
+    <div v-if="!isEditMode && hasDraft && !draftRestored" class="draft-notice">
       <Info :size="16" />
       <span>检测到未保存的草稿</span>
       <button type="button" class="draft-btn" @click="restoreDraft">
@@ -23,6 +23,7 @@
           v-model="form.community_id"
           :communities="communities"
           :loading="loadingCommunities"
+          :disabled="isEditMode"
         />
         <span v-if="errors.community_id" class="error-message">
           {{ errors.community_id }}
@@ -109,8 +110,8 @@
         :disabled="isSubmitting || !isFormValid"
       >
         <Send :size="16" v-if="!isSubmitting" />
-        <span v-if="isSubmitting">发布中...</span>
-        <span v-else>发布帖子</span>
+        <span v-if="isSubmitting">{{ isEditMode ? '更新中...' : '发布中...' }}</span>
+        <span v-else>{{ isEditMode ? '更新帖子' : '发布帖子' }}</span>
       </button>
     </div>
   </form>
@@ -126,6 +127,17 @@ import MarkdownEditor from './MarkdownEditor.vue'
 import FileUploader from '@/components/upload/FileUploader.vue'
 
 const emit = defineEmits(['submit', 'cancel'])
+
+const props = defineProps({
+  initialData: {
+    type: Object,
+    default: null
+  },
+  isEditMode: {
+    type: Boolean,
+    default: false
+  }
+})
 
 // 表单数据
 const form = reactive({
@@ -303,25 +315,32 @@ const onSubmit = async () => {
 
     console.log('[表单] 附件 ID:', attachmentIds)
 
-    // 发布帖子（用户选择社区时已自动加入）
-    const response = await client.POST('/v1/posts', {
-      body: {
-        title: form.title.trim(),
-        content: form.content.trim(),
-        community_id: form.community_id,
-        attachment_ids: attachmentIds
-      }
-    })
+    const formData = {
+      title: form.title.trim(),
+      content: form.content.trim(),
+      community_id: form.community_id,
+      attachment_ids: attachmentIds
+    }
 
-    if (response.data) {
-      console.log('[表单] 发布成功, ID:', response.data.id, '完整数据:', response.data)
-      // 清除草稿
-      clearDraft()
-      // 通知父组件
-      emit('submit', response.data.id)
+    if (props.isEditMode) {
+      // 编辑模式 - 发送更新事件
+      emit('submit', formData)
     } else {
-      console.error('[表单] 发布失败，没有返回数据')
-      alert('发布失败，请重试')
+      // 创建模式 - 发布帖子（用户选择社区时已自动加入）
+      const response = await client.POST('/v1/posts', {
+        body: formData
+      })
+
+      if (response.data) {
+        console.log('[表单] 发布成功, ID:', response.data.id, '完整数据:', response.data)
+        // 清除草稿
+        clearDraft()
+        // 通知父组件
+        emit('submit', response.data.id)
+      } else {
+        console.error('[表单] 发布失败，没有返回数据')
+        alert('发布失败，请重试')
+      }
     }
   } catch (error) {
     console.error('[表单] 发布失败:', error)
@@ -333,8 +352,8 @@ const onSubmit = async () => {
 
 // 取消
 const handleCancel = () => {
-  // 如果有内容，询问是否保存草稿
-  if (form.title || form.content) {
+  // 如果有内容且不是编辑模式，询问是否保存草稿
+  if (!props.isEditMode && (form.title || form.content)) {
     if (confirm('是否保存草稿？')) {
       saveDraft(form)
     }
@@ -347,10 +366,27 @@ onMounted(() => {
   console.log('[表单] 组件挂载')
   // 加载社区列表
   loadCommunities()
-  // 检查草稿
-  loadDraft()
-  // 启动自动保存
-  startAutoSave(form)
+
+  // 如果是编辑模式，填充数据
+  if (props.isEditMode && props.initialData) {
+    form.community_id = props.initialData.community_id
+    form.title = props.initialData.title
+    form.content = props.initialData.content
+    // 处理附件
+    if (props.initialData.attachments) {
+      attachmentList.value = props.initialData.attachments.map(a => ({
+        file: null,
+        preview: a.file_url,
+        attachmentId: a.id
+      }))
+    }
+  } else {
+    // 检查草稿
+    loadDraft()
+    // 启动自动保存
+    startAutoSave(form)
+  }
+
   // 自动聚焦标题输入框
   setTimeout(() => {
     titleInputRef.value?.focus()

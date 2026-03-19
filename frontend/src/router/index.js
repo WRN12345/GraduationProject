@@ -50,6 +50,12 @@ const routes = [
         meta: { title: '帖子详情' }
       },
       {
+        path: 'post/:id/edit',
+        name: 'EditPost',
+        component: () => import('../views/EditPost.vue'),
+        meta: { title: '编辑帖子' }
+      },
+      {
         path: 'my-communities',
         name: 'MyCommunities',
         component: () => import('../views/MyCommunities.vue'),
