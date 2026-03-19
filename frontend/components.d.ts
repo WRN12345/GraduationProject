@@ -44,6 +44,8 @@ declare module 'vue' {
     Layout: typeof import('./src/components/Layout.vue')['default']
     Main: typeof import('./src/components/Main.vue')['default']
     MarkdownEditor: typeof import('./src/components/post/MarkdownEditor.vue')['default']
+    MemberActions: typeof import('./src/components/community/MemberActions.vue')['default']
+    MemberListItem: typeof import('./src/components/community/MemberListItem.vue')['default']
     PasswordEditDialog: typeof import('./src/components/user/PasswordEditDialog.vue')['default']
     PostCard: typeof import('./src/components/PostCard.vue')['default']
     PostForm: typeof import('./src/components/post/PostForm.vue')['default']

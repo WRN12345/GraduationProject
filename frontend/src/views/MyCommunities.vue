@@ -42,9 +42,19 @@
         <div class="card-header">
           <span class="community-icon">👾</span>
           <span class="community-name">{{ community.name }}</span>
-          <span class="role-badge" :class="getRoleClass(community.role)">
-            {{ community.role_display }}
-          </span>
+          <div class="header-actions">
+            <span class="role-badge" :class="getRoleClass(community.role)">
+              {{ community.role_display }}
+            </span>
+            <button
+              v-if="canManageMembers(community.role)"
+              class="btn-members"
+              @click="goToMembers($event, community.id)"
+            >
+              <Settings :size="14" />
+              成员管理
+            </button>
+          </div>
         </div>
 
         <p class="description">{{ community.description || '暂无描述' }}</p>
@@ -71,7 +81,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Users, Plus, Search, FileText } from 'lucide-vue-next'
+import { Users, Plus, Search, FileText, Settings } from 'lucide-vue-next'
 import { client } from '@/api/client'
 
 const router = useRouter()
@@ -144,6 +154,17 @@ const goToCreateCommunity = () => {
 // 跳转到探索页面（暂时跳转到主页）
 const goToExplore = () => {
   router.push('/')
+}
+
+// 跳转到成员管理页
+const goToMembers = (event, communityId) => {
+  event.stopPropagation() // 阻止卡片点击事件
+  router.push(`/community/${communityId}/members`)
+}
+
+// 检查是否为管理员或群主
+const canManageMembers = (role) => {
+  return role === 2 || role === 1 // owner 或 admin
 }
 
 // 初始化
@@ -293,6 +314,35 @@ onMounted(() => {
   font-weight: 600;
   color: #1c1c1c;
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-members {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: #0079d3;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-members:hover {
+  background: #0066b3;
 }
 
 .role-badge {

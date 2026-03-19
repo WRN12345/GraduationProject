@@ -80,6 +80,12 @@ const routes = [
         meta: { title: '社区详情' }
       },
       {
+        path: 'community/:id/members',
+        name: 'CommunityMembers',
+        component: () => import('../views/CommunityMembers.vue'),
+        meta: { title: '社区成员' }
+      },
+      {
         path: 'trending',
         name: 'Trending',
         component: () => import('../views/Trending.vue'),

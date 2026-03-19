@@ -26,8 +26,19 @@
       <!-- 下方：帖子列表 -->
       <section class="posts-section">
         <div class="posts-header">
-          <h2>社区帖子</h2>
-          <span class="post-count">({{ community.post_count || 0 }})</span>
+          <div class="posts-title">
+            <h2>社区帖子</h2>
+            <span class="post-count">({{ community.post_count || 0 }})</span>
+          </div>
+          <!-- 成员管理按钮（仅 owner/admin 可见） -->
+          <router-link
+            v-if="membership?.role === 2 || membership?.role === 1"
+            :to="`/community/${communityId}/members`"
+            class="members-link"
+          >
+            <Users :size="16" />
+            成员管理
+          </router-link>
         </div>
         <PostList
           :community-id="communityId"
@@ -43,6 +54,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { client } from '@/api/client'
+import { Users } from 'lucide-vue-next'
 import CommunityInfoCard from '@/components/community/CommunityInfoCard.vue'
 import PostList from '@/components/PostList.vue'
 
@@ -177,8 +189,14 @@ onMounted(() => {
 .posts-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   margin-bottom: 16px;
+}
+
+.posts-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .posts-header h2 {
@@ -191,6 +209,24 @@ onMounted(() => {
 .post-count {
   color: #878a8c;
   font-size: 16px;
+}
+
+.members-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #0079d3;
+  color: #fff;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.members-link:hover {
+  background: #0066b3;
 }
 
 /* 响应式 */
