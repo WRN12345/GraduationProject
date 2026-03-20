@@ -74,28 +74,28 @@ watch(loading, (newLoading) => {
 <style scoped>
 .vote-buttons {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   align-items: center;
 }
 
 .vote-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 4px;
+  padding: 6px 10px;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #666;
-  font-size: 14px;
+  color: #888;
+  font-size: 13px;
   font-weight: 500;
   user-select: none;
 }
 
 .vote-btn:hover:not(:disabled) {
-  background: #f8f9fa;
+  background: #f5f5f5;
 }
 
 .vote-btn.upvote.active {
@@ -113,9 +113,9 @@ watch(loading, (newLoading) => {
 }
 
 .count {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  min-width: 16px;
+  min-width: 14px;
   text-align: center;
 }
 

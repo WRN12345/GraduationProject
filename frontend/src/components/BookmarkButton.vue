@@ -60,21 +60,21 @@ watch(loading, (newLoading) => {
 .bookmark-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 4px;
+  padding: 6px 10px;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #666;
-  font-size: 14px;
+  color: #888;
+  font-size: 13px;
   font-weight: 500;
   user-select: none;
 }
 
 .bookmark-btn:hover:not(:disabled) {
-  background: #f8f9fa;
+  background: #f5f5f5;
 }
 
 .bookmark-btn.active {

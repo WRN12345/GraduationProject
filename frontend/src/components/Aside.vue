@@ -1,5 +1,5 @@
 <script setup>
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import {
   Home,
   TrendingUp,
@@ -30,6 +30,15 @@ defineProps({
 const emit = defineEmits(['close-mobile'])
 
 const router = useRouter()
+const route = useRoute()
+
+// 判断当前路由是否匹配指定路径
+const isActive = (path) => {
+  if (path === '/') {
+    return route.path === '/'
+  }
+  return route.path.startsWith(path)
+}
 
 const closeMobileSidebar = () => {
   emit('close-mobile')
@@ -49,19 +58,19 @@ const navigateTo = (path) => {
     </button>
 
     <nav class="nav-group">
-      <div class="nav-item active" @click="navigateTo('/')">
+      <div class="nav-item" :class="{ active: isActive('/') }" @click="navigateTo('/')">
         <Home :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">主页</span>
       </div>
-      <div class="nav-item" @click="navigateTo('/trending')">
+      <div class="nav-item" :class="{ active: isActive('/trending') }" @click="navigateTo('/trending')">
         <TrendingUp :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">受欢迎</span>
       </div>
-      <div class="nav-item" @click="navigateTo('/bookmarks')">
+      <div class="nav-item" :class="{ active: isActive('/bookmarks') }" @click="navigateTo('/bookmarks')">
         <Bookmark :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">收藏夹</span>
       </div>
-      <div class="nav-item" @click="navigateTo('/my-posts')">
+      <div class="nav-item" :class="{ active: isActive('/my-posts') }" @click="navigateTo('/my-posts')">
         <FileText :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">我的帖子</span>
       </div>
@@ -71,11 +80,11 @@ const navigateTo = (path) => {
 
     <div class="section-title" v-if="!isCollapsed">社区</div>
     <nav class="nav-group">
-      <div class="nav-item" @click="navigateTo('/my-communities')">
+      <div class="nav-item" :class="{ active: isActive('/my-communities') }" @click="navigateTo('/my-communities')">
         <Users :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">我的社区</span>
       </div>
-      <div class="nav-item" @click="navigateTo('/all-communities')">
+      <div class="nav-item" :class="{ active: isActive('/all-communities') }" @click="navigateTo('/all-communities')">
         <Compass :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">全部社区</span>
       </div>
@@ -155,19 +164,37 @@ const navigateTo = (path) => {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #1c1c1c;
-  font-size: 14px;
+  color: #666;
+  font-size: 13px;
+  font-weight: 400;
   transition: all 0.2s ease;
   width: 100%;
+  position: relative;
+  margin: 2px 0;
 }
 
 .nav-item:hover {
-  background-color: #f6f7f8;
+  background-color: #f5f5f5;
+  color: #333;
 }
 
 .nav-item.active {
-  background-color: #f6f7f8;
-  font-weight: 600;
+  background-color: #f0f7ff;
+  color: #0079d3;
+  font-weight: 500;
+}
+
+/* 选中状态指示线 */
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: linear-gradient(180deg, #0079d3, #00a0ff);
+  border-radius: 0 3px 3px 0;
 }
 
 .icon {
@@ -175,8 +202,14 @@ const navigateTo = (path) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #1c1c1c;
+  color: #777;
   flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.nav-item:hover .icon,
+.nav-item.active .icon {
+  color: inherit;
 }
 
 .text {
@@ -187,15 +220,16 @@ const navigateTo = (path) => {
 
 .divider {
   height: 1px;
-  background-color: #edeff1;
-  margin: 15px 0;
+  background-color: #e8e8e8;
+  margin: 12px 0;
 }
 
 .section-title {
-  font-size: 12px;
-  color: #878a8c;
+  font-size: 11px;
+  color: #999;
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: 0.5px;
   margin-bottom: 8px;
   padding-left: 12px;
 }

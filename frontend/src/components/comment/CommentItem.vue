@@ -3,101 +3,121 @@
     :class="['comment-item', `level-${level}`, { 'has-children': hasChildren }]"
     :id="`comment-${comment.id}`"
   >
-    <!-- 辅助连线（可点击折叠） -->
+    <!-- 辅助连线（可点击折叠）- 用户点击线条来展开/收起 -->
     <div
       v-if="level > 0"
       class="thread-line"
-      :class="{ 'is-clickable': hasChildren, 'collapsed': isCollapsed }"
+      :class="{ 
+        'is-clickable': hasChildren, 
+        'is-collapsed': isCollapsed,
+        'is-loading': repliesLoading 
+      }"
       @click="hasChildren ? toggleCollapse() : null"
-    >
-      <!-- 折叠/展开按钮 -->
-      <span v-if="hasChildren" class="thread-collapse-btn" @click.stop="toggleCollapse()">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-          <path d="M2 3L5 7L8 3H2Z"/>
-        </svg>
-      </span>
-    </div>
+    ></div>
 
-    <!-- 评论内容 -->
-    <CommentContent
-      :comment="comment"
-      :is-deleted="!!comment.deleted_at"
-      :is-editing="activeEditId === comment.id"
-      @edit-save="handleEditSave"
-      @vote-changed="handleVoteChanged"
-    />
-
-    <!-- 操作栏 -->
-    <CommentActions
-      :comment="comment"
-      :is-replying="activeReplyId === comment.id"
-      :can-edit="canEdit"
-      :can-delete="canDelete"
-      @reply="$emit('reply', comment.id)"
-      @edit="$emit('edit', comment.id)"
-      @delete="$emit('delete', comment.id)"
-      @load-more="$emit('load-more', comment.id)"
-    />
-
-    <!-- 回复编辑器 -->
-    <CommentReplyEditor
-      v-if="activeReplyId === comment.id"
-      :post-id="postId"
-      :parent-comment="comment"
-      @submit="handleReplySubmit"
-      @cancel="$emit('cancel-reply')"
-    />
-
-    <!-- 折叠状态提示 -->
-    <div v-if="isCollapsed && hiddenReplyCount > 0" class="collapsed-hint" @click="toggleCollapse">
-      <span class="collapse-icon">▶</span>
-      <span>{{ hiddenReplyCount }} 条隐藏回复</span>
-    </div>
-
-    <!-- 子评论列表（递归） - 只在未折叠时显示 -->
-    <div v-if="!isCollapsed && comment.replies?.length > 0" class="comment-replies">
-      <CommentItem
-        v-for="reply in comment.replies"
-        :key="reply.id"
-        :comment="reply"
-        :post-id="postId"
-        :level="Math.min(level + 1, maxLevel)"
-        :max-level="maxLevel"
-        :active-reply-id="activeReplyId"
-        :active-edit-id="activeEditId"
-        :is-replying="activeReplyId === reply.id"
-        :is-editing="activeEditId === reply.id"
-        @reply="handleNestedReply"
-        @edit="handleNestedEdit"
-        @delete="handleNestedDelete"
-        @load-more="handleNestedLoadMore"
-        @cancel-reply="$emit('cancel-reply')"
-        @cancel-edit="$emit('cancel-edit')"
-        @comment-created="$emit('comment-created', $event)"
-        @comment-updated="$emit('comment-updated', $event)"
+    <!-- 评论主体 -->
+    <div class="comment-body">
+      <!-- 评论内容 -->
+      <CommentContent
+        :comment="comment"
+        :is-deleted="!!comment.deleted_at"
+        :is-editing="activeEditId === comment.id"
+        @edit-save="handleEditSave"
+        @vote-changed="handleVoteChanged"
       />
+
+      <!-- 操作栏 -->
+      <CommentActions
+        :comment="comment"
+        :is-replying="activeReplyId === comment.id"
+        :can-edit="canEdit"
+        :can-delete="canDelete"
+        :is-expanded="!isCollapsed"
+        :replies-loading="repliesLoading"
+        @reply="$emit('reply', comment.id)"
+        @edit="$emit('edit', comment.id)"
+        @delete="$emit('delete', comment.id)"
+        @load-more="$emit('load-more', comment.id)"
+        @toggle-collapse="toggleCollapse"
+      />
+
+      <!-- 回复编辑器 -->
+      <CommentReplyEditor
+        v-if="activeReplyId === comment.id"
+        :post-id="postId"
+        :parent-comment="comment"
+        @submit="handleReplySubmit"
+        @cancel="$emit('cancel-reply')"
+      />
+
+      <!-- 折叠状态提示 - 点击线条或此按钮可展开 -->
+      <div v-if="isCollapsed && hiddenReplyCount > 0" class="collapsed-hint" @click="toggleCollapse">
+        <span class="collapse-icon">▶</span>
+        <span>展开 {{ hiddenReplyCount }} 条回复</span>
+      </div>
     </div>
+
+    <!-- 子评论列表容器（带动画） -->
+    <Transition
+      name="replies-collapse"
+      @before-enter="beforeEnter"
+      @enter="enter"
+      @leave="leave"
+    >
+      <div 
+        v-if="!isCollapsed && comment.replies?.length > 0" 
+        ref="repliesContainer"
+        class="comment-replies"
+      >
+        <TransitionGroup name="reply-item" appear>
+          <CommentItem
+            v-for="reply in comment.replies"
+            :key="reply.id"
+            :comment="reply"
+            :post-id="postId"
+            :level="Math.min(level + 1, maxLevel)"
+            :max-level="maxLevel"
+            :active-reply-id="activeReplyId"
+            :active-edit-id="activeEditId"
+            :is-replying="activeReplyId === reply.id"
+            :is-editing="activeEditId === reply.id"
+            @reply="handleNestedReply"
+            @edit="handleNestedEdit"
+            @delete="handleNestedDelete"
+            @load-more="handleNestedLoadMore"
+            @cancel-reply="$emit('cancel-reply')"
+            @cancel-edit="$emit('cancel-edit')"
+            @comment-created="$emit('comment-created', $event)"
+            @comment-updated="$emit('comment-updated', $event)"
+          />
+        </TransitionGroup>
+      </div>
+    </Transition>
 
     <!-- 加载更多子评论 -->
-    <div
-      v-if="comment.has_more_replies && !isCollapsed && !repliesLoading"
-      class="load-more-replies"
-    >
-      <el-button text @click="$emit('load-more', comment.id)">
-        加载更多回复 ({{ comment.reply_count - (comment.replies?.length || 0) }})
-      </el-button>
-    </div>
+    <Transition name="fade">
+      <div
+        v-if="comment.has_more_replies && !isCollapsed && !repliesLoading"
+        class="load-more-replies"
+      >
+        <el-button text @click="$emit('load-more', comment.id)">
+          加载更多回复 ({{ comment.reply_count - (comment.replies?.length || 0) }})
+        </el-button>
+      </div>
+    </Transition>
 
     <!-- 子评论加载中 -->
-    <div v-if="repliesLoading" class="replies-loading">
-      <el-icon class="is-loading"><Loading /></el-icon>
-      <span>加载中...</span>
-    </div>
+    <Transition name="fade">
+      <div v-if="repliesLoading" class="replies-loading">
+        <el-icon class="is-loading"><Loading /></el-icon>
+        <span>加载中...</span>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { Loading } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -155,6 +175,7 @@ const emit = defineEmits([
 
 const userStore = useUserStore()
 const repliesLoading = computed(() => props.comment._loading)
+const repliesContainer = ref(null)
 
 // 折叠状态管理
 const isCollapsed = ref(false)
@@ -179,7 +200,35 @@ const hiddenReplyCount = computed(() => {
 
 // 切换折叠状态
 const toggleCollapse = () => {
+  if (repliesLoading.value) return
   isCollapsed.value = !isCollapsed.value
+}
+
+// Transition hooks for smooth height animation
+const beforeEnter = (el) => {
+  el.style.height = '0'
+  el.style.opacity = '0'
+  el.style.overflow = 'hidden'
+}
+
+const enter = (el) => {
+  const height = el.scrollHeight
+  el.style.height = height + 'px'
+  el.style.opacity = '1'
+  
+  // After animation, remove fixed height for responsive content
+  setTimeout(() => {
+    el.style.height = 'auto'
+  }, 300)
+}
+
+const leave = (el) => {
+  const height = el.scrollHeight
+  el.style.height = height + 'px'
+  // Force reflow
+  el.offsetHeight
+  el.style.height = '0'
+  el.style.opacity = '0'
 }
 
 const canEdit = computed(() =>
@@ -259,7 +308,12 @@ const handleVoteChanged = (voteData) => {
 <style scoped>
 .comment-item {
   position: relative;
-  padding: 12px 0;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.comment-item:last-child {
+  border-bottom: none;
 }
 
 /* 根评论无缩进 */
@@ -267,113 +321,83 @@ const handleVoteChanged = (voteData) => {
   padding-left: 0;
 }
 
-/* 子评论左侧留出辅助连线空间 */
+/* 子评论左侧留出辅助连线空间 - 增加缩进量 */
 .comment-item:not(.level-0) {
-  padding-left: 40px;
-  margin-left: 8px;
+  padding-left: 32px;
+  margin-left: 16px;
 }
 
-/* 辅助连线 - 可点击折叠 */
+/* 评论主体 */
+.comment-body {
+  position: relative;
+  z-index: 2;
+}
+
+/* 辅助连线 - 从父评论头像中线开始垂直向下，可点击展开/收起 */
 .thread-line {
   position: absolute;
-  left: 12px;
-  top: 0;
+  left: 11px;
+  top: 28px;
   bottom: 0;
-  width: 4px;
-  background: #edeff1;
-  transition: all 0.2s;
-  border-radius: 2px;
+  width: 1px;
+  background: #eee;
+  transition: all 0.2s ease;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
+/* 可点击状态 */
 .thread-line.is-clickable {
   cursor: pointer;
 }
 
+/* Hover效果：颜色加深(#999)，宽度变粗(2px) */
 .thread-line.is-clickable:hover {
-  background: #c8cdd0;
-  width: 6px;
-  left: 11px;
+  background: #999;
+  width: 2px;
+  left: 10px;
 }
 
-.thread-line.collapsed {
-  background: #0079d3;
+/* 折叠状态 - 线条颜色略深以便提示 */
+.thread-line.is-collapsed {
+  background: #e0e0e0;
 }
 
-/* 折叠/展开按钮 */
-.thread-collapse-btn {
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 18px;
-  height: 18px;
-  background: #fff;
-  border: 1px solid #edeff1;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #878a8c;
-  cursor: pointer;
-  transition: all 0.2s;
-  z-index: 2;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+/* 加载状态 */
+.thread-line.is-loading {
+  background: #ccc;
 }
 
-.thread-line.is-clickable:hover .thread-collapse-btn {
-  border-color: #0079d3;
-  color: #0079d3;
-  box-shadow: 0 2px 6px rgba(0, 121, 211, 0.2);
-}
-
-.thread-line.collapsed .thread-collapse-btn {
-  border-color: #0079d3;
-  color: #0079d3;
-  background: #f0f6fc;
-}
-
-.thread-collapse-btn svg {
-  transition: transform 0.2s ease;
-}
-
-/* 折叠时图标向右旋转 */
-.thread-line.collapsed .thread-collapse-btn svg {
-  transform: rotate(-90deg);
-}
-
-/* 折叠状态提示 */
+/* 折叠状态提示 - 轻量级文本按钮 */
 .collapsed-hint {
   padding: 8px 0 8px 24px;
   margin-top: 8px;
   cursor: pointer;
-  color: #878a8c;
+  color: #999;
   font-size: 13px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   user-select: none;
   border-radius: 4px;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .collapsed-hint:hover {
   color: #0079d3;
-  background: #f6f7f8;
 }
 
 .collapse-icon {
-  transition: transform 0.2s;
+  transition: transform 0.2s ease;
   font-size: 10px;
 }
 
+/* 子评论列表容器 */
 .comment-replies {
   margin-top: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* 加载更多 */
 .load-more-replies {
   margin-top: 8px;
   padding-left: 24px;
@@ -384,7 +408,7 @@ const handleVoteChanged = (voteData) => {
   align-items: center;
   gap: 8px;
   padding: 12px;
-  color: #878a8c;
+  color: #0079d3;
   font-size: 14px;
 }
 
@@ -401,10 +425,55 @@ const handleVoteChanged = (voteData) => {
   }
 }
 
+/* 抽屉式折叠动画 */
+.replies-collapse-enter-active,
+.replies-collapse-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.replies-collapse-enter-from,
+.replies-collapse-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* 子评论项依次出现动画 */
+.reply-item-enter-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: 0.05s;
+}
+
+.reply-item-leave-active {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reply-item-enter-from {
+  opacity: 0;
+  transform: translateY(-15px);
+}
+
+.reply-item-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+/* 淡入淡出动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 /* 移动端适配 */
 @media (max-width: 639px) {
   .comment-item:not(.level-0) {
-    padding-left: 28px;
+    padding-left: 24px;
+    margin-left: 12px;
   }
 
   .thread-line {
@@ -413,12 +482,6 @@ const handleVoteChanged = (voteData) => {
 
   .thread-line.is-clickable:hover {
     left: 7px;
-  }
-
-  .thread-collapse-btn {
-    width: 16px;
-    height: 16px;
-    top: 14px;
   }
 
   .load-more-replies {

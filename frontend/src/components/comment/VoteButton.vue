@@ -4,24 +4,24 @@
       :class="['vote-btn', 'like', { active: userVote === 1 }]"
       @click="handleVote(1)"
       :disabled="loading"
-      title="喜欢"
+      title="赞"
     >
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-        <path d="M8 13.5L2.5 8C1 6.5 1 4 2.5 2.5C4 1 6.5 1 8 2.5C9.5 1 12 1 13.5 2.5C15 4 15 6.5 13.5 8L8 13.5Z"/>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
       </svg>
-      <span class="vote-count" v-if="upvotes > 0">{{ upvotes }}</span>
+      <span class="vote-count">{{ upvotes }}</span>
     </button>
 
     <button
       :class="['vote-btn', 'dislike', { active: userVote === -1 }]"
       @click="handleVote(-1)"
       :disabled="loading"
-      title="不喜欢"
+      title="踩"
     >
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-        <path d="M13.5 8L8 13.5L2.5 8C1 6.5 1 4 2.5 2.5C4 1 6.5 1 8 2.5C9.5 1 12 1 13.5 2.5C15 4 15 6.5 13.5 8ZM5.5 5.5L8 8L10.5 5.5"/>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/>
       </svg>
-      <span class="vote-count" v-if="downvotes > 0">{{ downvotes }}</span>
+      <span class="vote-count">{{ downvotes }}</span>
     </button>
   </div>
 </template>
@@ -129,18 +129,18 @@ defineExpose({
 .vote-button {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .vote-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   padding: 4px 6px;
   border: none;
   border-radius: 4px;
   background: transparent;
-  color: #878a8c;
+  color: #999999;
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
@@ -152,11 +152,11 @@ defineExpose({
 }
 
 .vote-btn.like.active {
-  color: #ff1744;
+  color: #0079d3;
 }
 
 .vote-btn.dislike.active {
-  color: #757575;
+  color: #ff4500;
 }
 
 .vote-btn:disabled {
@@ -165,7 +165,9 @@ defineExpose({
 }
 
 .vote-count {
-  font-weight: 600;
+  font-weight: 500;
   font-size: 12px;
+  min-width: 16px;
+  text-align: center;
 }
 </style>

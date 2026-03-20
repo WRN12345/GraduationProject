@@ -24,6 +24,9 @@
       请 <router-link to="/login">登录</router-link> 后发表评论
     </div>
 
+    <!-- 输入区与评论列表之间的分割线 -->
+    <div class="section-divider"></div>
+
     <!-- 评论列表 -->
     <CommentList
       :comments="comments"
@@ -296,13 +299,13 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .comment-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1c1c1c;
+  font-size: 15px;
+  font-weight: 500;
+  color: #666;
   margin: 0;
 }
 
@@ -323,5 +326,10 @@ onMounted(() => {
 
 .login-tip a:hover {
   text-decoration: underline;
+}
+
+.section-divider {
+  border-bottom: 1px solid #f0f0f0;
+  margin: 20px 0;
 }
 </style>

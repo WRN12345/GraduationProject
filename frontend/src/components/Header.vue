@@ -366,16 +366,16 @@ const handlePasswordUpdate = async () => {
 <style scoped>
 /* --- 全局容器样式 --- */
 .header-container {
-  height: 56px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 20px;
   background: #fff;
   position: sticky;
   top: 0;
   z-index: 2000;
-  border-bottom: 1px solid #edeff1;
+  border-bottom: 1px solid #f0f0f0;
   gap: 12px;
 }
 
@@ -430,8 +430,8 @@ const handlePasswordUpdate = async () => {
 
 .search-section {
   flex: 1;
-  max-width: 640px;
-  margin: 0 24px;
+  max-width: 560px;
+  margin: 0 20px;
   position: relative;
 }
 
@@ -445,10 +445,10 @@ const handlePasswordUpdate = async () => {
 }
 
 .search-bar {
-  background: #f6f7f8;
-  border-radius: 24px;
-  padding: 0 16px;
-  height: 40px;
+  background: #f5f5f5;
+  border-radius: 20px;
+  padding: 0 14px;
+  height: 36px;
   display: flex;
   align-items: center;
   border: 1px solid transparent;
@@ -459,7 +459,8 @@ const handlePasswordUpdate = async () => {
 
 .search-bar:hover {
   background: #fff;
-  border-color: #0079d3;
+  border-color: #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .search-icon {
@@ -558,34 +559,44 @@ const handlePasswordUpdate = async () => {
 .actions-section {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   flex-shrink: 0;
+}
+
+/* 分隔线 */
+.actions-section .divider-line {
+  width: 1px;
+  height: 24px;
+  background: #e0e0e0;
+  margin: 0 8px;
 }
 
 .btn-icon {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  color: #1c1c1c;
-  padding: 8px;
-  border-radius: 50%;
+  gap: 4px;
+  color: #666;
+  padding: 6px 10px;
+  border-radius: 20px;
   transition: all 0.2s;
-  min-width: 40px;
-  height: 40px;
+  min-width: auto;
+  height: auto;
 }
 
 .btn-icon:hover {
-  background: #f6f7f8;
+  background: #f5f5f5;
+  color: #333;
 }
 
 .btn-icon.active {
-  background: #f6f7f8;
+  background: #f0f0f0;
+  color: #0079d3;
 }
 
 /* 创建菜单容器 */
@@ -661,8 +672,8 @@ const handlePasswordUpdate = async () => {
 
 .avatar-box {
   position: relative;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
 }
 
 .avatar-img-wrapper {
@@ -674,9 +685,16 @@ const handlePasswordUpdate = async () => {
 .user-avatar-img {
   width: 100%;
   height: 100%;
-  border-radius: 8px;
+  border-radius: 50%;
   object-fit: cover;
   background: #ddd;
+  border: 1px solid #e8e8e8;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.avatar-img-wrapper:hover .user-avatar-img {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .status-dot {
