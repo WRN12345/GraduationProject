@@ -3,24 +3,63 @@
     <el-button
       text
       size="small"
-      :icon="isReplying ? ChevronUp : MessageCircle"
       @click="$emit('reply')"
     >
-      {{ isReplying ? '取消回复' : '回复' }}
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="action-icon">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span>{{ isReplying ? '取消' : '回复' }}</span>
     </el-button>
 
-    <span v-if="comment.reply_count > 0" class="reply-count">
-      {{ comment.reply_count }} 条回复
-    </span>
+    <!-- 整合的展开/收起按钮 -->
+    <Transition name="expand-toggle" mode="out-in">
+      <button
+        v-if="comment.reply_count > 0"
+        key="toggle"
+        class="expand-toggle-btn"
+        :class="{ 
+          'is-expanded': isExpanded,
+          'is-loading': repliesLoading
+        }"
+        @click="$emit('toggle-collapse')"
+        :disabled="repliesLoading"
+      >
+        <!-- 细线条箭头图标 -->
+        <span class="toggle-icon">
+          <svg 
+            v-if="!repliesLoading" 
+            width="10" 
+            height="10" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            stroke-width="2"
+            stroke-linecap="round" 
+            stroke-linejoin="round"
+          >
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+          <el-icon v-else class="loading-spinner"><Loading /></el-icon>
+        </span>
+        
+        <!-- 文字说明 -->
+        <span class="toggle-text">
+          {{ repliesLoading ? '加载中...' : (isExpanded ? '收起' : `${comment.reply_count} 条回复`) }}
+        </span>
+      </button>
+    </Transition>
 
     <template v-if="canEdit">
       <el-button
         text
         size="small"
-        :icon="Edit2"
         @click="$emit('edit')"
       >
-        编辑
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="action-icon">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+        <span>编辑</span>
       </el-button>
     </template>
 
@@ -28,18 +67,21 @@
       <el-button
         text
         size="small"
-        :icon="Trash2"
         class="delete-btn"
         @click="handleDelete"
       >
-        删除
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="action-icon">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+        <span>删除</span>
       </el-button>
     </template>
   </div>
 </template>
 
 <script setup>
-import { MessageCircle, ChevronUp, Edit2, Trash2 } from 'lucide-vue-next'
+import { Loading } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 
 const props = defineProps({
@@ -58,10 +100,18 @@ const props = defineProps({
   canDelete: {
     type: Boolean,
     default: false
+  },
+  isExpanded: {
+    type: Boolean,
+    default: false
+  },
+  repliesLoading: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['reply', 'edit', 'delete', 'load-more'])
+const emit = defineEmits(['reply', 'edit', 'delete', 'load-more', 'toggle-collapse'])
 
 const handleDelete = () => {
   ElMessageBox.confirm(
@@ -89,30 +139,114 @@ const handleDelete = () => {
 .comment-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 16px;
   flex-wrap: wrap;
   margin-left: 44px;
   margin-top: 8px;
 }
 
 .comment-actions .el-button {
-  padding: 4px 8px;
-  font-size: 13px;
-  color: #878a8c;
+  padding: 4px 0;
+  font-size: 12px;
+  color: #999;
+  background: transparent;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .comment-actions .el-button:hover {
-  color: #0079d3;
+  color: #333;
+  background: transparent;
+}
+
+/* 操作图标样式 */
+.action-icon {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.comment-actions .el-button:hover .action-icon {
+  opacity: 1;
 }
 
 .delete-btn:hover {
   color: #ff4500 !important;
 }
 
-.reply-count {
-  color: #878a8c;
-  font-size: 13px;
-  margin-left: 4px;
+/* 整合的展开/收起按钮 - 轻量级设计 */
+.expand-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #999;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  user-select: none;
+}
+
+.expand-toggle-btn:hover:not(:disabled) {
+  color: #333;
+}
+
+.expand-toggle-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.expand-toggle-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* 箭头图标 */
+.toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+/* 展开时箭头旋转90度（向右变为向下） */
+.expand-toggle-btn.is-expanded .toggle-icon {
+  transform: rotate(90deg);
+}
+
+/* 加载状态 */
+.expand-toggle-btn.is-loading {
+  color: #999;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 按钮切换动画 */
+.expand-toggle-enter-active,
+.expand-toggle-leave-active {
+  transition: all 0.2s ease;
+}
+
+.expand-toggle-enter-from {
+  opacity: 0;
+  transform: translateX(-5px);
+}
+
+.expand-toggle-leave-to {
+  opacity: 0;
+  transform: translateX(5px);
 }
 
 @media (max-width: 639px) {

@@ -169,15 +169,16 @@ const updateBookmark = (bookmarked, count) => {
 <style scoped>
 .post-card {
   background: #fff;
-  border: 1px solid #edeff1;
+  border: 1px solid #f0f0f0;
   border-radius: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .post-card:hover {
-  border-color: #0079d3;
+  border-color: #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 /* 置顶帖子样式 */
@@ -244,12 +245,21 @@ const updateBookmark = (bookmarked, count) => {
 
 .post-header {
   font-size: 12px;
-  color: #787c7e;
+  color: #999;
   margin-bottom: 8px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
+}
+
+.meta-info {
+  color: #999;
+}
+
+.meta-info .separator {
+  margin: 0 4px;
+  color: #ccc;
 }
 
 .author-avatar {
@@ -265,7 +275,13 @@ const updateBookmark = (bookmarked, count) => {
   border-radius: 50%;
   object-fit: cover;
   background: transparent;
-  border: 1px solid #e6e6e6;
+  border: 1px solid #e8e8e8;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.author-avatar:hover .avatar-img {
+  transform: scale(1.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .avatar-text {
@@ -292,17 +308,18 @@ const updateBookmark = (bookmarked, count) => {
 }
 
 .post-title {
-  font-size: 18px;
-  margin: 0 0 12px 0;
-  font-weight: 600;
-  color: #1c1c1c;
-  line-height: 1.4;
+  font-size: 16px;
+  margin: 0 0 10px 0;
+  font-weight: 500;
+  color: #1a1a1a;
+  line-height: 1.5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .post-preview {
-  color: #1c1c1c;
+  color: #444;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.7;
   margin-bottom: 12px;
 }
 
@@ -311,9 +328,9 @@ const updateBookmark = (bookmarked, count) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #edeff1;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .footer-left {
@@ -327,23 +344,23 @@ const updateBookmark = (bookmarked, count) => {
 }
 
 .action-btn {
-  background: none;
+  background: transparent;
   border: none;
-  padding: 6px 12px;
-  color: #878a8c;
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: 20px;
+  padding: 6px 10px;
+  color: #888;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   transition: all 0.2s;
 }
 
 .action-btn:hover {
-  background: #f6f7f8;
-  color: #1c1c1c;
+  background: #f5f5f5;
+  color: #555;
 }
 
 /* 响应式优化 */

@@ -121,11 +121,7 @@ const handleLoadMore = (commentId) => emit('load-more', commentId)
 }
 
 .comment-list-item {
-  border-bottom: 1px solid #edeff1;
-}
-
-.comment-list-item:last-child {
-  border-bottom: none;
+  /* 分割线已移至 CommentItem 组件中 */
 }
 
 .comment-loading,

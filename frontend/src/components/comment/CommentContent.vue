@@ -161,13 +161,24 @@ const handleAvatarError = (event) => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #0079d3;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
   font-weight: 600;
+}
+
+/* 子评论头像缩小 */
+.level-1 .comment-avatar,
+.level-2 .comment-avatar,
+.level-3 .comment-avatar,
+.level-4 .comment-avatar,
+.level-5 .comment-avatar {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
 }
 
 .comment-avatar-img {
@@ -196,22 +207,23 @@ const handleAvatarError = (event) => {
 }
 
 .comment-time {
-  color: #878a8c;
+  color: #999999;
   font-size: 12px;
 }
 
 .comment-edited {
-  color: #878a8c;
+  color: #999999;
   font-size: 12px;
   font-style: italic;
 }
 
 .comment-text {
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
   color: #1c1c1c;
   word-break: break-word;
-  margin-top: 4px;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
 .comment-deleted {

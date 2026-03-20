@@ -14,6 +14,18 @@
           <span class="community-name">{{ post.community?.name || '未知社区' }}</span>
           <span class="separator">•</span>
           <span class="post-time">{{ formatTime(post.created_at) }}</span>
+
+          <!-- 作者专属操作按钮 - 编辑和删除 -->
+          <div v-if="canEdit || canDelete" class="author-actions">
+            <button v-if="canEdit" class="author-action-btn" @click="handleEdit" title="编辑帖子">
+              <Edit2 :size="14" />
+              <span>编辑</span>
+            </button>
+            <button v-if="canDelete" class="author-action-btn delete" @click="handleDelete" title="删除帖子">
+              <Trash2 :size="14" />
+              <span>删除</span>
+            </button>
+          </div>
         </div>
 
         <!-- 标题和状态 -->
@@ -99,40 +111,43 @@
           </div>
         </div>
 
-        <!-- 投票和收藏操作区 -->
+        <!-- 互动操作区 - 左侧按钮组 -->
         <div class="post-actions">
-          <VoteButtons
-            v-if="post"
-            :target-type="'post'"
-            :target-id="post.id"
-            :upvotes="post.upvotes || 0"
-            :downvotes="post.downvotes || 0"
-            :user-vote="post.user_vote || 0"
-            :show-count="true"
-            :icon-size="18"
-            @vote-change="handleVoteChange"
-          />
+          <div class="actions-left">
+            <!-- 投票按钮 -->
+            <VoteButtons
+              v-if="post"
+              :target-type="'post'"
+              :target-id="post.id"
+              :upvotes="post.upvotes || 0"
+              :downvotes="post.downvotes || 0"
+              :user-vote="post.user_vote || 0"
+              :show-count="true"
+              :icon-size="18"
+              @vote-change="handleVoteChange"
+            />
 
-          <BookmarkButton
-            v-if="post"
-            :post-id="post.id"
-            :bookmarked="post.bookmarked || false"
-            :count="post.bookmark_count || 0"
-            :show-count="false"
-            :icon-size="18"
-          />
-        </div>
+            <!-- 评论按钮 -->
+            <button class="action-btn" title="评论">
+              <MessageCircle :size="18" />
+              <span>{{ post.comment_count || 0 }}</span>
+            </button>
 
-        <!-- 帖主操作区 -->
-        <div v-if="canEdit || canDelete" class="post-owner-actions">
-          <button v-if="canEdit" class="action-btn edit-btn" @click="handleEdit">
-            <Edit2 :size="16" />
-            <span>编辑帖子</span>
-          </button>
-          <button v-if="canDelete" class="action-btn delete-btn" @click="handleDelete">
-            <Trash2 :size="16" />
-            <span>删除帖子</span>
-          </button>
+            <!-- 收藏按钮 -->
+            <BookmarkButton
+              v-if="post"
+              :post-id="post.id"
+              :bookmarked="post.bookmarked || false"
+              :count="post.bookmark_count || 0"
+              :show-count="false"
+              :icon-size="18"
+            />
+
+            <!-- 转发按钮 -->
+            <button class="action-btn" title="转发">
+              <Share2 :size="18" />
+            </button>
+          </div>
         </div>
 
         <!-- 版主操作区 -->
@@ -180,7 +195,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Edit2, Trash2, Pin, Star } from 'lucide-vue-next'
+import { Edit2, Trash2, Pin, Star, MessageCircle, Share2 } from 'lucide-vue-next'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { client } from '@/api/client'
 import { marked } from 'marked'
@@ -446,7 +461,7 @@ onMounted(() => {
 .post-detail-container {
   min-height: calc(100vh - 56px);
   padding: 24px 16px;
-  background: #f6f7f8;
+  background: #fafafa;
 }
 
 .loading {
@@ -488,26 +503,63 @@ onMounted(() => {
 .community-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  font-size: 14px;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  flex-wrap: wrap;
 }
 
 .community-icon {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .community-name {
-  font-weight: 600;
+  font-weight: 500;
   color: #0079d3;
 }
 
 .separator {
-  color: #edeff1;
+  color: #ccc;
 }
 
 .post-time {
-  color: #878a8c;
+  color: #999;
+}
+
+/* 作者专属操作按钮 */
+.author-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.author-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.author-action-btn:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.author-action-btn.delete {
+  color: #d32f2f;
+}
+
+.author-action-btn.delete:hover {
+  background: #fff0f0;
+  color: #c62828;
 }
 
 .post-title-section {
@@ -544,11 +596,12 @@ onMounted(() => {
 }
 
 .post-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1c1c1c;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
   margin: 0;
-  line-height: 1.3;
+  line-height: 1.4;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .author-info {
@@ -565,22 +618,28 @@ onMounted(() => {
 }
 
 .author-avatar {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: #0079d3;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .author-avatar-img {
   background: transparent;
   object-fit: cover;
-  border: 2px solid #e6e6e6;
+  border: 1px solid #e8e8e8;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.author-info:hover .author-avatar-img {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .author-details {
@@ -615,66 +674,36 @@ onMounted(() => {
 .post-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
+  padding: 12px 0;
   margin: 20px 0;
-  background: #f8f9fa;
-  border-radius: 12px;
-  border: 1px solid #e9ecef;
-  transition: all 0.3s ease;
+  border-top: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.post-actions:hover {
-  border-color: #dee2e6;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.post-actions > * {
+.actions-left {
   display: flex;
-  gap: 12px;
   align-items: center;
+  gap: 4px;
 }
 
-/* 帖主操作区 */
-.post-owner-actions {
+.actions-left .action-btn {
   display: flex;
-  gap: 12px;
-  padding: 16px 20px;
-  margin: 20px 0;
-  background: #fff8f8;
-  border-radius: 12px;
-  border: 1px solid #ffebee;
-}
-
-.post-owner-actions .action-btn {
-  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  gap: 4px;
+  padding: 6px 10px;
   border: none;
+  background: transparent;
+  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  color: #888;
+  font-size: 13px;
+  font-weight: 500;
 }
 
-.edit-btn {
-  background: #e3f2fd;
-  color: #1976d2;
-}
-
-.edit-btn:hover {
-  background: #bbdefb;
-}
-
-.delete-btn {
-  background: #ffebee;
-  color: #d32f2f;
-}
-
-.delete-btn:hover {
-  background: #ffcdd2;
+.actions-left .action-btn:hover {
+  background: #f5f5f5;
+  color: #555;
 }
 
 /* 版主操作区 */
@@ -751,9 +780,9 @@ onMounted(() => {
 }
 
 .content-body {
-  font-size: 16px;
-  line-height: 1.6;
-  color: #1c1c1c;
+  font-size: 15px;
+  line-height: 1.8;
+  color: #333;
 }
 
 /* Markdown 样式 */
@@ -835,18 +864,19 @@ onMounted(() => {
   margin: 16px 0;
 }
 
-/* 附件区域 */
+/* 附件区域 - 优化样式 */
 .post-attachments-section {
   margin-top: 24px;
   padding: 16px;
-  background: #f6f7f8;
+  background: #fafafa;
   border-radius: 8px;
+  border: 1px solid #eee;
 }
 
 .post-attachments-section h4 {
   margin: 0 0 12px 0;
-  font-size: 16px;
-  color: #1c1c1c;
+  font-size: 14px;
+  color: #666;
   font-weight: 600;
 }
 
@@ -870,13 +900,32 @@ onMounted(() => {
 .image-attachment img {
   max-width: 100%;
   max-height: 400px;
+  border: 1px solid #eee;
   border-radius: 8px;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .image-attachment img:hover {
-  transform: scale(1.02);
+  transform: scale(1.01);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* 图片附件说明文字（图注） */
+.image-attachment .attachment-info {
+  margin-top: 8px;
+  padding: 0 4px;
+}
+
+.image-attachment .file-name {
+  font-size: 13px;
+  color: #888;
+}
+
+.image-attachment .file-size {
+  font-size: 12px;
+  color: #aaa;
 }
 
 .video-attachment {
@@ -891,14 +940,16 @@ onMounted(() => {
 }
 
 .file-attachment {
-  padding: 12px;
+  padding: 14px;
   background: white;
-  border-radius: 8px;
-  border: 1px solid #edeff1;
+  border-radius: 10px;
+  border: 1px solid #eee;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .file-icon {
-  font-size: 32px;
+  font-size: 28px;
+  flex-shrink: 0;
 }
 
 .attachment-info {
@@ -938,8 +989,7 @@ onMounted(() => {
 
 .comments-section {
   padding: 24px;
-  border-top: 1px solid #edeff1;
-  background: #f6f7f8;
+  background: #ffffff;
 }
 
 .comments-placeholder {

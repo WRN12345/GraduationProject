@@ -1,37 +1,42 @@
 <template>
   <div class="reply-editor-wrapper">
-    <!-- 引用被回复的评论 -->
-    <div class="reply-quote">
-      <span class="reply-label">回复</span>
-      <span class="reply-author">{{ parentComment.author_name }}</span>
-      <span class="reply-content-preview">{{ contentPreview }}</span>
-    </div>
-
-    <div class="reply-editor">
-      <el-input
-        ref="inputRef"
-        v-model="content"
-        type="textarea"
-        :rows="3"
-        :placeholder="placeholder"
-        :maxlength="maxLength"
-        @keydown.ctrl.enter="handleSubmit"
-        @keydown.esc="handleCancel"
-      />
-    </div>
-
-    <div class="reply-actions">
-      <el-button
-        type="primary"
-        size="small"
+    <!-- 现代化胶囊输入框 - 左右布局 -->
+    <div class="pill-editor">
+      <!-- 回复前缀标签 -->
+      <span class="reply-prefix">
+        <span class="reply-label">回复</span>
+        <span class="reply-author">@{{ parentComment.author_name }}</span>
+      </span>
+      
+      <!-- 输入区域 -->
+      <div class="pill-input-wrapper">
+        <el-input
+          ref="inputRef"
+          v-model="content"
+          type="textarea"
+          :rows="1"
+          :placeholder="placeholder"
+          :maxlength="maxLength"
+          autosize
+          @keydown.ctrl.enter="handleSubmit"
+          @keydown.esc="handleCancel"
+          class="pill-textarea"
+        />
+      </div>
+      
+      <!-- 内嵌发送按钮 -->
+      <button 
+        class="send-btn" 
+        :class="{ 'send-btn-active': isValid }"
         :disabled="!isValid"
         @click="handleSubmit"
+        title="发送"
       >
-        发表回复
-      </el-button>
-      <el-button size="small" @click="handleCancel">
-        取消
-      </el-button>
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="send-icon">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
     </div>
   </div>
 </template>
@@ -74,13 +79,9 @@ const inputRef = ref(null)
 
 const isValid = computed(() =>
   content.value.length >= props.minLength &&
-  content.value.length <= props.maxLength
+  content.value.length <= props.maxLength &&
+  content.value.trim().length > 0
 )
-
-const contentPreview = computed(() => {
-  const text = props.parentComment.content || ''
-  return text.length > 30 ? text.substring(0, 30) + '...' : text
-})
 
 // 自动聚焦
 if (props.autoFocus) {
@@ -111,57 +112,170 @@ const handleCancel = () => {
 
 <style scoped>
 .reply-editor-wrapper {
-  margin-top: 12px;
-  padding: 12px;
-  background: #f6f7f8;
-  border-radius: 8px;
+  margin-top: 8px;
 }
 
-.reply-quote {
+/* 现代化胶囊编辑器 - 整体化设计 */
+.pill-editor {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-  font-size: 13px;
+  gap: 0;
+  background: #f0f2f5;
+  border-radius: 24px;
+  padding: 6px 6px 6px 14px;
+  transition: all 0.2s ease;
+}
+
+.pill-editor:focus-within {
+  background: #e8eaed;
+  box-shadow: 0 0 0 2px rgba(0, 136, 254, 0.15);
+}
+
+/* 回复前缀标签 - 左侧 */
+.reply-prefix {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 12px;
+  border-right: 1px solid #dcdde0;
+  margin-right: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .reply-label {
-  color: #878a8c;
+  color: #8b8b8b;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .reply-author {
+  font-size: 13px;
   font-weight: 600;
-  color: #0079d3;
+  color: #5a8dee;
 }
 
-.reply-content-preview {
-  color: #878a8c;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 300px;
+/* 输入框容器 */
+.pill-input-wrapper {
+  flex: 1;
+  min-width: 0;
 }
 
-.reply-editor :deep(.el-textarea__inner) {
-  border-radius: 6px;
-  resize: vertical;
+.pill-input-wrapper :deep(.el-textarea__inner) {
+  border: none;
+  background: transparent;
+  resize: none;
+  font-size: 14px;
+  line-height: 24px;
+  padding: 0;
+  min-height: 24px !important;
+  max-height: 120px;
+  /* 垂直居中关键 */
+  display: flex;
+  align-items: center;
+}
+
+.pill-input-wrapper :deep(.el-textarea__inner)::placeholder {
+  color: #9ca3af;
   font-size: 14px;
 }
 
-.reply-actions {
+.pill-input-wrapper :deep(.el-textarea__inner):focus {
+  box-shadow: none;
+}
+
+/* 隐藏 textarea 边框 */
+.pill-input-wrapper :deep(.el-textarea) {
+  display: block;
+}
+
+.pill-input-wrapper :deep(.el-textarea__inner) {
+  outline: none;
+}
+
+/* 修复 textarea 内部垂直居中 */
+.pill-input-wrapper :deep(.el-textarea) {
+  line-height: normal;
+}
+
+.pill-input-wrapper :deep(.el-textarea__inner) {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+/* 内嵌发送按钮 */
+.send-btn {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #e5e5e5;
+  border-radius: 50%;
+  color: #a0a0a0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.send-btn:hover:not(:disabled) {
+  background: #d0d0d0;
+  color: #707070;
+}
+
+.send-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* 激活状态 - 输入时变蓝 */
+.send-btn-active {
+  background: #0088fe;
+  color: #fff;
+}
+
+.send-btn-active:hover:not(:disabled) {
+  background: #0077ee;
+  color: #fff;
+}
+
+.send-btn-active:disabled {
+  background: #e5e5e5;
+  color: #a0a0a0;
+  opacity: 0.5;
+}
+
+.send-icon {
+  transform: translateX(1px);
 }
 
 @media (max-width: 639px) {
-  .reply-content-preview {
-    max-width: 150px;
+  .pill-editor {
+    padding: 5px 5px 5px 12px;
   }
-
-  .reply-actions .el-button {
-    font-size: 13px;
+  
+  .reply-prefix {
+    padding-right: 8px;
+    margin-right: 8px;
+  }
+  
+  .reply-label,
+  .reply-author {
+    font-size: 12px;
+  }
+  
+  .send-btn {
+    width: 32px;
+    height: 32px;
+    margin-left: 6px;
+  }
+  
+  .send-icon {
+    width: 16px;
+    height: 16px;
   }
 }
 </style>
