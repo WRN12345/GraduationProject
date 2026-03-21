@@ -27,7 +27,7 @@ class PostAttachment(models.Model):
     # 附件信息
     attachment_type = fields.CharEnumField(AttachmentType, max_length=10)
     file_name = fields.CharField(max_length=255)  # 原始文件名
-    file_url = fields.CharField(max_length=1024)  # MinIO URL
+    file_url = fields.CharField(max_length=1024)  # RustFS URL
     file_size = fields.BigIntField()  # 文件大小(字节)
     mime_type = fields.CharField(max_length=100)  # MIME 类型
 

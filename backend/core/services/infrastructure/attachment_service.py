@@ -4,7 +4,7 @@
 from datetime import timedelta
 from typing import Optional
 from core.cache import get_redis
-from core.services.infrastructure.minio_service import minio_service
+from core.services.infrastructure.rustfs_service import rustfs_service
 
 
 class AttachmentService:
@@ -46,7 +46,7 @@ class AttachmentService:
                 await redis.close()
 
         # 生成新的 presigned URL
-        presigned_url = await minio_service.generate_presigned_url(
+        presigned_url = await rustfs_service.generate_presigned_url(
             file_url,
             expires=timedelta(hours=24)
         )
@@ -117,7 +117,7 @@ class AttachmentService:
                     attachment_id = attachment['id']
                     file_url = attachment['file_url']
 
-                    presigned_url = await minio_service.generate_presigned_url(
+                    presigned_url = await rustfs_service.generate_presigned_url(
                         file_url,
                         expires=timedelta(hours=24)
                     )

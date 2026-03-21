@@ -6,7 +6,7 @@
 from typing import List, Tuple
 from models.user import User
 from models.post_attachment import PostAttachment, AttachmentType
-from core.services.infrastructure.minio_service import minio_service
+from core.services.infrastructure.rustfs_service import rustfs_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -50,8 +50,8 @@ class UploadService:
         if len(file_data) > self.MAX_IMAGE_SIZE:
             return {"error": "图片大小不能超过 10MB"}
 
-        # 上传到 MinIO
-        url = await minio_service.upload_file(
+        # 上传到 RustFS
+        url = await rustfs_service.upload_file(
             file_data=file_data,
             filename=filename or "image",
             content_type=content_type
@@ -105,7 +105,7 @@ class UploadService:
         if len(file_data) > self.MAX_VIDEO_SIZE:
             return {"error": "视频大小不能超过 100MB"}
 
-        url = await minio_service.upload_file(
+        url = await rustfs_service.upload_file(
             file_data=file_data,
             filename=filename or "video",
             content_type=content_type
@@ -155,7 +155,7 @@ class UploadService:
         if len(file_data) > self.MAX_FILE_SIZE:
             return {"error": "文件大小不能超过 50MB"}
 
-        url = await minio_service.upload_file(
+        url = await rustfs_service.upload_file(
             file_data=file_data,
             filename=filename or "file",
             content_type=content_type or 'application/octet-stream'
@@ -218,7 +218,7 @@ class UploadService:
                 })
                 continue
 
-            url = await minio_service.upload_file(
+            url = await rustfs_service.upload_file(
                 file_data=file_data,
                 filename=filename or "file",
                 content_type=content_type or 'application/octet-stream'

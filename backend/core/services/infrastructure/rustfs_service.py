@@ -1,5 +1,5 @@
 """
-MinIO 对象存储服务
+RustFS (S3兼容) 对象存储服务
 """
 from minio import Minio
 from minio.error import S3Error
@@ -12,44 +12,47 @@ from typing import Optional
 from core.config import settings
 
 
-class MinioService:
-    """MinIO 服务单例"""
+class RustfsService:
+    """RustFS 服务单例 (使用 S3 协议)"""
 
     def __init__(self):
         self.client: Optional[Minio] = None
         self._initialized = False
 
     def initialize(self):
-        """初始化 MinIO 客户端"""
+        """初始化 RustFS/S3 客户端"""
         try:
+            # 从 S3_ENDPOINT 提取 host 和 port
+            endpoint = settings.S3_ENDPOINT.replace("http://", "").replace("https://", "")
+            secure = settings.S3_ENDPOINT.startswith("https://")
+
             self.client = Minio(
-                endpoint=settings.MINIO_ENDPOINT,
-                access_key=settings.MINIO_ACCESS_KEY,
-                secret_key=settings.MINIO_SECRET_KEY,
-                secure=settings.MINIO_SECURE,
-                region=settings.MINIO_REGION
+                endpoint=endpoint,
+                access_key=settings.S3_ACCESS_KEY,
+                secret_key=settings.S3_SECRET_KEY,
+                secure=secure
             )
             # 测试连接
             self.client.list_buckets()
             self._initialized = True
             return self
         except Exception as e:
-            print(f"⚠️  MinIO 初始化失败: {e}")
-            print(f"   请检查 MinIO 服务是否正常运行")
-            print(f"   Endpoint: {settings.MINIO_ENDPOINT}")
+            print(f"⚠️  RustFS 初始化失败: {e}")
+            print(f"   请检查 RustFS 服务是否正常运行")
+            print(f"   Endpoint: {settings.S3_ENDPOINT}")
             self._initialized = False
             return self
 
     async def ensure_buckets(self):
         """确保所有必需的 bucket 都存在"""
         if not self._initialized:
-            print("⚠️  MinIO 未初始化，跳过 bucket 检查")
+            print("⚠️  RustFS 未初始化，跳过 bucket 检查")
             return
 
         buckets = [
-            settings.MINIO_IMAGE_BUCKET,
-            settings.MINIO_VIDEO_BUCKET,
-            settings.MINIO_FILE_BUCKET
+            settings.S3_IMAGE_BUCKET,
+            settings.S3_VIDEO_BUCKET,
+            settings.S3_FILE_BUCKET
         ]
 
         for bucket in buckets:
@@ -76,18 +79,23 @@ class MinioService:
                     print(f"✅ bucket {bucket} 已存在")
             except S3Error as e:
                 print(f"⚠️  bucket {bucket} 操作失败: {e}")
-                print(f"   请确保 MinIO 凭证配置正确")
+                print(f"   请确保 RustFS 凭证配置正确")
             except Exception as e:
                 print(f"⚠️  bucket {bucket} 操作异常: {e}")
 
     def get_bucket_by_mime(self, mime_type: str) -> str:
         """根据 MIME 类型返回对应的 bucket"""
         if mime_type.startswith('image/'):
-            return settings.MINIO_IMAGE_BUCKET
+            return settings.S3_IMAGE_BUCKET
         elif mime_type.startswith('video/'):
-            return settings.MINIO_VIDEO_BUCKET
+            return settings.S3_VIDEO_BUCKET
         else:
-            return settings.MINIO_FILE_BUCKET
+            return settings.S3_FILE_BUCKET
+
+    def _get_public_url(self, bucket: str, object_name: str) -> str:
+        """生成公共访问 URL"""
+        # 使用 S3_ENDPOINT 作为基础 URL
+        return f"{settings.S3_ENDPOINT}/{bucket}/{object_name}"
 
     async def upload_file(
         self,
@@ -97,7 +105,7 @@ class MinioService:
         bucket: Optional[str] = None
     ) -> str:
         """
-        上传文件到 MinIO
+        上传文件到 RustFS
 
         Args:
             file_data: 文件二进制数据
@@ -109,7 +117,7 @@ class MinioService:
             公共访问 URL
         """
         if not self._initialized:
-            raise HTTPException(status_code=503, detail="MinIO 服务未初始化")
+            raise HTTPException(status_code=503, detail="RustFS 服务未初始化")
 
         if bucket is None:
             bucket = self.get_bucket_by_mime(content_type)
@@ -131,11 +139,11 @@ class MinioService:
             raise HTTPException(status_code=500, detail=f"文件上传失败: {str(e)}")
 
         # 返回公共访问 URL
-        return f"{settings.MINIO_PUBLIC_URL}/{bucket}/{unique_name}"
+        return self._get_public_url(bucket, unique_name)
 
     async def delete_file(self, url: str) -> bool:
         """
-        从 MinIO 删除文件
+        从 RustFS 删除文件
 
         Args:
             url: 文件的完整 URL
@@ -147,8 +155,9 @@ class MinioService:
             return False
 
         try:
-            # 解析 URL: http://localhost:9000/bucket/filename
-            parts = url.replace(f"{settings.MINIO_PUBLIC_URL}/", "").split('/', 1)
+            # 解析 URL: http://host:port/bucket/filename
+            url_without_scheme = url.replace(f"{settings.S3_ENDPOINT}/", "")
+            parts = url_without_scheme.split('/', 1)
             if len(parts) == 2:
                 bucket, object_name = parts
                 self.client.remove_object(bucket, object_name)
@@ -174,13 +183,14 @@ class MinioService:
             presigned URL
         """
         if not self._initialized:
-            raise HTTPException(status_code=503, detail="MinIO 服务未初始化")
+            raise HTTPException(status_code=503, detail="RustFS 服务未初始化")
 
         try:
-            # 解析 URL: http://localhost:9000/bucket/filename
-            parts = url.replace(f"{settings.MINIO_PUBLIC_URL}/", "").split('/', 1)
+            # 解析 URL: http://host:port/bucket/filename
+            url_without_scheme = url.replace(f"{settings.S3_ENDPOINT}/", "")
+            parts = url_without_scheme.split('/', 1)
             if len(parts) != 2:
-                raise ValueError(f"无效的 MinIO URL 格式: {url}")
+                raise ValueError(f"无效的 RustFS URL 格式: {url}")
 
             bucket, object_name = parts
 
@@ -191,13 +201,15 @@ class MinioService:
                 expires=expires
             )
 
-            # 替换 base URL 为 MINIO_PUBLIC_URL（让前端可以访问）
-            # presigned URL 使用 MINIO_ENDPOINT，需要替换为 MINIO_PUBLIC_URL
-            endpoint_base = f"http://{settings.MINIO_ENDPOINT}"
-            if settings.MINIO_SECURE:
-                endpoint_base = f"https://{settings.MINIO_ENDPOINT}"
-
-            presigned_url = presigned_url.replace(endpoint_base, settings.MINIO_PUBLIC_URL)
+            # 替换 base URL 为 S3_ENDPOINT（让前端可以访问）
+            presigned_url = presigned_url.replace(
+                f"http://{settings.S3_ENDPOINT.replace('http://', '').replace('https://', '')}",
+                settings.S3_ENDPOINT
+            )
+            presigned_url = presigned_url.replace(
+                f"https://{settings.S3_ENDPOINT.replace('http://', '').replace('https://', '')}",
+                settings.S3_ENDPOINT
+            )
 
             return presigned_url
         except Exception as e:
@@ -230,4 +242,4 @@ class MinioService:
 
 
 # 全局单例
-minio_service = MinioService()
+rustfs_service = RustfsService()
