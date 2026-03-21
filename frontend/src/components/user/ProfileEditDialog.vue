@@ -106,6 +106,8 @@ watch(() => props.user, (newUser) => {
       bio: newUser.bio || '',
       avatar: newUser.avatar || ''
     })
+    // 重置头像修改标志
+    avatarChanged.value = false
   }
 }, { immediate: true })
 
@@ -153,11 +155,16 @@ const beforeAvatarUpload = (file) => {
   return true
 }
 
-// 头像上传成功
+// 头像上传成功 - 注意：后端 upload_avatar 会自动保存头像到数据库
 const handleAvatarSuccess = (response) => {
   form.avatar = response.avatar_url
+  avatarChanged.value = true
+  // 注意：后端已经自动更新了数据库中的头像，不需要再次调用 profile API
   ElMessage.success('头像上传成功')
 }
+
+// 标记头像是否被修改过（用于判断是否需要调用 profile API）
+const avatarChanged = ref(false)
 
 // 提交表单
 const handleSubmit = async () => {
@@ -184,24 +191,31 @@ const handleSubmit = async () => {
           throw new Error(error.detail || '用户名修改失败')
         }
       }
-
       // 更新其他资料
+      const profileData = {
+        nickname: form.nickname,
+        bio: form.bio,
+      }
+      // 只有填了邮箱才传
+      if (form.email && form.email.trim() !== '') {
+        profileData.email = form.email
+      }
+
+      // 更新其他资料（注意：头像已由 upload_avatar API 自动保存，不需要再次传递）
       const profileResponse = await fetch('/api/v1/users/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           ...uploadHeaders.value
         },
-        body: JSON.stringify({
-          nickname: form.nickname,
-          email: form.email,
-          bio: form.bio,
-          avatar: form.avatar
+        body: JSON.stringify({profileData
+
         })
       })
 
       if (!profileResponse.ok) {
         const error = await profileResponse.json()
+        console.log('profile错误详情:', JSON.stringify(error, null, 2)) 
         throw new Error(error.detail || '资料更新失败')
       }
 

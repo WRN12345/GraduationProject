@@ -19,11 +19,11 @@ async def lifespan(app: FastAPI):
     )
     print("Redis 连接成功")
 
-    # 初始化 MinIO 客户端
-    from core.services.infrastructure.minio_service import minio_service
-    minio_service.initialize()
-    await minio_service.ensure_buckets()
-    print("MinIO 连接成功，Bucket 检查完成")
+    # 初始化 RustFS 客户端
+    from core.services.infrastructure.rustfs_service import rustfs_service
+    rustfs_service.initialize()
+    await rustfs_service.ensure_buckets()
+    print("RustFS 连接成功，Bucket 检查完成")
 
     # 启动后台同步任务
     from core.tasks.tasks import start_background_tasks
@@ -71,10 +71,10 @@ app.add_middleware(
 )
 
 
-# ---  数据库注册 (Pgpool 中间件) ---
+# --- 数据库注册 ---
 register_tortoise(
     app,
-    db_url=settings.DB_URL,  # Pgpool 连接
+    db_url=settings.DB_URL,  # 直接连接 PostgreSQL
     modules={"models": ["models.user", "models.vote", "models.comment", "models.community", "models.post", "models.post_attachment", "models.membership", "models.bookmark", "models.audit_log"]},
     generate_schemas=False,  # 使用 Aerich 管理迁移，不再自动生成 schemas
     add_exception_handlers=True,

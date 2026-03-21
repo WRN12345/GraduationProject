@@ -9,7 +9,7 @@ from models.post import Post
 from models.comment import Comment
 from models.vote import Vote
 from core.security import get_password_hash, verify_password
-from core.services.infrastructure.minio_service import minio_service
+from core.services.infrastructure.rustfs_service import rustfs_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -189,8 +189,8 @@ class UserService:
         if len(file_data) > MAX_SIZE:
             return {"error": "头像大小不能超过 5MB"}
 
-        # 上传到 MinIO
-        url = await minio_service.upload_file(
+        # 上传到 RustFS
+        url = await rustfs_service.upload_file(
             file_data=file_data,
             filename=f"avatar_{user.id}_{filename}",
             content_type=content_type
@@ -345,6 +345,14 @@ class UserService:
         # 手动序列化，确保包含关联对象
         result = []
         for comment in comments:
+            # 安全地访问 post 关系
+            post_data = None
+            if comment.post:
+                post_data = {
+                    "id": comment.post.id,
+                    "title": comment.post.title
+                }
+
             result.append({
                 "id": comment.id,
                 "content": comment.content,
@@ -356,10 +364,7 @@ class UserService:
                     "nickname": comment.author.nickname
                 } if comment.author else None,
                 "post_id": comment.post_id,
-                "post": {
-                    "id": comment.post.id,
-                    "title": comment.post.title
-                } if comment.post else None,
+                "post": post_data,
                 "parent_id": comment.parent_id,
                 "upvotes": comment.upvotes,
                 "downvotes": comment.downvotes,
@@ -443,7 +448,7 @@ class UserService:
         votes = await Vote.filter(
             user=user,
             direction=1
-        ).order_by("-id").offset(skip).limit(limit).prefetch_related('post', 'comment')
+        ).order_by("-id").offset(skip).limit(limit).prefetch_related('post', 'comment__post')
 
         # 整理结果
         result = []
@@ -504,7 +509,7 @@ class UserService:
         votes = await Vote.filter(
             user=user,
             direction=-1
-        ).order_by("-id").offset(skip).limit(limit).prefetch_related('post', 'comment')
+        ).order_by("-id").offset(skip).limit(limit).prefetch_related('post', 'comment__post')
 
         # 整理结果
         result = []

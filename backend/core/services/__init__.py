@@ -24,7 +24,7 @@ from .infrastructure import (
     hot_rank_service,
     post_cache_service,
     comment_cache_service,
-    minio_service,
+    rustfs_service,
     upload_service,
     attachment_service,
 )
@@ -47,7 +47,7 @@ __all__ = [
     "hot_rank_service",
     "post_cache_service",
     "comment_cache_service",
-    "minio_service",
+    "rustfs_service",
     "upload_service",
     "attachment_service",
 ]

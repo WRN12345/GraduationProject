@@ -1,4 +1,4 @@
 [tool.aerich]
-tortoise_orm = "backend.api.__init__.TORTOISE_ORM"
-location = "./backend/migrations"
+tortoise_orm = "api.__init__.TORTOISE_ORM"
+location = "./migrations"
 src_folder = "./."

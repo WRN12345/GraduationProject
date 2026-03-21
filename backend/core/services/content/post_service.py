@@ -13,7 +13,7 @@ from models import post as models
 from core.services.content.bookmark_service import bookmark_service
 from core.services.content.vote_service import vote_service
 from core.services.infrastructure.redis_service import hot_rank_service, post_cache_service
-from core.services.infrastructure.minio_service import minio_service
+from core.services.infrastructure.rustfs_service import rustfs_service
 from core.cache import get_redis
 from schemas import post as schemas
 from tortoise import transactions
@@ -441,7 +441,7 @@ class PostService:
         if not is_author and not is_moderator and not is_superuser:
             return {"error": "无权删除此帖子"}
 
-        # 获取所有附件，用于删除 MinIO 文件
+        # 获取所有附件，用于删除 RustFS 文件
         attachments = await PostAttachment.filter(post_id=post_id)
 
         # 使用事务确保删除和审计日志的原子性
@@ -460,9 +460,9 @@ class PostService:
                 metadata={"is_author": is_author, "is_moderator": is_moderator}
             )
 
-        # 删除 MinIO 中的文件
+        # 删除 RustFS 中的文件
         for attachment in attachments:
-            await minio_service.delete_file(attachment.file_url)
+            await rustfs_service.delete_file(attachment.file_url)
 
         # 从 Redis 热门榜中移除
         redis_dep = get_redis()
@@ -727,7 +727,7 @@ class PostService:
         # 移除不再使用的附件
         if to_remove:
             for attachment in await PostAttachment.filter(id__in=to_remove):
-                await minio_service.delete_file(attachment.file_url)
+                await rustfs_service.delete_file(attachment.file_url)
             await PostAttachment.filter(id__in=to_remove).delete()
 
         # 添加新附件

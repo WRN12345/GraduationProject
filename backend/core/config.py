@@ -29,16 +29,13 @@ class Settings(BaseSettings):
     DB_URL: str = os.getenv("DB_URL", "")
     REDIS_URL: str = os.getenv("REDIS_URL", "")
 
-    # --- MinIO 对象存储配置 ---
-    MINIO_ENDPOINT: str = os.getenv("MINIO_ENDPOINT", "localhost:9000")
-    MINIO_ACCESS_KEY: str = os.getenv("MINIO_ACCESS_KEY", "")
-    MINIO_SECRET_KEY: str = os.getenv("MINIO_SECRET_KEY", "")
-    MINIO_SECURE: bool = os.getenv("MINIO_SECURE", "False").lower() == "True"
-    MINIO_REGION: str = os.getenv("MINIO_REGION", "us-east-1")
-    MINIO_IMAGE_BUCKET: str = os.getenv("MINIO_IMAGE_BUCKET", "superimg")
-    MINIO_VIDEO_BUCKET: str = os.getenv("MINIO_VIDEO_BUCKET", "supervideo")
-    MINIO_FILE_BUCKET: str = os.getenv("MINIO_FILE_BUCKET", "superfile")
-    MINIO_PUBLIC_URL: str = os.getenv("MINIO_PUBLIC_URL", "http://localhost:9000")
+    # --- RustFS/S3 对象存储配置 ---
+    S3_ENDPOINT: str = os.getenv("S3_ENDPOINT", "http://localhost:9000")
+    S3_ACCESS_KEY: str = os.getenv("S3_ACCESS_KEY", "")
+    S3_SECRET_KEY: str = os.getenv("S3_SECRET_KEY", "")
+    S3_IMAGE_BUCKET: str = os.getenv("S3_IMAGE_BUCKET", "superimg")
+    S3_VIDEO_BUCKET: str = os.getenv("S3_VIDEO_BUCKET", "supervideo")
+    S3_FILE_BUCKET: str = os.getenv("S3_FILE_BUCKET", "superfile")
 
     # --- 跨域配置 ---
     CORS_ORIGINS: List[str] = ["*"]
