@@ -137,8 +137,8 @@ class CommunityService:
         Returns:
             List[dict]: 推荐的社区列表
         """
-        # 获取所有社区
-        all_communities = await Community.all()
+        # 获取所有社区（限制数量，避免全表扫描）
+        all_communities = await Community.all().limit(200)
 
         def extract_keywords(text):
             if not text:

@@ -225,12 +225,16 @@ class BookmarkService:
                 deleted_at__isnull=True
             ).select_related('author', 'community').prefetch_related('attachments')
 
+            # 批量查询所有收藏记录（替代循环查询）
+            bookmarks = await Bookmark.filter(
+                user_id=user_id,
+                post_id__in=missing_ids
+            ).all()
+            # 构建 post_id -> bookmark 映射
+            bookmark_map = {b.post_id: b for b in bookmarks}
+
             for post in db_posts:
-                # 获取收藏时间
-                bookmark = await Bookmark.filter(
-                    user_id=user_id,
-                    post_id=post.id
-                ).first()
+                bookmark = bookmark_map.get(post.id)
 
                 cached_details[post.id] = {
                     'post_id': post.id,
