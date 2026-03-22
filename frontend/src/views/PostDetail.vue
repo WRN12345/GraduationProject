@@ -111,7 +111,7 @@
           </div>
         </div>
 
-        <!-- 互动操作区 - 左侧按钮组 -->
+        <!-- 互动操作区 -->
         <div class="post-actions">
           <div class="actions-left">
             <!-- 投票按钮 -->
@@ -148,34 +148,29 @@
               <Share2 :size="18" />
             </button>
           </div>
-        </div>
 
-        <!-- 版主操作区 -->
-        <div v-if="isModerator" class="moderator-actions">
-          <div class="moderator-actions-header">
-            <h3>版主操作</h3>
-          </div>
-          <div class="moderator-actions-buttons">
-            <button
-              class="moderator-btn pin-btn"
-              :class="{ active: post.is_pinned }"
-              :disabled="loadingPin"
-              @click="handleTogglePin"
-            >
-              <Pin :size="16" />
-              <span v-if="!loadingPin">{{ post.is_pinned ? '取消置顶' : '置顶帖子' }}</span>
-              <span v-else>处理中...</span>
-            </button>
-            <button
-              class="moderator-btn highlight-btn"
-              :class="{ active: post.is_highlighted }"
-              :disabled="loadingHighlight"
-              @click="handleToggleHighlight"
-            >
-              <Star :size="16" />
-              <span v-if="!loadingHighlight">{{ post.is_highlighted ? '取消精华' : '设为精华' }}</span>
-              <span v-else>处理中...</span>
-            </button>
+          <!-- 版主操作 - 右侧下拉菜单 -->
+          <div v-if="isModerator" class="actions-right">
+            <el-dropdown trigger="click" @command="handleModeratorCommand">
+              <button class="moderator-dropdown-btn" :disabled="loadingPin || loadingHighlight">
+                <Settings :size="16" />
+                <span v-if="loadingPin || loadingHighlight">处理中...</span>
+                <span v-else>版主操作</span>
+                <ChevronDown :size="14" />
+              </button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item :command="'pin'">
+                    <Pin :size="14" />
+                    <span>{{ post.is_pinned ? '取消置顶' : '置顶帖子' }}</span>
+                  </el-dropdown-item>
+                  <el-dropdown-item :command="'highlight'">
+                    <Star :size="14" />
+                    <span>{{ post.is_highlighted ? '取消精华' : '设为精华' }}</span>
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
         </div>
       </div>
@@ -195,8 +190,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Edit2, Trash2, Pin, Star, MessageCircle, Share2 } from 'lucide-vue-next'
-import { ElMessageBox, ElMessage } from 'element-plus'
+import { Edit2, Trash2, Pin, Star, MessageCircle, Share2, Settings, ChevronDown } from 'lucide-vue-next'
+import { ElMessageBox, ElMessage, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus'
 import { client } from '@/api/client'
 import { marked } from 'marked'
 import { useUserStore } from '@/stores/user'
@@ -371,6 +366,15 @@ const handleTogglePin = async () => {
     ElMessage.error('操作失败，请稍后重试')
   } finally {
     loadingPin.value = false
+  }
+}
+
+// 处理版主操作下拉菜单命令
+const handleModeratorCommand = async (command) => {
+  if (command === 'pin') {
+    await handleTogglePin()
+  } else if (command === 'highlight') {
+    await handleToggleHighlight()
   }
 }
 
@@ -575,23 +579,23 @@ onMounted(() => {
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: 16px;
-  font-size: 13px;
-  font-weight: 600;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1;
 }
 
 .pinned-badge {
-  background: #fff5f5;
-  color: #ff4500;
-  border: 1px solid #ffccc7;
+  background: #fff0ed;
+  color: #d63031;
+  border: 1px solid #ffd9d9;
 }
 
 .highlighted-badge {
-  background: #fffff0;
-  color: #ffa500;
+  background: #fffbe6;
+  color: #d48806;
   border: 1px solid #ffe58f;
 }
 
@@ -706,77 +710,61 @@ onMounted(() => {
   color: #555;
 }
 
-/* 版主操作区 */
-.moderator-actions {
-  padding: 16px 20px;
-  margin: 20px 0;
-  background: #f0f7ff;
-  border-radius: 12px;
-  border: 1px solid #b3d9ff;
-}
-
-.moderator-actions-header {
-  margin-bottom: 12px;
-}
-
-.moderator-actions-header h3 {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0052a3;
-  margin: 0;
-}
-
-.moderator-actions-buttons {
+/* 右侧操作区 */
+.actions-right {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
 }
 
-.moderator-btn {
+/* 版主操作下拉框按钮 */
+.moderator-dropdown-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  border: 2px solid;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 0.5px solid #e0e0e0;
   cursor: pointer;
   transition: all 0.2s;
-  background: white;
+  background: transparent;
+  color: var(--color-text-secondary, #888);
 }
 
-.moderator-btn:disabled {
+.moderator-dropdown-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+  color: #555;
+}
+
+.moderator-dropdown-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.pin-btn {
-  border-color: #ff4500;
-  color: #ff4500;
+/* 下拉菜单样式 */
+:deep(.el-dropdown-menu) {
+  padding: 4px;
 }
 
-.pin-btn:hover:not(:disabled) {
-  background: #fff5f5;
+:deep(.el-dropdown-menu__item) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #555;
 }
 
-.pin-btn.active {
-  background: #ff4500;
-  color: white;
+:deep(.el-dropdown-menu__item:hover) {
+  background: #f5f5f5;
+  color: #333;
 }
 
-.highlight-btn {
-  border-color: #ffa500;
-  color: #ffa500;
-}
-
-.highlight-btn:hover:not(:disabled) {
-  background: #fffff0;
-}
-
-.highlight-btn.active {
-  background: #ffa500;
-  color: white;
+:deep(.el-dropdown-menu__item .lucide) {
+  flex-shrink: 0;
 }
 
 .content-body {

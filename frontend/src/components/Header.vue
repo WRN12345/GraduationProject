@@ -26,6 +26,12 @@ import defaultAvatar from '@/assets/image/wrn.png'
 // 默认头像
 const DEFAULT_AVATAR = defaultAvatar
 
+// 获取用户首字母头像
+const getAvatarText = (name) => {
+  if (!name) return 'U'
+  return name.charAt(0).toUpperCase()
+}
+
 // 定义 emit
 const emit = defineEmits(['open-mobile-sidebar'])
 
@@ -296,7 +302,8 @@ const handlePasswordUpdate = async () => {
         <div class="avatar-trigger" @click="toggleProfile">
           <div class="avatar-box">
              <div class="avatar-img-wrapper">
-               <img :src="userInfo?.avatar || DEFAULT_AVATAR" class="user-avatar-img" />
+               <img v-if="userInfo?.avatar" :src="userInfo.avatar" class="user-avatar-img" />
+                <div v-else class="user-avatar-text">{{ getAvatarText(userInfo?.username) }}</div>
                <div class="status-dot"></div>
              </div>
           </div>
@@ -309,7 +316,8 @@ const handlePasswordUpdate = async () => {
           <div class="menu-section user-info-section" @click="goToProfile">
             <div class="menu-item-user">
               <div class="user-avatar-large">
-                <img :src="userInfo?.avatar || DEFAULT_AVATAR" />
+                <img v-if="userInfo?.avatar" :src="userInfo.avatar" />
+                <div v-else class="user-avatar-large-text">{{ getAvatarText(userInfo?.username) }}</div>
                 <div class="status-dot large"></div>
               </div>
               <div class="user-text-info">
@@ -330,10 +338,6 @@ const handlePasswordUpdate = async () => {
             <div class="menu-item" @click="openPasswordEdit">
               <Lock :size="20" class="menu-icon" />
               <span class="menu-text">修改密码</span>
-            </div>
-            <div class="menu-item" @click="goToSettings">
-              <Settings :size="20" class="menu-icon" />
-              <span class="menu-text">设置</span>
             </div>
           </div>
 
@@ -565,10 +569,10 @@ const handlePasswordUpdate = async () => {
 
 /* 分隔线 */
 .actions-section .divider-line {
-  width: 1px;
-  height: 24px;
+  width: 100%;
+  height: 1px;
   background: #e0e0e0;
-  margin: 0 8px;
+  margin: 8px 0;
 }
 
 .btn-icon {
@@ -642,13 +646,14 @@ const handlePasswordUpdate = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #1c1c1c;
+  color: #777;
   flex-shrink: 0;
 }
 
 .create-menu-item .menu-text {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 400;
+  color: #666;
 }
 
 /* 头像触发器 */
@@ -690,6 +695,25 @@ const handlePasswordUpdate = async () => {
   background: #ddd;
   border: 1px solid #e8e8e8;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-avatar-text {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #0079d3;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid #e8e8e8;
+}
+
+.avatar-img-wrapper:hover .user-avatar-text {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .avatar-img-wrapper:hover .user-avatar-img {
@@ -768,6 +792,19 @@ const handlePasswordUpdate = async () => {
   background: #ddd;
 }
 
+.user-avatar-large-text {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #0079d3;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 600;
+}
+
 .status-dot.large {
   width: 12px;
   height: 12px;
@@ -783,14 +820,14 @@ const handlePasswordUpdate = async () => {
 }
 
 .user-display-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1c1c1c;
+  font-size: 13px;
+  font-weight: 400;
+  color: #666;
 }
 
 .user-handle {
-  font-size: 13px;
-  color: #787c7e;
+  font-size: 11px;
+  color: #999;
   margin-top: 2px;
 }
 
@@ -817,7 +854,7 @@ const handlePasswordUpdate = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #1c1c1c;
+  color: #777;
   flex-shrink: 0;
 }
 
@@ -828,8 +865,9 @@ const handlePasswordUpdate = async () => {
 }
 
 .menu-text {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 400;
+  color: #666;
 }
 
 .sub-text {

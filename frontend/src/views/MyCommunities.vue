@@ -162,7 +162,7 @@ const goToMembers = (event, communityId) => {
   router.push(`/community/${communityId}/members`)
 }
 
-// 检查是否为管理员或群主
+// 检查是否为管理员或版主
 const canManageMembers = (role) => {
   return role === 2 || role === 1 // owner 或 admin
 }

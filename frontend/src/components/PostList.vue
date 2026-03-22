@@ -415,33 +415,29 @@ defineExpose({
   margin: 0;
 }
 
-/* 帖子卡片 */
+/* 帖子卡片 - 统一灰色细边框 */
 .post-card {
   background: #fff;
-  border: 1px solid #edeff1;
+  border: 0.5px solid #e0e0e0;
   border-radius: 8px;
   margin-bottom: 16px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-/* 置顶帖子样式 */
+/* 置顶帖子 - 左侧 3px 红色色条 */
 .post-card.is-pinned {
-  border-left: 4px solid #ff4500;
-  background: linear-gradient(to right, #fff5f5, #ffffff);
-  box-shadow: 0 2px 8px rgba(255, 69, 0, 0.1);
+  border-left: 3px solid #ff4500;
 }
 
-.post-card.is-pinned.is-highlighted {
-  background: linear-gradient(to right, #fffaf0, #ffffff);
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.15);
-}
-
-/* 精华帖子样式 */
+/* 精华帖子 - 左侧 3px 暖黄色色条 */
 .post-card.is-highlighted {
-  border: 2px solid #ffd700;
-  background: linear-gradient(to right, #fffff0, #ffffff);
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.1);
+  border-left: 3px solid #e6a700;
+}
+
+/* 置顶+精华 - 保留红色 */
+.post-card.is-pinned.is-highlighted {
+  border-left: 3px solid #ff4500;
 }
 
 /* 状态标识 */
@@ -462,27 +458,24 @@ defineExpose({
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 14px;
-  font-size: 13px;
-  font-weight: 700;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1;
-  letter-spacing: 0.5px;
 }
 
 .pinned-badge {
-  background: linear-gradient(135deg, #ff4500, #ff6347);
-  color: white;
-  border: none;
-  box-shadow: 0 2px 4px rgba(255, 69, 0, 0.3);
+  background: #fff0ed;
+  color: #d63031;
+  border: 1px solid #ffd9d9;
 }
 
 .highlighted-badge {
-  background: linear-gradient(135deg, #ffd700, #ffed4e);
-  color: #8b4500;
-  border: none;
-  box-shadow: 0 2px 4px rgba(255, 215, 0, 0.4);
+  background: #fffbe6;
+  color: #d48806;
+  border: 1px solid #ffe58f;
 }
 
 .post-card:hover {

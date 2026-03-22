@@ -150,6 +150,7 @@ class MembershipService:
                 "joined_at": m.joined_at,  # 保持 datetime 对象
                 "username": m.user.username,
                 "nickname": m.user.nickname,
+                "avatar": m.user.avatar,
                 "karma": m.user.karma
             })
 

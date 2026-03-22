@@ -1,15 +1,26 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowBigUp, Calendar, MessageCircle, FileText, ThumbsUp, ThumbsDown } from 'lucide-vue-next'
+import { ArrowBigUp, Calendar, MessageCircle, FileText, ThumbsUp, ThumbsDown, Edit, Camera } from 'lucide-vue-next'
 import { client } from '@/api/client'
 import { marked } from 'marked'
 import VoteButtons from '@/components/VoteButtons.vue'
 import BookmarkButton from '@/components/BookmarkButton.vue'
 import UserTabs from '@/components/user/UserTabs.vue'
+import ProfileEditDialog from '@/components/user/ProfileEditDialog.vue'
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
+
+// 编辑对话框状态
+const showEditDialog = ref(false)
+
+// 判断是否是当前用户的个人主页
+const isOwnProfile = computed(() => {
+  return userStore.userInfo && userStore.userInfo.username === username.value
+})
 
 // 从路由参数获取用户名
 const username = computed(() => route.params.username)
@@ -405,6 +416,20 @@ const retryLoad = () => {
   }
 }
 
+// 打开编辑对话框
+const openEditDialog = () => {
+  showEditDialog.value = true
+}
+
+// 编辑成功后刷新用户信息
+const handleEditSuccess = () => {
+  fetchUserInfo()
+  // 如果是当前用户，也更新 store 中的用户信息
+  if (isOwnProfile.value) {
+    userStore.fetchUserInfo()
+  }
+}
+
 // 计算当前标签的加载状态
 const currentLoading = computed(() => {
   switch (activeTab.value) {
@@ -459,7 +484,7 @@ onMounted(() => {
     </div>
 
     <div v-else-if="userInfo" class="user-info-card">
-      <div class="user-avatar-section">
+      <div class="user-avatar-section" :class="{ 'editable': isOwnProfile }" @click="isOwnProfile && openEditDialog()">
         <img
           v-if="userInfo.avatar"
           :src="userInfo.avatar"
@@ -469,11 +494,15 @@ onMounted(() => {
         <div v-else class="user-avatar-text">
           {{ getAvatarText(userInfo) }}
         </div>
+        <div v-if="isOwnProfile" class="avatar-edit-overlay">
+          <Camera :size="24" />
+        </div>
       </div>
 
       <div class="user-details">
-        <h1 class="user-display-name">
+        <h1 class="user-display-name" :class="{ 'editable': isOwnProfile }" @click="isOwnProfile && openEditDialog()">
           {{ userInfo.nickname || userInfo.username }}
+          <Edit v-if="isOwnProfile" :size="16" class="edit-icon" />
         </h1>
         <p class="user-username">@{{ userInfo.username }}</p>
 
@@ -774,6 +803,13 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- 编辑资料对话框 -->
+    <ProfileEditDialog
+      v-model="showEditDialog"
+      :user="userInfo"
+      @success="handleEditSuccess"
+    />
   </div>
 </template>
 
@@ -819,6 +855,54 @@ onMounted(() => {
   font-size: 48px;
   font-weight: 700;
   border: 4px solid #edeff1;
+}
+
+/* 头像可编辑样式 */
+.user-avatar-section.editable {
+  position: relative;
+  cursor: pointer;
+}
+
+.user-avatar-section.editable:hover .avatar-edit-overlay {
+  opacity: 1;
+}
+
+.avatar-edit-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  border: 4px solid #edeff1;
+}
+
+/* 昵称可编辑样式 */
+.user-display-name.editable {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-display-name.editable:hover {
+  color: #0079d3;
+}
+
+.edit-icon {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.user-display-name.editable:hover .edit-icon {
+  opacity: 1;
 }
 
 .user-details {
@@ -1236,6 +1320,11 @@ onMounted(() => {
     width: 80px;
     height: 80px;
     font-size: 32px;
+  }
+
+  .avatar-edit-overlay {
+    width: 80px;
+    height: 80px;
   }
 
   .user-stats {
