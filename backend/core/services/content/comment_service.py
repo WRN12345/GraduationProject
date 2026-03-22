@@ -10,6 +10,7 @@ from models.user import User
 from models.comment import Comment
 from models.post import Post
 from core.services.infrastructure.redis_service import comment_cache_service
+from core.services.content.vote_service import vote_service
 from core.config import settings
 import logging
 

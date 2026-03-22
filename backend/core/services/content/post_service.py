@@ -125,9 +125,11 @@ class PostService:
 
         # 为每个帖子添加用户状态
         items = []
-        if redis and current_user:
+        if redis:
+            # 即使没有登录用户，也需要从 Redis 获取投票数
             items = await self._enrich_posts_with_user_state(redis, items_orm, current_user)
         else:
+            # 没有 Redis 时使用数据库字段（fallback）
             for post in items_orm:
                 post_dict = schemas.PostOut.model_validate(post).model_dump()
                 # 添加评论数量
@@ -696,22 +698,25 @@ class PostService:
         self,
         redis: Redis,
         posts: List[models.Post],
-        current_user: User
+        current_user: Optional[User] = None
     ) -> List[dict]:
         """为帖子列表批量添加用户状态"""
         post_ids = [p.id for p in posts]
 
-        # 批量获取投票状态
-        vote_statuses = await vote_service.batch_get_vote_statuses(
-            redis, current_user.id, [('post', pid) for pid in post_ids]
-        )
+        # 批量获取投票状态（仅当用户已登录时）
+        if current_user:
+            vote_statuses = await vote_service.batch_get_vote_statuses(
+                redis, current_user.id, [('post', pid) for pid in post_ids]
+            )
+            # 批量获取收藏状态
+            bookmark_statuses = await bookmark_service.batch_check_bookmarked(
+                redis, current_user.id, post_ids
+            )
+        else:
+            vote_statuses = {}
+            bookmark_statuses = {}
 
-        # 批量获取收藏状态
-        bookmark_statuses = await bookmark_service.batch_check_bookmarked(
-            redis, current_user.id, post_ids
-        )
-
-        # 批量获取收藏数
+        # 批量获取收藏数（所有用户都能看到）
         bookmark_counts = await bookmark_service.batch_get_bookmark_counts(
             redis, post_ids
         )
@@ -728,8 +733,8 @@ class PostService:
             post_dict["score"] = score
 
             # 添加用户状态字段
-            post_dict["user_vote"] = vote_statuses.get(('post', post.id), 0)
-            post_dict["bookmarked"] = bookmark_statuses.get(post.id, False)
+            post_dict["user_vote"] = vote_statuses.get(('post', post.id), 0) if current_user else 0
+            post_dict["bookmarked"] = bookmark_statuses.get(post.id, False) if current_user else False
             post_dict["bookmark_count"] = bookmark_counts.get(post.id, 0)
 
             # 添加评论数量

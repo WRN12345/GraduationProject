@@ -25,7 +25,7 @@ class SearchService:
         limit: int = 20
     ) -> dict:
         """
-        搜索帖子（全文搜索）
+        搜索帖子（全文搜索 - zhparser 中文分词）
 
         Args:
             query: 搜索关键词
@@ -39,7 +39,8 @@ class SearchService:
         if not query or len(query.strip()) < 1:
             return {"results": [], "total": 0}
 
-        # PostgreSQL 全文搜索查询
+        # PostgreSQL 全文搜索查询 (使用 zhparser 中文分词)
+        # 关联查询 author 和 community 信息，以及评论数
         sql = """
         SELECT
             p.id,
@@ -63,8 +64,24 @@ class SearchService:
                 p.content,
                 plainto_tsquery('zhcfg', $1),
                 'StartSel=<mark>, StopSel=</mark>, MaxWords=60, MinWords=30'
-            ) as highlighted_content
+            ) as highlighted_content,
+            -- 作者信息
+            u.username as author_username,
+            u.avatar as author_avatar,
+            u.nickname as author_nickname,
+            -- 社区信息
+            c.name as community_name,
+            -- 评论数
+            COALESCE(pc.comment_count, 0) as comment_count
         FROM posts p
+        LEFT JOIN users u ON p.author_id = u.id
+        LEFT JOIN communities c ON p.community_id = c.id
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) as comment_count
+            FROM comments
+            WHERE deleted_at IS NULL
+            GROUP BY post_id
+        ) pc ON p.id = pc.post_id
         WHERE p.search_vector @@ plainto_tsquery('zhcfg', $1)
             AND p.deleted_at IS NULL
         """
@@ -98,8 +115,37 @@ class SearchService:
         )
         total = count_result[0]['total'] if count_result else 0
 
+        # 转换结果为前端期望的嵌套对象格式
+        transformed_results = []
+        for r in results:
+            transformed_results.append({
+                "id": r.get("id"),
+                "title": r.get("title"),
+                "content": r.get("content"),
+                "author_id": r.get("author_id"),
+                "author": {
+                    "id": r.get("author_id"),
+                    "username": r.get("author_username") or "",
+                    "nickname": r.get("author_nickname"),
+                    "avatar": r.get("author_avatar")
+                },
+                "community_id": r.get("community_id"),
+                "community": {
+                    "id": r.get("community_id"),
+                    "name": r.get("community_name") or ""
+                } if r.get("community_id") else None,
+                "score": r.get("score"),
+                "upvotes": r.get("upvotes"),
+                "downvotes": r.get("downvotes"),
+                "hot_rank": r.get("hot_rank"),
+                "created_at": r.get("created_at"),
+                "updated_at": r.get("updated_at"),
+                "comment_count": r.get("comment_count") or 0,
+                "headline": r.get("highlighted_title") or r.get("highlighted_content"),
+            })
+
         return {
-            "results": results,
+            "results": transformed_results,
             "total": total,
             "query": query.strip()
         }

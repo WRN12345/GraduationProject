@@ -62,11 +62,20 @@ import PostList from '@/components/PostList.vue'
 const route = useRoute()
 const router = useRouter()
 
-const communityId = parseInt(route.params.id)  // 使用数字 ID
+// 解析并验证社区 ID
+const parsedId = parseInt(route.params.id)
+const communityId = isNaN(parsedId) || parsedId <= 0 ? null : parsedId
+
 const community = ref(null)
 const membership = ref(null)
 const loading = ref(true)
 const error = ref(null)
+
+// 如果没有有效的 communityId，直接显示错误
+if (!communityId) {
+  error.value = '无效的社区 ID'
+  loading.value = false
+}
 
 // 空状态文案
 const emptyTitle = computed(() => {
