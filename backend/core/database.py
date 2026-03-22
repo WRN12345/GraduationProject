@@ -63,6 +63,13 @@ def db_retry(config: RetryConfig = None):
                     DBConnectionError,
                     OperationalError,
                 ) as e:
+                    # 这种错误表示表不存在，重试无法解决
+                    error_str = str(e).lower()
+                    if "relation" in error_str and "does not exist" in error_str:
+                        logger.error(
+                            f"{func.__name__} 失败: 数据库表不存在 - {str(e)}"
+                        )
+                        raise
                     last_error = e
                     is_last_attempt = attempt == config.max_attempts - 1
 

@@ -93,20 +93,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    # 延迟导入避免循环依赖
-    from core.services.auth.token_blacklist_service import token_blacklist_service
-
-    # 1. 首先检查黑名单
-    is_blacklisted = await token_blacklist_service.is_blacklisted(token)
-    if is_blacklisted:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token 已失效，请重新登录",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
     try:
-        # 2. 解码并验证 Token
+        # 1. 解码并验证 Token
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
 
         # 获取用户 ID

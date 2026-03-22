@@ -6,7 +6,6 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
-from core.database import db_retry
 from core.cache import get_redis
 from core.services.content.hot_content_service import hot_content_service
 from core.services.infrastructure.redis_service import hot_rank_service
@@ -18,7 +17,6 @@ from models.comment import Comment
 logger = logging.getLogger(__name__)
 
 
-@db_retry()
 async def sync_community_stats():
     """
     定时任务：同步社区统计数据到 Redis
@@ -86,12 +84,15 @@ async def sync_community_stats():
         logger.info("社区统计数据同步完成")
 
     except Exception as e:
-        logger.error(f"社区统计同步任务执行失败: {e}")
+        error_str = str(e).lower()
+        if "relation" in error_str and "does not exist" in error_str:
+            logger.warning(f"数据库表不存在，跳过社区统计同步: {e}")
+        else:
+            logger.error(f"社区统计同步任务执行失败: {e}")
     finally:
         await redis.close()
 
 
-@db_retry()
 async def sync_user_stats():
     """
     定时任务：同步用户统计数据到 Redis
@@ -104,6 +105,8 @@ async def sync_user_stats():
     - 用户最后活跃时间
     - 重新计算活跃度分数
     - 更新 Redis 排行榜
+
+    注意：不使用 @db_retry 装饰器，因为表不存在时重试没有意义
     """
     redis = await get_redis().__anext__()
 
@@ -199,7 +202,11 @@ async def sync_user_stats():
         logger.info("活跃用户统计数据同步完成")
 
     except Exception as e:
-        logger.error(f"用户统计同步任务执行失败: {e}")
+        error_str = str(e).lower()
+        if "relation" in error_str and "does not exist" in error_str:
+            logger.warning(f"数据库表不存在，跳过用户统计同步: {e}")
+        else:
+            logger.error(f"用户统计同步任务执行失败: {e}")
     finally:
         await redis.close()
 
