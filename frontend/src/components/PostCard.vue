@@ -47,10 +47,6 @@ const getAvatarText = () => {
 // 头像加载失败处理
 const handleAvatarError = (event) => {
   event.target.style.display = 'none'
-  const textElement = event.target.nextElementSibling
-  if (textElement) {
-    textElement.style.display = 'flex'
-  }
 }
 
 // 格式化时间
@@ -95,7 +91,7 @@ const updateBookmark = (bookmarked, count) => {
             class="avatar-img"
             @error="handleAvatarError"
           />
-          <div class="avatar-text">{{ getAvatarText() }}</div>
+          <div v-else class="avatar-text">{{ getAvatarText() }}</div>
         </div>
         <span class="community-icon">👾</span>
         <span class="community-name" @click.stop="router.push(`/community/${post.community?.id}`)">
@@ -279,7 +275,7 @@ const updateBookmark = (bookmarked, count) => {
 }
 
 .avatar-text {
-  display: none;
+  display: flex;
   width: 100%;
   height: 100%;
   border-radius: 50%;

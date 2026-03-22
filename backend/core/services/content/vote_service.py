@@ -51,7 +51,7 @@ class VoteService:
         target_id: int
     ) -> Tuple[int, int, int]:
         """
-        从 Redis 获取投票计数
+        从 Redis 获取投票计数，如果 Redis 中没有则从数据库同步
 
         Returns:
             (upvotes, downvotes, score)
@@ -60,8 +60,11 @@ class VoteService:
         data = await redis.hgetall(key)
 
         if not data:
-            # Redis 没有，返回默认值
-            return 0, 0, 0
+            # Redis 没有，尝试从数据库加载并初始化 Redis
+            upvotes, downvotes, score = await self._sync_vote_counts_from_db(
+                redis, target_type, target_id
+            )
+            return upvotes, downvotes, score
 
         upvotes = int(data.get('upvotes', 0))
         downvotes = int(data.get('downvotes', 0))
@@ -70,6 +73,56 @@ class VoteService:
         # 确保计数永远不小于 0（修复数据一致性问题）
         upvotes = max(0, upvotes)
         downvotes = max(0, downvotes)
+
+        return upvotes, downvotes, score
+
+    async def _sync_vote_counts_from_db(
+        self,
+        redis: Redis,
+        target_type: str,
+        target_id: int
+    ) -> Tuple[int, int, int]:
+        """
+        从数据库同步投票计数到 Redis
+
+        Args:
+            redis: Redis 客户端
+            target_type: 'post' 或 'comment'
+            target_id: 帖子/评论 ID
+
+        Returns:
+            (upvotes, downvotes, score)
+        """
+        if target_type == "post":
+            post = await Post.get_or_none(id=target_id)
+            if post:
+                upvotes = post.upvotes
+                downvotes = post.downvotes
+                score = post.score
+            else:
+                upvotes, downvotes, score = 0, 0, 0
+        else:
+            comment = await Comment.get_or_none(id=target_id)
+            if comment:
+                upvotes = comment.upvotes
+                downvotes = comment.downvotes
+                score = comment.score
+            else:
+                upvotes, downvotes, score = 0, 0, 0
+
+        # 确保非负
+        upvotes = max(0, upvotes)
+        downvotes = max(0, downvotes)
+
+        # 写入 Redis 缓存
+        key = self._get_counts_key(target_type, target_id)
+        counts_ttl = getattr(settings, 'REDIS_VOTE_COUNTS_TTL', 3600)
+        await redis.hset(key, mapping={
+            'upvotes': upvotes,
+            'downvotes': downvotes,
+            'score': score
+        })
+        await redis.expire(key, counts_ttl)
 
         return upvotes, downvotes, score
 
