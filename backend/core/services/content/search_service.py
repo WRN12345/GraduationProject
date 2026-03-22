@@ -4,6 +4,7 @@
 @Des: 搜索服务 - PostgreSQL 全文搜索
 """
 from typing import Optional
+from tortoise.expressions import Q
 from models.post import Post
 from models.user import User
 from models.comment import Comment
@@ -125,31 +126,15 @@ class SearchService:
 
         query_str = query.strip()
 
-        # 搜索活跃用户（按用户名）
+        # 合并查询：同时搜索用户名和昵称（使用 Q 表达式）
         users = await User.filter(
-            username__icontains=query_str
-        ).filter(
+            Q(username__icontains=query_str) | Q(nickname__icontains=query_str),
             is_active=True
-        ).all()
-
-        # 同时搜索昵称
-        users_by_nickname = await User.filter(
-            nickname__icontains=query_str
-        ).filter(
-            is_active=True
-        ).all()
-
-        # 合并结果并去重
-        seen = set()
-        unique_users = []
-        for user in users + users_by_nickname:
-            if user.id not in seen:
-                seen.add(user.id)
-                unique_users.append(user)
+        ).distinct().all()
 
         # 手动分页
-        total = len(unique_users)
-        paginated_users = unique_users[skip:skip + limit]
+        total = len(users)
+        paginated_users = users[skip:skip + limit]
 
         # 转换为字典格式
         results = [
