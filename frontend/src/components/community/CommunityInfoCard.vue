@@ -3,7 +3,7 @@
     <div class="community-header">
       <span class="community-icon">👾</span>
       <h2 class="community-name">{{ community.name }}</h2>
-      <span class="role-badge" :class="roleClass">{{ roleDisplay }}</span>
+      <span v-if="roleDisplay" class="role-badge" :class="roleClass">{{ roleDisplay }}</span>
     </div>
 
     <p class="description">{{ community.description || '暂无描述' }}</p>
@@ -24,14 +24,22 @@
     </div>
 
     <div class="actions">
-      <button class="btn-primary" @click="goToCreatePost">
-        <Plus :size="16" />
-        <span>发帖</span>
+      <!-- 未加入社区时显示加入按钮 -->
+      <button v-if="!isMember" class="btn-primary" @click="handleJoin">
+        <UserPlus :size="16" />
+        <span>加入社区</span>
       </button>
-      <button class="btn-secondary" @click="handleLeave" v-if="canLeave">
-        <LogOut :size="16" />
-        <span>退出社区</span>
-      </button>
+      <!-- 已加入社区时显示发帖和退出按钮 -->
+      <template v-else>
+        <button class="btn-primary" @click="goToCreatePost">
+          <Plus :size="16" />
+          <span>发帖</span>
+        </button>
+        <button class="btn-secondary" @click="handleLeave" v-if="canLeave">
+          <LogOut :size="16" />
+          <span>退出社区</span>
+        </button>
+      </template>
     </div>
   </div>
 </template>
@@ -39,7 +47,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Users, FileText, Calendar, Plus, LogOut } from 'lucide-vue-next'
+import { Users, FileText, Calendar, Plus, LogOut, UserPlus } from 'lucide-vue-next'
 import { client } from '@/api/client'
 
 const props = defineProps({
@@ -49,16 +57,20 @@ const props = defineProps({
   },
   role: {
     type: Number,
-    default: 0  // 0=成员, 1=管理员, 2=版主
+    default: undefined  // undefined=未加入, 0=成员, 1=管理员, 2=版主
   }
 })
 
-const emit = defineEmits(['leave'])
+const emit = defineEmits(['leave', 'join'])
 
 const router = useRouter()
 
 // 角色显示
 const roleDisplay = computed(() => {
+  // 未加入社区时不显示标签
+  if (props.role === undefined || props.role === null) {
+    return ''
+  }
   const roleMap = {
     2: '版主',
     1: '管理员',
@@ -69,12 +81,21 @@ const roleDisplay = computed(() => {
 
 // 角色样式类
 const roleClass = computed(() => {
+  // 未加入社区时不显示标签
+  if (props.role === undefined || props.role === null) {
+    return ''
+  }
   const classMap = {
     2: 'owner',
     1: 'admin',
     0: 'member'
   }
   return classMap[props.role] || 'member'
+})
+
+// 是否已加入社区
+const isMember = computed(() => {
+  return props.role !== undefined && props.role !== null
 })
 
 // 是否可以退出（版主不能直接退出）
@@ -116,6 +137,21 @@ const handleLeave = async () => {
   } catch (error) {
     console.error('[CommunityInfoCard] 退出社区失败:', error)
     alert('退出失败：' + (error?.message || '未知错误'))
+  }
+}
+
+// 加入社区
+const handleJoin = async () => {
+  try {
+    const response = await client.POST(`/v1/communities/${props.community.id}/join`)
+
+    if (response.data) {
+      alert('已成功加入社区')
+      emit('join', { role: 0 })  // 0 = 普通成员
+    }
+  } catch (error) {
+    console.error('[CommunityInfoCard] 加入社区失败:', error)
+    alert('加入失败：' + (error?.message || '未知错误'))
   }
 }
 </script>

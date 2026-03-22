@@ -118,14 +118,15 @@ async def can_comment_on_post(
         community_id=post.community_id
     )
 
-    # 如果不是成员，自动加入（但排除被封禁的情况）
+    # 如果不是成员，返回错误提示用户先加入社区
     if not membership:
-        await CommunityMembership.create(
-            user=current_user,
-            community_id=post.community_id,
-            role=MembershipRole.MEMBER.value
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="您不是该社区的成员，请先加入社区后再评论"
         )
-    elif membership.role == MembershipRole.BANNED.value:
+
+    # 检查是否被封禁
+    if membership.role == MembershipRole.BANNED.value:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="您已被该社区封禁"

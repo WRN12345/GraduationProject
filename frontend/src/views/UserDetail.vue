@@ -538,6 +538,8 @@ onMounted(() => {
         v-model="activeTab"
         :post-count="userInfo.post_count || 0"
         :comment-count="userInfo.comment_count || 0"
+        :upvote-count="userInfo.upvote_count || 0"
+        :downvote-count="userInfo.downvote_count || 0"
         @update:modelValue="handleTabChange"
       />
     </div>
