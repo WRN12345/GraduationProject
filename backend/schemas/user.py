@@ -71,6 +71,8 @@ class UserProfile(BaseModel):
     is_active: bool
     post_count: int = 0
     comment_count: int = 0
+    upvote_count: int = 0
+    downvote_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -66,7 +66,8 @@ class CommunityService:
         community = await Community.create(
             name=name,
             description=description,
-            creator=user
+            creator=user,
+            member_count=1  # 创建者自动加入，所以初始成员数为1
         )
 
         # 4. 自动将创建者加入为群主
@@ -115,9 +116,35 @@ class CommunityService:
         Raises:
             Returns {"error": "..."} on failure
         """
+        from models.post import Post
+        from models.membership import CommunityMembership
+
         community = await Community.get_or_none(id=community_id)
         if not community:
             return {"error": "社区不存在"}
+
+        # 如果 post_count 为 0 或 member_count 为 0，动态计算并更新
+        if community.post_count == 0 or community.member_count == 0:
+            # 计算实际帖子数量
+            actual_post_count = await Post.filter(
+                community_id=community_id,
+                deleted_at=None
+            ).count()
+
+            # 计算实际成员数量
+            actual_member_count = await CommunityMembership.filter(
+                community_id=community_id
+            ).count()
+
+            # 更新数据库
+            await Community.filter(id=community_id).update(
+                post_count=actual_post_count,
+                member_count=actual_member_count
+            )
+
+            # 重新获取更新后的数据
+            community = await Community.get_or_none(id=community_id)
+
         return community
 
     async def recommend_communities(

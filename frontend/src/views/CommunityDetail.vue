@@ -18,8 +18,9 @@
       <section class="community-info-section">
         <CommunityInfoCard
           :community="community"
-          :role="membership.role"
+          :role="membership?.role"
           @leave="handleLeave"
+          @join="handleJoin"
         />
       </section>
 
@@ -126,6 +127,11 @@ const loadData = async () => {
 // 退出社区后返回列表页
 const handleLeave = () => {
   router.push('/my-communities')
+}
+
+// 用户加入社区后更新状态
+const handleJoin = (data) => {
+  membership.value = { role: data.role }
 }
 
 // 初始化

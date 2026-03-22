@@ -12,6 +12,7 @@ class CommunityOut(BaseModel):
     name: str
     description: Optional[str] = None
     member_count: int = 0
+    post_count: int = 0
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

@@ -229,6 +229,11 @@ class UserService:
         post_count = await Post.filter(author=user, deleted_at__isnull=True).count()
         comment_count = await Comment.filter(author=user, deleted_at__isnull=True).count()
 
+        # 计算点赞和点踩数量
+        from models.vote import Vote
+        upvote_count = await Vote.filter(user=user, direction=1).count()
+        downvote_count = await Vote.filter(user=user, direction=-1).count()
+
         # 如果 karma 为 0，触发计算
         if user.karma == 0:
             await user.calculate_karma()
@@ -245,6 +250,8 @@ class UserService:
             "is_active": user.is_active,
             "post_count": post_count,
             "comment_count": comment_count,
+            "upvote_count": upvote_count,
+            "downvote_count": downvote_count,
         }
 
     async def get_user_posts(

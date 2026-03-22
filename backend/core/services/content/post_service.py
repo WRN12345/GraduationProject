@@ -6,6 +6,7 @@
 from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime, timezone
 from redis.asyncio import Redis
+from tortoise.expressions import F
 from models.user import User
 from models.community import Community
 from models.post_attachment import PostAttachment
@@ -323,6 +324,11 @@ class PostService:
             author=user
         )
 
+        # 更新社区帖子计数
+        await Community.filter(id=community_id).update(
+            post_count=F('post_count') + 1
+        )
+
         # 关联附件
         if attachment_ids:
             # 验证附件是否存在且属于当前用户且未被使用
@@ -466,6 +472,11 @@ class PostService:
             await models.Post.filter(id=post_id).update(
                 deleted_at=datetime.now(timezone.utc),
                 deleted_by_id=user.id
+            )
+
+            # 更新社区帖子计数（减少）
+            await Community.filter(id=post.community_id).update(
+                post_count=F('post_count') - 1
             )
 
             await create_audit_log(
