@@ -21,7 +21,6 @@ from core.services.content.bookmark_service import bookmark_service
 logger = logging.getLogger(__name__)
 
 
-@db_retry()
 async def sync_votes_to_db():
     """
     定时任务：同步 Redis 投票数据到 PostgreSQL
@@ -39,7 +38,14 @@ async def sync_votes_to_db():
 
         if post_ids:
             logger.info(f"开始同步 {len(post_ids)} 个帖子的投票数据")
-            await _sync_post_votes(redis, list(post_ids))
+            try:
+                await _sync_post_votes(redis, list(post_ids))
+            except Exception as e:
+                error_str = str(e).lower()
+                if "relation" in error_str and "does not exist" in error_str:
+                    logger.warning(f"数据库表不存在，跳过投票同步: {e}")
+                else:
+                    raise
             await redis.delete(post_sync_key)
 
         # 2. 获取需要同步的评论 ID
@@ -48,7 +54,14 @@ async def sync_votes_to_db():
 
         if comment_ids:
             logger.info(f"开始同步 {len(comment_ids)} 个评论的投票数据")
-            await _sync_comment_votes(redis, list(comment_ids))
+            try:
+                await _sync_comment_votes(redis, list(comment_ids))
+            except Exception as e:
+                error_str = str(e).lower()
+                if "relation" in error_str and "does not exist" in error_str:
+                    logger.warning(f"数据库表不存在，跳过评论投票同步: {e}")
+                else:
+                    raise
             await redis.delete(comment_sync_key)
 
     finally:
@@ -146,12 +159,13 @@ async def _sync_comment_votes(redis: Redis, comment_ids: List[int]):
         )
 
 
-@db_retry()
 async def sync_bookmarks_to_db():
     """
     定时任务：同步 Redis 收藏数据到 PostgreSQL
 
     频率：每 5 分钟执行一次
+
+    注意：不使用 @db_retry 装饰器，因为表不存在时重试没有意义
     """
     from core.cache import get_redis
 
@@ -167,9 +181,16 @@ async def sync_bookmarks_to_db():
 
         logger.info(f"开始同步 {len(user_ids)} 个用户的收藏数据")
 
-        for user_id in user_ids:
-            user_id = int(user_id)
-            await _sync_user_bookmarks(redis, user_id)
+        try:
+            for user_id in user_ids:
+                user_id = int(user_id)
+                await _sync_user_bookmarks(redis, user_id)
+        except Exception as e:
+            error_str = str(e).lower()
+            if "relation" in error_str and "does not exist" in error_str:
+                logger.warning(f"数据库表不存在，跳过收藏同步: {e}")
+            else:
+                raise
 
         await redis.delete(sync_key)
         logger.info("收藏数据同步完成")

@@ -167,7 +167,8 @@ const handleLogout = async () => {
   // 调用登出方法
   await userStore.logout()
 
-  // 登出成功后会自动跳转到登录页（通过路由守卫）
+  // 跳转到登录页
+  router.push('/login')
 }
 
 // 创建帖子
@@ -222,6 +223,8 @@ const handleProfileUpdate = async () => {
 const handlePasswordUpdate = async () => {
   // 密码修改成功后登出
   await userStore.logout()
+  // 跳转到登录页
+  router.push('/login')
 }
 </script>
 

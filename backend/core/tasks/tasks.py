@@ -14,7 +14,6 @@ from core.config import settings
 from core.database import db_retry, check_db_connection, ensure_connection
 
 
-@db_retry()
 async def sync_post_stats_to_db():
     """
     定时任务：将 Redis 交互计数同步到 PostgreSQL
@@ -24,6 +23,8 @@ async def sync_post_stats_to_db():
     - upvotes/downvotes 计数
     - 重新计算并更新 hot_rank
     """
+    from tortoise.exceptions import OperationalError as TortoiseOperationalError
+
     redis = await get_redis().__anext__()
 
     try:
@@ -63,7 +64,13 @@ async def sync_post_stats_to_db():
                 if success:
                     synced_count += 1
             except Exception as e:
-                logger.error(f"同步帖子 {post_id} 最终失败（已重试）: {e}")
+                error_str = str(e).lower()
+                if "relation" in error_str and "does not exist" in error_str:
+                    # 表不存在，跳过本次同步（可能是迁移未运行）
+                    logger.warning(f"数据库表不存在，跳过帖子 {post_id} 的同步: {e}")
+                    break  # 跳出循环，因为后续的帖子也会失败
+                else:
+                    logger.error(f"同步帖子 {post_id} 最终失败（已重试）: {e}")
 
         logger.info(f"成功同步 {synced_count} 个帖子到 PostgreSQL")
 
@@ -111,7 +118,6 @@ async def _sync_single_post_with_retry(redis, post_id: int, interactions: dict) 
     return True
 
 
-@db_retry()
 async def update_hot_ranks():
     """
     定时任务：批量重新计算并更新热门帖子热度
@@ -120,6 +126,8 @@ async def update_hot_ranks():
     - 帖子创建后初始化热度
     - 时间衰减导致热度变化
     - 数据修正后重新计算
+
+    注意：不使用 @db_retry 装饰器，因为表不存在时重试没有意义
     """
     redis = await get_redis().__anext__()
 
@@ -143,7 +151,12 @@ async def update_hot_ranks():
                     community_id=post.community_id
                 )
             except Exception as e:
-                logger.error(f"更新帖子 {post.id} 热度失败: {e}")
+                error_str = str(e).lower()
+                if "relation" in error_str and "does not exist" in error_str:
+                    logger.warning(f"数据库表不存在，跳过热度更新: {e}")
+                    break
+                else:
+                    logger.error(f"更新帖子 {post.id} 热度失败: {e}")
 
         logger.info("热度更新完成")
 
