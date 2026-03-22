@@ -40,7 +40,7 @@ const handleAvatarError = (event) => {
 
 // 获取角色名称
 const getRoleName = (role) => {
-  const map = { 2: '群主', 1: '管理员', 0: '成员', '-1': '已封禁' }
+  const map = { 2: '版主', 1: '管理员', 0: '成员', '-1': '已封禁' }
   return map[role] || '成员'
 }
 
@@ -68,7 +68,7 @@ const formatTime = (dateString) => {
         class="avatar-img"
         @error="handleAvatarError"
       />
-      <div class="avatar-text">{{ getAvatarText() }}</div>
+      <div v-else class="avatar-text">{{ getAvatarText() }}</div>
     </div>
 
     <!-- 用户信息 -->
@@ -144,7 +144,7 @@ const formatTime = (dateString) => {
 }
 
 .avatar-text {
-  display: none;
+  display: flex;
   width: 100%;
   height: 100%;
   border-radius: 50%;

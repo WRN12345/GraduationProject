@@ -74,7 +74,7 @@ const emptyTitle = computed(() => {
 
 const emptyMessage = computed(() => {
   if (membership.value?.role === 2) {
-    return '作为群主，快来发布第一篇帖子吧！'
+    return '作为版主，快来发布第一篇帖子吧！'
   }
   return '成为第一个发帖的人吧！'
 })

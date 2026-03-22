@@ -15,11 +15,11 @@ const props = defineProps({
 
 const emit = defineEmits(['transfer', 'promote', 'demote', 'ban', 'unban'])
 
-// 转让群主
+// 转让版主
 const handleTransfer = () => {
   ElMessageBox.confirm(
-    `确定要将群主转让给「${props.member.nickname || props.member.username}」吗？转让后你将成为管理员。`,
-    '确认转让群主',
+    `确定要将版主转让给「${props.member.nickname || props.member.username}」吗？转让后你将成为管理员。`,
+    '确认转让版主',
     {
       confirmButtonText: '确认转让',
       cancelButtonText: '取消',
@@ -104,7 +104,7 @@ const handleUnban = () => {
 
 <template>
   <div class="member-actions">
-    <!-- 转让群主（仅 owner 对 admin 可见） -->
+    <!-- 转让版主（仅 owner 对 admin 可见） -->
     <el-button
       v-if="permissions.canTransfer"
       text
@@ -113,7 +113,7 @@ const handleUnban = () => {
       @click="handleTransfer"
     >
       <Crown :size="14" />
-      转让群主
+      转让版主
     </el-button>
 
     <!-- 提升为管理员（仅 owner 对 member 可见） -->

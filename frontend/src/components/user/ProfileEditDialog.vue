@@ -88,6 +88,9 @@ const dialogVisible = computed({
 const formRef = ref(null)
 const loading = ref(false)
 
+// 标记头像是否被修改过（用于判断是否需要调用 profile API）
+const avatarChanged = ref(false)
+
 const form = reactive({
   username: '',
   nickname: '',
@@ -163,9 +166,6 @@ const handleAvatarSuccess = (response) => {
   ElMessage.success('头像上传成功')
 }
 
-// 标记头像是否被修改过（用于判断是否需要调用 profile API）
-const avatarChanged = ref(false)
-
 // 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return
@@ -208,9 +208,7 @@ const handleSubmit = async () => {
           'Content-Type': 'application/json',
           ...uploadHeaders.value
         },
-        body: JSON.stringify({profileData
-
-        })
+        body: JSON.stringify(profileData)
       })
 
       if (!profileResponse.ok) {

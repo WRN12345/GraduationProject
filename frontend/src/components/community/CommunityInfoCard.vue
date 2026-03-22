@@ -49,7 +49,7 @@ const props = defineProps({
   },
   role: {
     type: Number,
-    default: 0  // 0=成员, 1=管理员, 2=群主
+    default: 0  // 0=成员, 1=管理员, 2=版主
   }
 })
 
@@ -60,7 +60,7 @@ const router = useRouter()
 // 角色显示
 const roleDisplay = computed(() => {
   const roleMap = {
-    2: '群主',
+    2: '版主',
     1: '管理员',
     0: '成员'
   }
@@ -77,7 +77,7 @@ const roleClass = computed(() => {
   return classMap[props.role] || 'member'
 })
 
-// 是否可以退出（群主不能直接退出）
+// 是否可以退出（版主不能直接退出）
 const canLeave = computed(() => {
   return props.role !== 2
 })

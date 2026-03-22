@@ -113,7 +113,7 @@ const isModerator = computed(() => isOwner.value || isAdmin.value)
 // 按角色分组
 const groupedMembers = computed(() => {
   const groups = {
-    2: { role: 2, roleName: '群主', members: [] },
+    2: { role: 2, roleName: '版主', members: [] },
     1: { role: 1, roleName: '管理员', members: [] },
     0: { role: 0, roleName: '成员', members: [] },
     '-1': { role: -1, roleName: '已封禁', members: [] }
@@ -126,7 +126,7 @@ const groupedMembers = computed(() => {
     }
   })
 
-  // 按固定顺序返回：群主 → 管理员 → 成员 → 已封禁
+  // 按固定顺序返回：版主 → 管理员 → 成员 → 已封禁
   const order = [2, 1, 0, -1]
   return order.map(role => groups[role]).filter(g => g.members.length > 0)
 })
@@ -247,7 +247,7 @@ const handleDemote = async (memberId) => {
   }
 }
 
-// 转让群主
+// 转让版主
 const handleTransfer = async (memberId) => {
   try {
     await client.POST('/v1/memberships/communities/{community_id}/transfer-ownership', {
@@ -256,7 +256,7 @@ const handleTransfer = async (memberId) => {
       },
       body: { user_id: memberId }
     })
-    ElMessage.success('已转让群主')
+    ElMessage.success('已转让版主')
     router.push('/my-communities')
   } catch (err) {
     console.error('[成员管理] 转让失败:', err)
@@ -267,7 +267,7 @@ const handleTransfer = async (memberId) => {
 // 退出社区
 const handleLeave = async () => {
   if (isOwner.value) {
-    ElMessage.warning('群主需要先转让群主才能退出社区')
+    ElMessage.warning('版主需要先转让版主才能退出社区')
     return
   }
 
