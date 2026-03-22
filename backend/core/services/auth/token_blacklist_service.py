@@ -23,7 +23,7 @@ class TokenBlacklistService:
     async def _get_redis(self) -> redis.Redis:
         """获取 Redis 连接"""
         if self._redis is None:
-            self._redis = redis.from_url(
+            self._redis = await redis.from_url(
                 settings.REDIS_URL,
                 decode_responses=True,
                 encoding="utf-8"

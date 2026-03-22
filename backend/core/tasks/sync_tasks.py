@@ -158,6 +158,61 @@ async def _sync_comment_votes(redis: Redis, comment_ids: List[int]):
             score=score
         )
 
+        # 获取投票用户列表（可选，用于同步 Vote 记录）
+        up_voters_key = vote_service._get_voters_key('comment', comment_id, 'up')
+        down_voters_key = vote_service._get_voters_key('comment', comment_id, 'down')
+
+        up_voter_ids = await redis.zrange(up_voters_key, 0, -1)
+        down_voter_ids = await redis.zrange(down_voters_key, 0, -1)
+
+        # 同步 Vote 记录（使用 upsert 逻辑）
+        async with in_transaction():
+            # 处理赞
+            for user_id in up_voter_ids:
+                user_id = int(user_id)
+                vote = await Vote.get_or_none(
+                    user_id=user_id,
+                    comment_id=comment_id
+                )
+
+                if vote:
+                    if vote.direction != 1:
+                        vote.direction = 1
+                        await vote.save()
+                else:
+                    await Vote.create(
+                        user_id=user_id,
+                        comment_id=comment_id,
+                        direction=1
+                    )
+
+            # 处理踩
+            for user_id in down_voter_ids:
+                user_id = int(user_id)
+                vote = await Vote.get_or_none(
+                    user_id=user_id,
+                    comment_id=comment_id
+                )
+
+                if vote:
+                    if vote.direction != -1:
+                        vote.direction = -1
+                        await vote.save()
+                else:
+                    await Vote.create(
+                        user_id=user_id,
+                        comment_id=comment_id,
+                        direction=-1
+                    )
+
+            # 删除不在 Redis 中的投票记录（取消投票的情况）
+            all_voter_ids = set([int(uid) for uid in up_voter_ids + down_voter_ids])
+            if all_voter_ids:
+                await Vote.filter(
+                    comment_id=comment_id,
+                    user_id__not_in=all_voter_ids
+                ).delete()
+
 
 async def sync_bookmarks_to_db():
     """
