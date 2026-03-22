@@ -4,7 +4,7 @@
  * 核心特性：
  * 1. 封装热门内容数据获取逻辑
  * 2. 管理 loading、error、data 状态
- * 3. 实现缓存机制（5分钟缓存，避免频繁请求）
+ * 3. 实现缓存机制（2分钟缓存，避免频繁请求）
  * 4. 支持按社区筛选
  */
 
@@ -60,7 +60,7 @@ export function useTrending(options: UseTrendingOptions = {}) {
     limit = 10,
     communityId,
     autoFetch = true,
-    cacheTime = 5 * 60 * 1000 // 默认5分钟
+    cacheTime = 2 * 60 * 1000 // 默认2分钟
   } = options
 
   // 状态管理
