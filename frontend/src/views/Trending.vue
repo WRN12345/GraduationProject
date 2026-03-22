@@ -4,13 +4,22 @@ import { useTrending } from '@/composables/useTrending'
 import HotPostsList from '@/components/trending/HotPostsList.vue'
 import HotCommunitiesList from '@/components/trending/HotCommunitiesList.vue'
 import HotUsersList from '@/components/trending/HotUsersList.vue'
-import { RotateCw, TrendingUp } from 'lucide-vue-next'
+import { RotateCw, TrendingUp, FileText, Users, User } from 'lucide-vue-next'
 
 // 使用热门内容 composable
 const { hotPosts, hotCommunities, hotUsers, loading, error, refreshTrending } = useTrending({
   limit: 10,
   autoFetch: true
 })
+
+// Tab 状态
+const activeTab = ref('posts')
+
+const tabs = [
+  { id: 'posts', label: '热门帖子', icon: FileText },
+  { id: 'communities', label: '热门社区', icon: Users },
+  { id: 'users', label: '活跃用户', icon: User }
+]
 
 // 刷新处理
 const isRefreshing = ref(false)
@@ -23,19 +32,30 @@ const handleRefresh = async () => {
 
 <template>
   <div class="trending-page">
-    <!-- 页面标题 -->
+    <!-- 页面头部：Tab 胶囊按钮 + 刷新按钮 -->
     <div class="page-header">
-      <h1 class="page-title">
-        <TrendingUp :size="28" class="title-icon" />
-        热门内容
-      </h1>
+      <!-- 左侧：胶囊按钮 Tab -->
+      <div class="tab-container">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          class="tab-button"
+          :class="{ active: activeTab === tab.id }"
+          @click="activeTab = tab.id"
+        >
+          <component :is="tab.icon" :size="14" />
+          <span>{{ tab.label }}</span>
+        </button>
+      </div>
+
+      <!-- 右侧：刷新按钮 -->
       <button
         class="refresh-button"
         @click="handleRefresh"
         :disabled="loading || isRefreshing"
         :class="{ loading: loading || isRefreshing }"
       >
-        <RotateCw :size="16" :class="{ spinning: isRefreshing }" />
+        <RotateCw :size="14" :class="{ spinning: isRefreshing }" />
         <span>刷新</span>
       </button>
     </div>
@@ -53,31 +73,19 @@ const handleRefresh = async () => {
     <!-- 内容区域 -->
     <div v-else class="content">
       <!-- 热门帖子 -->
-      <section class="trending-section">
-        <div class="section-header">
-          <h2 class="section-title">热门帖子</h2>
-          <span class="section-count">{{ hotPosts.length }} 条</span>
-        </div>
+      <div v-show="activeTab === 'posts'" class="tab-content">
         <HotPostsList :posts="hotPosts" :loading="loading" />
-      </section>
+      </div>
 
       <!-- 热门社区 -->
-      <section class="trending-section">
-        <div class="section-header">
-          <h2 class="section-title">热门社区</h2>
-          <span class="section-count">{{ hotCommunities.length }} 个</span>
-        </div>
+      <div v-show="activeTab === 'communities'" class="tab-content">
         <HotCommunitiesList :communities="hotCommunities" :loading="loading" />
-      </section>
+      </div>
 
       <!-- 活跃用户 -->
-      <section class="trending-section">
-        <div class="section-header">
-          <h2 class="section-title">活跃用户</h2>
-          <span class="section-count">{{ hotUsers.length }} 位</span>
-        </div>
+      <div v-show="activeTab === 'users'" class="tab-content">
         <HotUsersList :users="hotUsers" :loading="loading" />
-      </section>
+      </div>
     </div>
   </div>
 </template>
@@ -89,40 +97,63 @@ const handleRefresh = async () => {
   padding: 20px;
 }
 
-/* 页面标题 */
+/* 页面头部 */
 .page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 2px solid #edeff1;
 }
 
-.page-title {
+/* Tab 胶囊按钮 */
+.tab-container {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  color: #1c1c1c;
+  gap: 4px;
+  background-color: #f6f7f8;
+  padding: 4px;
+  border-radius: 24px;
 }
 
-.title-icon {
-  color: #ff6b35;
-}
-
-.refresh-button {
+.tab-button {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
+  background-color: transparent;
+  border: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #878a8c;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: #1c1c1c;
+  background-color: #edeff1;
+}
+
+.tab-button.active {
+  background-color: #ffffff;
+  color: #1c1c1c;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+}
+
+/* 刷新按钮 */
+.refresh-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
   background-color: #0079d3;
   color: #ffffff;
   border: none;
   border-radius: 20px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -195,42 +226,23 @@ const handleRefresh = async () => {
 
 /* 内容区域 */
 .content {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-/* 区块 */
-.trending-section {
   background-color: #ffffff;
   border: 1px solid #edeff1;
   border-radius: 8px;
-  padding: 20px;
+  padding: 16px;
 }
 
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #edeff1;
+.tab-content {
+  animation: fadeIn 0.2s ease;
 }
 
-.section-title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: #1c1c1c;
-}
-
-.section-count {
-  padding: 4px 12px;
-  background-color: #f6f7f8;
-  color: #878a8c;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* 响应式 */
@@ -240,39 +252,32 @@ const handleRefresh = async () => {
   }
 
   .page-header {
-    margin-bottom: 20px;
-    padding-bottom: 12px;
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
   }
 
-  .page-title {
-    font-size: 20px;
+  .tab-container {
+    justify-content: center;
   }
 
-  .title-icon {
-    width: 24px;
-    height: 24px;
+  .tab-button {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .tab-button span {
+    display: none;
   }
 
   .refresh-button {
+    align-self: flex-end;
     padding: 6px 12px;
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .content {
-    gap: 24px;
-  }
-
-  .trending-section {
-    padding: 16px;
-  }
-
-  .section-title {
-    font-size: 16px;
-  }
-
-  .section-count {
-    padding: 3px 10px;
-    font-size: 11px;
+    padding: 12px;
   }
 }
 </style>
