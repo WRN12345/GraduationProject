@@ -127,12 +127,6 @@
               @vote-change="handleVoteChange"
             />
 
-            <!-- 评论按钮 -->
-            <button class="action-btn" title="评论">
-              <MessageCircle :size="18" />
-              <span>{{ post.comment_count || 0 }}</span>
-            </button>
-
             <!-- 收藏按钮 -->
             <BookmarkButton
               v-if="post"
@@ -190,7 +184,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Edit2, Trash2, Pin, Star, MessageCircle, Share2, Settings, ChevronDown } from 'lucide-vue-next'
+import { Edit2, Trash2, Pin, Star, Share2, Settings, ChevronDown } from 'lucide-vue-next'
 import { ElMessageBox, ElMessage, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus'
 import { client } from '@/api/client'
 import { marked } from 'marked'
@@ -699,10 +693,12 @@ onMounted(() => {
   background: transparent;
   border-radius: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
   color: #888;
   font-size: 13px;
   font-weight: 500;
+  height: 32px;
+  box-sizing: border-box;
 }
 
 .actions-left .action-btn:hover {

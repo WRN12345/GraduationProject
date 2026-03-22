@@ -9,6 +9,7 @@ from redis.asyncio import Redis
 from models.user import User
 from models.community import Community
 from models.post_attachment import PostAttachment
+from models.comment import Comment
 from models import post as models
 from core.services.content.bookmark_service import bookmark_service
 from core.services.content.vote_service import vote_service
@@ -74,6 +75,9 @@ class PostService:
         # 添加用户状态字段
         post_dict.update(await self._get_user_state(redis, post.id, current_user))
 
+        # 添加评论数量
+        post_dict["comment_count"] = await Comment.filter(post_id=post.id).count()
+
         return post_dict
 
     async def get_posts_list(
@@ -124,7 +128,10 @@ class PostService:
             items = await self._enrich_posts_with_user_state(redis, items_orm, current_user)
         else:
             for post in items_orm:
-                items.append(schemas.PostOut.model_validate(post).model_dump())
+                post_dict = schemas.PostOut.model_validate(post).model_dump()
+                # 添加评论数量
+                post_dict["comment_count"] = await Comment.filter(post_id=post.id).count()
+                items.append(post_dict)
 
         # 计算是否有更多数据
         has_more = skip + limit < total
@@ -250,11 +257,21 @@ class PostService:
                 post_dict["downvotes"] = downvotes
                 post_dict["score"] = score
 
+                # 添加评论数量
+                post_dict["comment_count"] = await Comment.filter(post_id=post.id).count()
+
                 cached_posts[post.id] = post_dict
                 await post_cache_service.cache_post(redis, post.id, post_dict)
 
         # 5. 按 post_ids 顺序排序（保持热度顺序）
-        items = [cached_posts[pid] for pid in post_ids if pid in cached_posts]
+        items = []
+        for pid in post_ids:
+            if pid in cached_posts:
+                post_dict = cached_posts[pid]
+                # 确保评论数量存在（从缓存获取的可能没有）
+                if "comment_count" not in post_dict:
+                    post_dict["comment_count"] = await Comment.filter(post_id=pid).count()
+                items.append(post_dict)
 
         # 6. 计算总数和是否有更多数据
         total = await redis.zcard(
@@ -633,6 +650,7 @@ class PostService:
             "user_vote": 0,
             "bookmarked": False,
             "bookmark_count": 0,
+            "comment_count": 0,
         }
 
     async def _get_user_state(
@@ -702,6 +720,9 @@ class PostService:
             post_dict["user_vote"] = vote_statuses.get(('post', post.id), 0)
             post_dict["bookmarked"] = bookmark_statuses.get(post.id, False)
             post_dict["bookmark_count"] = bookmark_counts.get(post.id, 0)
+
+            # 添加评论数量
+            post_dict["comment_count"] = await Comment.filter(post_id=post.id).count()
 
             items.append(post_dict)
 

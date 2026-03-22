@@ -87,11 +87,13 @@ watch(loading, (newLoading) => {
   background: transparent;
   border-radius: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
   color: #888;
   font-size: 13px;
   font-weight: 500;
   user-select: none;
+  height: 32px;
+  box-sizing: border-box;
 }
 
 .vote-btn:hover:not(:disabled) {

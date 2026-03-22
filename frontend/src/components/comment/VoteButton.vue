@@ -65,6 +65,8 @@ const loadVoteStatus = async () => {
     })
     if (response.data) {
       userVote.value = response.data.user_vote || 0
+      upvotes.value = response.data.upvotes || 0
+      downvotes.value = response.data.downvotes || 0
       score.value = response.data.score
     }
   } catch (error) {
@@ -95,10 +97,13 @@ const handleVote = async (direction) => {
         if (direction === 1) upvotes.value++
         else downvotes.value++
       } else {
+        // 改变投票方向：从赞变为踩，或从踩变为赞
         if (direction === 1) {
+          // 从踩变为赞：点踩数-1，点赞数+1
           downvotes.value--
           upvotes.value++
         } else {
+          // 从赞变为踩：点赞数-1，点踩数+1
           upvotes.value--
           downvotes.value++
         }

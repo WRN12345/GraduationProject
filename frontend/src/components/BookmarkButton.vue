@@ -10,7 +10,7 @@
       :fill="isBookmarked ? 'currentColor' : 'none'"
       :class="{ 'icon-pop': !loading && isBookmarked }"
     />
-    <span v-if="showCount && bookmarkCount > 0" class="count">{{ bookmarkCount }}</span>
+    <span v-if="showCount" class="count" :class="{ 'count-hidden': bookmarkCount <= 0 }">{{ bookmarkCount > 0 ? bookmarkCount : '' }}</span>
   </button>
 </template>
 
@@ -66,11 +66,13 @@ watch(loading, (newLoading) => {
   background: transparent;
   border-radius: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
   color: #888;
   font-size: 13px;
   font-weight: 500;
   user-select: none;
+  height: 32px;
+  box-sizing: border-box;
 }
 
 .bookmark-btn:hover:not(:disabled) {
@@ -91,7 +93,17 @@ watch(loading, (newLoading) => {
   font-size: 13px;
   font-weight: 500;
   min-width: 16px;
+  max-width: 32px;
   text-align: center;
+  overflow: hidden;
+  transition: max-width 0.2s ease, opacity 0.2s ease;
+}
+
+/* 隐藏count时保持空间，避免布局跳动 */
+.count-hidden {
+  min-width: 0;
+  max-width: 0;
+  opacity: 0;
 }
 
 /* 收藏动画 */

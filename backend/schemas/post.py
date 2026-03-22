@@ -84,6 +84,7 @@ class PostOut(BaseModel):
     user_vote: int = 0  # 用户投票状态: 1=赞, -1=踩, 0=无
     bookmarked: bool = False  # 用户是否已收藏
     bookmark_count: int = 0  # 收藏数量
+    comment_count: int = 0  # 评论数量
 
     model_config = ConfigDict(from_attributes=True)
 
