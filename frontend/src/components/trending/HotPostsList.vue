@@ -23,29 +23,39 @@ const getRainbowColor = (percentage: number) => {
   return rainbowColors[Math.min(index, rainbowColors.length - 1)]
 }
 
-// 获取热度颜色（彩虹色）
-const getHotColor = (hotRank: number, maxRank: number) => {
-  const percentage = maxRank > 0 ? (hotRank / maxRank) * 100 : 0
-  return getRainbowColor(percentage)
+// 获取热度颜色（基于排名位置）
+const getHotColor = (index: number) => {
+  // 根据排名分配颜色：前3名用红色系，4-10名用橙色系，其他用蓝色系
+  if (index === 0) return rainbowColors[0] // 红 - 第1名
+  if (index === 1) return rainbowColors[1] // 橙 - 第2名
+  if (index === 2) return rainbowColors[2] // 黄 - 第3名
+  if (index < 10) return rainbowColors[3] // 绿 - 4-10名
+  return rainbowColors[5] // 蓝 - 其他
 }
 
-// 热度等级计算（保留用于 tooltip）
-const getHotLevel = (percentage: number) => {
-  if (percentage >= 80) return { label: '极热', color: '#ff0000' }
-  if (percentage >= 50) return { label: '热门', color: '#ff7f00' }
-  if (percentage >= 20) return { label: '上升', color: '#00ff00' }
+// 热度等级计算（基于排名位置）
+const getHotLevel = (index: number) => {
+  // 根据排名来判断热度等级，而不是百分比
+  if (index === 0) return { label: '极热', color: '#ff0000' }
+  if (index === 1) return { label: '极热', color: '#ff0000' }
+  if (index === 2) return { label: '热门', color: '#ff7f00' }
+  if (index < 10) return { label: '上升', color: '#00ff00' }
   return { label: '普通', color: '#0000ff' }
 }
 
-// 计算最大热度值
+// 计算最大热度值（用于进度条宽度）
 const maxHotRank = computed(() => {
-  return Math.max(...(props.posts?.map(p => p.hot_rank) || [100]))
+  const ranks = props.posts?.map(p => p.hot_rank) || [100]
+  const max = Math.max(...ranks)
+  // 如果最大值为负数或0，使用一个小的正数作为基准
+  return max > 0 ? max : 1
 })
 
-// 获取热度百分比
+// 获取热度百分比（用于进度条显示）
 const getHotPercentage = (hotRank: number) => {
   if (!maxHotRank.value) return 0
-  return (hotRank / maxHotRank.value) * 100
+  // 确保百分比在 0-100 之间
+  return Math.max(0, Math.min(100, (hotRank / maxHotRank.value) * 100))
 }
 
 // 格式化时间
@@ -90,9 +100,8 @@ const hideTooltip = () => {
   hoveredIndex.value = null
 }
 
-const getTooltipData = (post: HotPost) => {
-  const percentage = getHotPercentage(post.hot_rank)
-  const level = getHotLevel(percentage)
+const getTooltipData = (post: HotPost, index: number) => {
+  const level = getHotLevel(index)
   return {
     value: post.hot_rank.toFixed(1),
     level: level.label,
@@ -167,7 +176,7 @@ const getTooltipData = (post: HotPost) => {
               class="progress-fill" 
               :style="{ 
                 width: `${getHotPercentage(post.hot_rank)}%`,
-                backgroundColor: getHotColor(post.hot_rank, maxHotRank)
+                backgroundColor: getHotColor(index)
               }"
             ></div>
           </div>
@@ -185,12 +194,12 @@ const getTooltipData = (post: HotPost) => {
           top: `${tooltipPosition.y}px`
         }"
       >
-        <div class="tooltip-value">{{ getTooltipData(posts[hoveredIndex]).value }}</div>
+        <div class="tooltip-value">{{ getTooltipData(posts[hoveredIndex], hoveredIndex).value }}</div>
         <div 
           class="tooltip-level"
-          :style="{ color: getTooltipData(posts[hoveredIndex]).color }"
+          :style="{ color: getTooltipData(posts[hoveredIndex], hoveredIndex).color }"
         >
-          {{ getTooltipData(posts[hoveredIndex]).level }}
+          {{ getTooltipData(posts[hoveredIndex], hoveredIndex).level }}
         </div>
       </div>
     </Teleport>

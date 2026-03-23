@@ -132,6 +132,7 @@ async def update_hot_ranks():
     redis = await get_redis().__anext__()
 
     try:
+        # ==================== 同步帖子热度 ====================
         # 获取所有帖子（只取最近的，避免全表扫描）
         posts = await Post.filter(
             deleted_at__isnull=True
@@ -158,10 +159,166 @@ async def update_hot_ranks():
                 else:
                     logger.error(f"更新帖子 {post.id} 热度失败: {e}")
 
+        # ==================== 同步社区热度 ====================
+        await sync_community_hot_ranks(redis)
+
+        # ==================== 同步用户活跃度 ====================
+        await sync_user_hot_ranks(redis)
+
         logger.info("热度更新完成")
 
     except Exception as e:
         logger.error(f"热度更新任务执行失败: {e}")
+    finally:
+        await redis.close()
+
+
+async def sync_community_hot_ranks(redis):
+    """
+    同步社区热度到 Redis
+
+    用于初始化和定时更新社区热门榜
+    """
+    from models.community import Community
+    from tortoise.functions import Count
+    from datetime import datetime, timezone, timedelta
+
+    try:
+        # 获取所有社区
+        communities = await Community.all()
+
+        if not communities:
+            return
+
+        logger.info(f"开始同步 {len(communities)} 个社区的热度")
+
+        seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+
+        for community in communities:
+            try:
+                # 计算近7天帖子数
+                recent_posts = await Post.filter(
+                    community_id=community.id,
+                    deleted_at__isnull=True,
+                    created_at__gte=seven_days_ago
+                ).count()
+
+                # 同步到 Redis
+                await hot_rank_service.sync_community_rank_from_db(
+                    redis=redis,
+                    community_id=community.id,
+                    member_count=community.member_count,
+                    post_count=getattr(community, 'post_count', 0) or 0,
+                    recent_posts=recent_posts,
+                    created_at=community.created_at
+                )
+            except Exception as e:
+                logger.error(f"同步社区 {community.id} 热度失败: {e}")
+
+        logger.info("社区热度同步完成")
+
+    except Exception as e:
+        logger.error(f"社区热度同步任务执行失败: {e}")
+
+
+async def sync_user_hot_ranks(redis):
+    """
+    同步用户活跃度到 Redis
+
+    用于初始化和定时更新用户活跃榜
+    """
+    from models.user import User
+    from models.comment import Comment
+    from datetime import datetime, timezone, timedelta
+
+    try:
+        # 获取所有活跃用户（只取最近登录的）
+        users = await User.filter(is_active=True).limit(1000).order_by("-last_login")
+
+        if not users:
+            return
+
+        logger.info(f"开始同步 {len(users)} 个用户的活跃度")
+
+        seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+
+        for user in users:
+            try:
+                # 计算近7天发帖数
+                recent_posts = await Post.filter(
+                    author_id=user.id,
+                    deleted_at__isnull=True,
+                    created_at__gte=seven_days_ago
+                ).count()
+
+                # 计算近7天评论数
+                recent_comments = await Comment.filter(
+                    author_id=user.id,
+                    deleted_at__isnull=True,
+                    created_at__gte=seven_days_ago
+                ).count()
+
+                recent_activity = recent_posts + recent_comments
+
+                # 同步到 Redis
+                await hot_rank_service.sync_user_rank_from_db(
+                    redis=redis,
+                    user_id=user.id,
+                    karma=user.karma,
+                    post_count=getattr(user, 'post_count', 0) or 0,
+                    comment_count=getattr(user, 'comment_count', 0) or 0,
+                    recent_activity=recent_activity,
+                    last_login=user.last_login,
+                    created_at=user.created_at
+                )
+            except Exception as e:
+                logger.error(f"同步用户 {user.id} 活跃度失败: {e}")
+
+        logger.info("用户活跃度同步完成")
+
+    except Exception as e:
+        logger.error(f"用户活跃度同步任务执行失败: {e}")
+
+
+async def initialize_hot_ranks():
+    """
+    启动时初始化热门数据
+
+    如果 Redis 中没有热门数据，从数据库同步
+    这个函数在应用启动时调用一次
+    """
+    redis = await get_redis().__anext__()
+
+    try:
+        # 检查 Redis 中是否已有热门数据
+        post_count = await redis.zcard(hot_rank_service.HOT_POSTS_GLOBAL)
+        community_count = await redis.zcard(hot_rank_service.HOT_COMMUNITIES_GLOBAL)
+        user_count = await redis.zcard(hot_rank_service.HOT_USERS_GLOBAL)
+
+        logger.info(f"当前 Redis 热度数据: 帖子={post_count}, 社区={community_count}, 用户={user_count}")
+
+        # 只有当数据为空时才初始化
+        if post_count == 0 or community_count == 0 or user_count == 0:
+            logger.info("检测到 Redis 热度数据不完整，开始初始化...")
+
+            # 同步帖子热度
+            if post_count == 0:
+                await update_hot_ranks()
+
+            # 同步社区热度
+            if community_count == 0:
+                await sync_community_hot_ranks(redis)
+
+            # 同步用户活跃度
+            if user_count == 0:
+                await sync_user_hot_ranks(redis)
+
+            logger.info("Redis 热度数据初始化完成")
+        else:
+            logger.info("Redis 热度数据已存在，跳过初始化")
+
+    except Exception as e:
+        logger.error(f"初始化热门数据失败: {e}")
     finally:
         await redis.close()
 
@@ -222,6 +379,7 @@ async def sync_scores_to_db():
 __all__ = [
     "sync_post_stats_to_db",
     "update_hot_ranks",
+    "initialize_hot_ranks",
     "start_background_tasks",
     "sync_scores_to_db",
 ]

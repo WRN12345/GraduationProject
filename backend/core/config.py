@@ -44,9 +44,13 @@ class Settings(BaseSettings):
     REDIS_POST_DETAIL_TTL: int = int(os.getenv("REDIS_POST_DETAIL_TTL", "600"))  # 帖子详情缓存 TTL (10分钟)
     REDIS_POST_LIST_TTL: int = int(os.getenv("REDIS_POST_LIST_TTL", "300"))  # 帖子列表缓存 TTL (5分钟)
     REDIS_SYNC_INTERVAL: int = int(os.getenv("REDIS_SYNC_INTERVAL", "60"))  # PG 同步间隔 (秒)
-    HOT_VIEW_WEIGHT: int = int(os.getenv("HOT_VIEW_WEIGHT", "1"))  # 浏览权重
-    HOT_SHARE_WEIGHT: int = int(os.getenv("HOT_SHARE_WEIGHT", "5"))  # 分享权重
-    HOT_VOTE_WEIGHT: int = int(os.getenv("HOT_VOTE_WEIGHT", "10"))  # 投票权重
+    # --- 热度算法 V2 配置 ---
+    HOT_VOTE_WEIGHT: float = float(os.getenv("HOT_VOTE_WEIGHT", "1.0"))  # 净票数权重（基准）
+    HOT_COMMENT_WEIGHT: float = float(os.getenv("HOT_COMMENT_WEIGHT", "1.2"))  # 评论数权重
+    HOT_FAV_WEIGHT: float = float(os.getenv("HOT_FAV_WEIGHT", "2.0"))  # 收藏数权重
+    HOT_TIME_DECAY: float = float(os.getenv("HOT_TIME_DECAY", "1.8"))  # 时间衰减系数（≈36h 半衰期）
+    HOT_PIN_BONUS: float = float(os.getenv("HOT_PIN_BONUS", "5.0"))  # 置顶固定加分
+    HOT_FEATURED_BONUS: float = float(os.getenv("HOT_FEATURED_BONUS", "2.0"))  # 精华固定加分
 
     # --- 投票和收藏同步配置 ---
     VOTE_SYNC_INTERVAL: int = int(os.getenv("VOTE_SYNC_INTERVAL", "300"))  # 投票同步间隔（秒）

@@ -8,8 +8,8 @@ import math
 from typing import Optional, List
 from datetime import datetime, timezone
 from redis.asyncio import Redis
+
 from core.config import settings
-from datetime import timezone
 
 
 class HotRankService:
@@ -25,6 +25,17 @@ class HotRankService:
     HOT_USERS_GLOBAL = "hot:users:global"
     COMMUNITY_STATS_PREFIX = "community:stats"
     USER_STATS_PREFIX = "user:stats"
+
+    # 热度计算器实例（V2 算法）- 延迟导入避免循环依赖
+    _calculator = None
+
+    @classmethod
+    def _get_calculator(cls):
+        """延迟初始化热度计算器"""
+        if cls._calculator is None:
+            from core.services.content.hot_score_calculator import HotScoreCalculator
+            cls._calculator = HotScoreCalculator(settings)
+        return cls._calculator
 
     @staticmethod
     def _get_post_interaction_key(post_id: int) -> str:
@@ -43,63 +54,69 @@ class HotRankService:
         upvotes: int,
         downvotes: int,
         created_at: datetime,
-        view_count: int = 0,
-        share_count: int = 0
+        comment_count: int = 0,
+        favorite_count: int = 0,
+        is_pinned: bool = False,
+        is_featured: bool = False
     ) -> float:
         """
-        计算 Reddit 风格的热度分数
+        计算热度分数 - V2 算法
 
-        公式: log10(|score|) + (timestamp / 45000)
-        加入浏览和分享权重
+        公式: vote_score + comment_score + fav_score + time_decay + pin_bonus + featured_bonus
+
+        权重设计（针对开发者技术社区调优）：
+        - 投票 ×1.0 基准值
+        - 评论 ×1.2 技术讨论质量高
+        - 收藏 ×2.0 "以后要用"意图最强
+        - 衰减 ×1.8 约36小时半衰期
+        - 置顶 +5.0 强制压过所有有机热度
+        - 精华 +2.0 相当于额外 ~100 个收藏的加成
         """
-        # 基础分数（投票）
-        vote_score = upvotes - downvotes
-        if vote_score == 0:
-            base_score = 0
-        else:
-            base_score = math.log10(max(abs(vote_score), 1))
-
-        # 交互权重（浏览和分享）
-        interaction_score = (
-            view_count * getattr(settings, 'HOT_VIEW_WEIGHT', 1) +
-            share_count * getattr(settings, 'HOT_SHARE_WEIGHT', 5)
+        return HotRankService._get_calculator().post_score(
+            upvotes=upvotes,
+            downvotes=downvotes,
+            comment_count=comment_count,
+            favorite_count=favorite_count,
+            created_at=created_at,
+            is_pinned=is_pinned,
+            is_featured=is_featured,
         )
-
-        # 时间组件（Unix 时间戳秒数）
-        epoch_seconds = int(created_at.timestamp())
-
-        # 热度分数 = 基础分数 + 时间衰减 + 交互加权
-        hot_score = base_score + (epoch_seconds / 45000) + (interaction_score * 0.001)
-
-        return round(hot_score, 7)
 
     async def increment_interaction(
         self,
         redis: Redis,
         post_id: int,
         interaction_type: str,
-        created_at: Optional[datetime] = None
+        created_at: Optional[datetime] = None,
+        comment_count: int = 0,
+        favorite_count: int = 0,
+        is_pinned: bool = False,
+        is_featured: bool = False
     ) -> float:
         """
-        增加用户交互并更新热度
+        增加用户交互并更新热度 - V2 算法
 
         Args:
             redis: Redis 客户端
             post_id: 帖子 ID
-            interaction_type: 交互类型 ('view', 'share', 'upvote', 'downvote')
+            interaction_type: 交互类型 ('upvote', 'downvote', 'comment', 'favorite')
             created_at: 帖子创建时间（用于计算热度）
+            comment_count: 评论数
+            favorite_count: 收藏数
+            is_pinned: 是否置顶
+            is_featured: 是否精华
 
         Returns:
             新的热度分数
         """
         key = self._get_post_interaction_key(post_id)
 
-        # 获取权重配置
+        # 获取权重配置 (V2)
         weights = {
-            'view': getattr(settings, 'HOT_VIEW_WEIGHT', 1),
-            'share': getattr(settings, 'HOT_SHARE_WEIGHT', 5),
-            'upvote': getattr(settings, 'HOT_VOTE_WEIGHT', 10),
-            'downvote': getattr(settings, 'HOT_VOTE_WEIGHT', 10),
+            'upvote': 1,
+            'downvote': 1,
+            'comment': 1,
+            'favorite': 1,
         }
 
         weight = weights.get(interaction_type, 1)
@@ -113,17 +130,20 @@ class HotRankService:
 
         # 计算热度（需要帖子创建时间）
         if created_at:
-            upvotes = int(interactions.get('upvote_count', 0)) // getattr(settings, 'HOT_VOTE_WEIGHT', 10)
-            downvotes = int(interactions.get('downvote_count', 0)) // getattr(settings, 'HOT_VOTE_WEIGHT', 10)
-            view_count = int(interactions.get('view_count', 0))
-            share_count = int(interactions.get('share_count', 0))
+            upvotes = int(interactions.get('upvote_count', 0))
+            downvotes = int(interactions.get('downvote_count', 0))
+            # comment_count 和 favorite_count 优先使用传入值，否则从 Redis 获取
+            comment_count = comment_count or int(interactions.get('comment_count', 0))
+            favorite_count = favorite_count or int(interactions.get('favorite_count', 0))
 
             hot_rank = self._calculate_hot_rank(
                 upvotes=upvotes,
                 downvotes=downvotes,
                 created_at=created_at,
-                view_count=view_count,
-                share_count=share_count
+                comment_count=comment_count,
+                favorite_count=favorite_count,
+                is_pinned=is_pinned,
+                is_featured=is_featured,
             )
 
             # 更新到全局热门 ZSET
@@ -140,17 +160,25 @@ class HotRankService:
         upvotes: int,
         downvotes: int,
         created_at: datetime,
-        community_id: Optional[int] = None
+        community_id: Optional[int] = None,
+        comment_count: int = 0,
+        favorite_count: int = 0,
+        is_pinned: bool = False,
+        is_featured: bool = False
     ):
         """
-        从数据库同步帖子热度到 Redis
+        从数据库同步帖子热度到 Redis - V2 算法
 
         用于初始化或定时同步
         """
         hot_rank = self._calculate_hot_rank(
             upvotes=upvotes,
             downvotes=downvotes,
-            created_at=created_at
+            created_at=created_at,
+            comment_count=comment_count,
+            favorite_count=favorite_count,
+            is_pinned=is_pinned,
+            is_featured=is_featured,
         )
 
         # 更新全局热门
@@ -214,27 +242,21 @@ class HotRankService:
         member_count: int,
         post_count: int,
         recent_posts: int,  # 近7天帖子数
-        created_at: datetime
+        comments_7d: int = 0,  # 近7天评论数
+        created_at: datetime = None
     ) -> float:
         """
-        计算社区热度分数
+        计算社区热度分数 - V2 算法
 
-        公式: 成员权重 + 帖子权重 + 活跃度权重 + 时间衰减
+        公式: member_score + post_score + activity_score + age_bonus
         """
-        # 成员对数权重（每10个成员+1分，最多5分）
-        member_score = min(math.log10(max(member_count, 1)), 5)
-
-        # 帖子数量对数权重
-        post_score = min(math.log10(max(post_count, 1)), 5)
-
-        # 近期活跃度（近7天帖子，权重更高）
-        activity_score = min(recent_posts * 0.5, 3)
-
-        # 时间衰减（社区越老，优势越小）
-        epoch_seconds = int(created_at.timestamp())
-        time_decay = (epoch_seconds / 45000) * 0.1
-
-        return round(member_score + post_score + activity_score + time_decay, 7)
+        return HotRankService._get_calculator().community_score(
+            member_count=member_count,
+            post_count=post_count,
+            posts_7d=recent_posts,
+            comments_7d=comments_7d,
+            created_at=created_at,
+        )
 
     async def sync_community_rank_from_db(
         self,
@@ -243,10 +265,11 @@ class HotRankService:
         member_count: int,
         post_count: int,
         recent_posts: int,
-        created_at: datetime
+        created_at: datetime = None,
+        comments_7d: int = 0
     ):
         """
-        从数据库同步社区热度到 Redis
+        从数据库同步社区热度到 Redis - V2 算法
 
         用于初始化或定时同步
         """
@@ -254,6 +277,7 @@ class HotRankService:
             member_count=member_count,
             post_count=post_count,
             recent_posts=recent_posts,
+            comments_7d=comments_7d,
             created_at=created_at
         )
 
@@ -266,6 +290,7 @@ class HotRankService:
             'member_count': member_count,
             'post_count': post_count,
             'recent_posts': recent_posts,
+            'comments_7d': comments_7d,
             'hot_rank': str(hot_rank)
         })
         await redis.expire(stats_key, 3600)  # 1小时过期
@@ -314,30 +339,21 @@ class HotRankService:
         post_count: int,
         comment_count: int,
         recent_activity: int,  # 近7天发帖+评论数
-        last_login: Optional[datetime],
-        created_at: datetime
+        last_login: Optional[datetime] = None,
+        created_at: datetime = None
     ) -> float:
         """
-        计算用户活跃度分数
+        计算用户活跃度分数 - V2 算法
 
-        公式: Karma权重 + 贡献权重 + 近期活跃 + 登录新鲜度
+        公式: karma_score + content_score + activity_score + login_bonus
         """
-        # Karma 对数权重
-        karma_score = min(math.log10(max(abs(karma), 1)), 5)
-
-        # 贡献数量（发帖+评论）
-        contribution_score = min(math.log10(max(post_count + comment_count, 1)), 3)
-
-        # 近期活跃度（近7天）
-        activity_score = min(recent_activity * 0.3, 2)
-
-        # 登录新鲜度（最近登录的用户得分更高）
-        if last_login:
-            login_freshness = (int(last_login.timestamp()) / 45000) * 0.5
-        else:
-            login_freshness = 0
-
-        return round(karma_score + contribution_score + activity_score + login_freshness, 7)
+        return HotRankService._get_calculator().user_score(
+            karma=karma,
+            post_count=post_count,
+            comment_count=comment_count,
+            activity_7d=recent_activity,
+            last_login_at=last_login,
+        )
 
     async def sync_user_rank_from_db(
         self,
@@ -347,11 +363,11 @@ class HotRankService:
         post_count: int,
         comment_count: int,
         recent_activity: int,
-        last_login: Optional[datetime],
-        created_at: datetime
+        last_login: Optional[datetime] = None,
+        created_at: datetime = None
     ):
         """
-        从数据库同步用户活跃度到 Redis
+        从数据库同步用户活跃度到 Redis - V2 算法
 
         用于初始化或定时同步
         """
