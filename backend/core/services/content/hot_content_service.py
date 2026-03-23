@@ -72,17 +72,31 @@ class HotContentService:
             deleted_at__isnull=True
         ).prefetch_related('author', 'community')
 
+        # 获取 Redis 中的实时热度分数
+        hot_scores = {}
+        if post_ids:
+            scores_with_ids = await redis.zrevrange(
+                hot_rank_service._get_hot_posts_key(community_id),
+                start=0,
+                end=len(post_ids) - 1,
+                withscores=True
+            )
+            for pid, score in scores_with_ids:
+                hot_scores[int(pid)] = score
+
         # 按 Redis 排序顺序重新排列
         posts_dict = {post.id: post for post in posts}
         sorted_posts = []
         for pid in post_ids:
             if pid in posts_dict:
                 post = posts_dict[pid]
+                # 使用 Redis 中的实时分数，而不是数据库的 hot_rank
+                redis_hot_rank = hot_scores.get(pid, post.hot_rank)
                 sorted_posts.append({
                     "id": post.id,
                     "title": post.title,
                     "score": post.score,
-                    "hot_rank": post.hot_rank,
+                    "hot_rank": redis_hot_rank,
                     "community_name": post.community.name if post.community else "未知",
                     "author_username": post.author.username if post.author else "匿名",
                     "created_at": post.created_at
@@ -104,6 +118,18 @@ class HotContentService:
         if not community_ids:
             return []
 
+        # 获取 Redis 中的实时热度分数
+        community_scores = {}
+        if community_ids:
+            scores_with_ids = await redis.zrevrange(
+                hot_rank_service.HOT_COMMUNITIES_GLOBAL,
+                start=0,
+                end=len(community_ids) - 1,
+                withscores=True
+            )
+            for cid, score in scores_with_ids:
+                community_scores[int(cid)] = score
+
         # 批量查询社区详情
         communities = await Community.filter(id__in=community_ids)
 
@@ -119,7 +145,7 @@ class HotContentService:
                     "description": community.description or "",
                     "member_count": community.member_count,
                     "post_count": getattr(community, 'post_count', 0) if hasattr(community, 'post_count') else 0,
-                    "hot_rank": 0.0  # 可以从 Redis 缓存获取
+                    "hot_rank": community_scores.get(cid, 0.0)
                 })
 
         return sorted_communities
@@ -138,6 +164,18 @@ class HotContentService:
         if not user_ids:
             return []
 
+        # 获取 Redis 中的实时热度分数
+        user_scores = {}
+        if user_ids:
+            scores_with_ids = await redis.zrevrange(
+                hot_rank_service.HOT_USERS_GLOBAL,
+                start=0,
+                end=len(user_ids) - 1,
+                withscores=True
+            )
+            for uid, score in scores_with_ids:
+                user_scores[int(uid)] = score
+
         # 批量查询用户详情
         users = await User.filter(id__in=user_ids, is_active=True)
 
@@ -155,7 +193,7 @@ class HotContentService:
                     "karma": user.karma,
                     "post_count": getattr(user, 'post_count', 0) if hasattr(user, 'post_count') else 0,
                     "comment_count": getattr(user, 'comment_count', 0) if hasattr(user, 'comment_count') else 0,
-                    "hot_rank": 0.0  # 可以从 Redis 缓存获取
+                    "hot_rank": user_scores.get(uid, 0.0)
                 })
 
         return sorted_users

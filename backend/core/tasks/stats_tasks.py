@@ -6,7 +6,8 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
-from core.cache import get_redis
+from redis.asyncio import Redis
+from core.cache import get_redis_pool
 from core.services.content.hot_content_service import hot_content_service
 from core.services.infrastructure.redis_service import hot_rank_service
 from models.community import Community
@@ -15,6 +16,13 @@ from models.post import Post
 from models.comment import Comment
 
 logger = logging.getLogger(__name__)
+
+
+async def _get_redis() -> Redis:
+    """从连接池获取 Redis 连接（不关闭，由连接池管理）"""
+    import redis.asyncio as aioredis
+    pool = await get_redis_pool()
+    return aioredis.Redis(connection_pool=pool)  # 复用连接池，不手动 close
 
 
 async def sync_community_stats():
@@ -29,7 +37,7 @@ async def sync_community_stats():
     - 重新计算热度分数
     - 更新 Redis 排行榜
     """
-    redis = await get_redis().__anext__()
+    redis = await _get_redis()  # 复用连接池，不手动 close
 
     try:
         # 获取所有社区
@@ -89,8 +97,7 @@ async def sync_community_stats():
             logger.warning(f"数据库表不存在，跳过社区统计同步: {e}")
         else:
             logger.error(f"社区统计同步任务执行失败: {e}")
-    finally:
-        await redis.close()
+    # 注意：不关闭 redis 连接，由连接池管理
 
 
 async def sync_user_stats():
@@ -108,7 +115,7 @@ async def sync_user_stats():
 
     注意：不使用 @db_retry 装饰器，因为表不存在时重试没有意义
     """
-    redis = await get_redis().__anext__()
+    redis = await _get_redis()  # 复用连接池，不手动 close
 
     try:
         # 获取活跃用户（分批处理，避免内存问题）
@@ -207,8 +214,7 @@ async def sync_user_stats():
             logger.warning(f"数据库表不存在，跳过用户统计同步: {e}")
         else:
             logger.error(f"用户统计同步任务执行失败: {e}")
-    finally:
-        await redis.close()
+    # 注意：不关闭 redis 连接，由连接池管理
 
 
 async def start_stats_tasks():

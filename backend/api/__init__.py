@@ -29,6 +29,10 @@ async def lifespan(app: FastAPI):
     from core.tasks.tasks import start_background_tasks
     await start_background_tasks()
 
+    # 启动时初始化热门数据（如果 Redis 中没有数据）
+    from core.tasks.tasks import initialize_hot_ranks
+    await initialize_hot_ranks()
+
     # 启动投票和收藏同步任务
     from core.tasks.sync_tasks import start_sync_tasks
     await start_sync_tasks()
