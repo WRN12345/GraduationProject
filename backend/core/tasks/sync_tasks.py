@@ -21,51 +21,121 @@ from core.services.content.bookmark_service import bookmark_service
 logger = logging.getLogger(__name__)
 
 
+async def _get_redis() -> Redis:
+    """从连接池获取 Redis 连接（不关闭，由连接池管理）"""
+    from core.cache import get_redis_pool
+    import redis.asyncio as aioredis
+    pool = await get_redis_pool()
+    return aioredis.Redis(connection_pool=pool)  # ✅ 复用连接池，不手动 close
+
+
 async def sync_votes_to_db():
     """
     定时任务：同步 Redis 投票数据到 PostgreSQL
-
     频率：每 5 分钟执行一次
     """
-    from core.cache import get_redis
+    redis = await _get_redis()  # ✅ 不再用 __anext__()，不再 close()
 
-    redis: Redis = await get_redis().__anext__()
+    # 1. 同步帖子投票
+    post_sync_key = vote_service._get_sync_key("post")
+    post_ids = await redis.smembers(post_sync_key)
+
+    if post_ids:
+        logger.info(f"开始同步 {len(post_ids)} 个帖子的投票数据")
+        try:
+            await _sync_post_votes(redis, list(post_ids))
+            await redis.delete(post_sync_key)
+        except Exception as e:
+            error_str = str(e).lower()
+            if "relation" in error_str and "does not exist" in error_str:
+                logger.warning(f"数据库表不存在，跳过投票同步: {e}")
+            else:
+                raise
+
+    # 2. 同步评论投票
+    comment_sync_key = vote_service._get_sync_key("comment")
+    comment_ids = await redis.smembers(comment_sync_key)
+
+    if comment_ids:
+        logger.info(f"开始同步 {len(comment_ids)} 个评论的投票数据")
+        try:
+            await _sync_comment_votes(redis, list(comment_ids))
+            await redis.delete(comment_sync_key)
+        except Exception as e:
+            error_str = str(e).lower()
+            if "relation" in error_str and "does not exist" in error_str:
+                logger.warning(f"数据库表不存在，跳过评论投票同步: {e}")
+            else:
+                raise
+
+
+async def sync_bookmarks_to_db():
+    """
+    定时任务：同步 Redis 收藏数据到 PostgreSQL
+    频率：每 5 分钟执行一次
+    """
+    redis = await _get_redis()  # ✅ 复用连接池
+
+    sync_key = bookmark_service._get_sync_key()
+    user_ids = await redis.smembers(sync_key)
+
+    if not user_ids:
+        return
+
+    logger.info(f"开始同步 {len(user_ids)} 个用户的收藏数据")
 
     try:
-        # 1. 获取需要同步的帖子 ID
-        post_sync_key = vote_service._get_sync_key("post")
-        post_ids = await redis.smembers(post_sync_key)
+        for user_id in user_ids:
+            await _sync_user_bookmarks(redis, int(user_id))
+        await redis.delete(sync_key)
+        logger.info("收藏数据同步完成")
+    except Exception as e:
+        error_str = str(e).lower()
+        if "relation" in error_str and "does not exist" in error_str:
+            logger.warning(f"数据库表不存在，跳过收藏同步: {e}")
+        else:
+            raise
 
-        if post_ids:
-            logger.info(f"开始同步 {len(post_ids)} 个帖子的投票数据")
-            try:
-                await _sync_post_votes(redis, list(post_ids))
-            except Exception as e:
-                error_str = str(e).lower()
-                if "relation" in error_str and "does not exist" in error_str:
-                    logger.warning(f"数据库表不存在，跳过投票同步: {e}")
-                else:
-                    raise
-            await redis.delete(post_sync_key)
 
-        # 2. 获取需要同步的评论 ID
-        comment_sync_key = vote_service._get_sync_key("comment")
-        comment_ids = await redis.smembers(comment_sync_key)
+# ✅ 统一的带重连保护的循环工厂
+async def _run_loop(task_name: str, task_fn, interval: int):
+    """
+    带重连保护的任务循环
 
-        if comment_ids:
-            logger.info(f"开始同步 {len(comment_ids)} 个评论的投票数据")
-            try:
-                await _sync_comment_votes(redis, list(comment_ids))
-            except Exception as e:
-                error_str = str(e).lower()
-                if "relation" in error_str and "does not exist" in error_str:
-                    logger.warning(f"数据库表不存在，跳过评论投票同步: {e}")
-                else:
-                    raise
-            await redis.delete(comment_sync_key)
+    - Redis 连接异常：等 5 秒重试（不等完整 interval）
+    - 其他异常：记录日志，等完整 interval 后继续
+    """
+    logger.info(f"{task_name} 启动")
+    while True:
+        try:
+            await task_fn()
+            await asyncio.sleep(interval)
+        except (ConnectionError, OSError) as e:
+            # Redis 连接断开，短暂等待后重试
+            logger.warning(f"{task_name} Redis连接异常，5秒后重试: {e}")
+            await asyncio.sleep(5)
+        except Exception as e:
+            logger.error(f"{task_name} 异常: {e}")
+            await asyncio.sleep(interval)
 
-    finally:
-        await redis.close()
+
+async def start_sync_tasks():
+    """启动同步任务，在应用启动时调用"""
+    vote_interval = getattr(settings, 'VOTE_SYNC_INTERVAL', 300)
+    bookmark_interval = getattr(settings, 'BOOKMARK_SYNC_INTERVAL', 300)
+
+    logger.info("启动投票和收藏同步任务...")
+
+    asyncio.create_task(
+        _run_loop("投票同步", sync_votes_to_db, vote_interval)
+    )
+    asyncio.create_task(
+        _run_loop("收藏同步", sync_bookmarks_to_db, bookmark_interval)
+    )
+
+    logger.info("同步任务启动完成")
+
+
 
 
 async def _sync_post_votes(redis: Redis, post_ids: List[int]):
@@ -214,53 +284,18 @@ async def _sync_comment_votes(redis: Redis, comment_ids: List[int]):
                 ).delete()
 
 
-async def sync_bookmarks_to_db():
-    """
-    定时任务：同步 Redis 收藏数据到 PostgreSQL
-
-    频率：每 5 分钟执行一次
-
-    注意：不使用 @db_retry 装饰器，因为表不存在时重试没有意义
-    """
-    from core.cache import get_redis
-
-    redis: Redis = await get_redis().__anext__()
-
-    try:
-        # 获取需要同步的用户 ID
-        sync_key = bookmark_service._get_sync_key()
-        user_ids = await redis.smembers(sync_key)
-
-        if not user_ids:
-            return
-
-        logger.info(f"开始同步 {len(user_ids)} 个用户的收藏数据")
-
-        try:
-            for user_id in user_ids:
-                user_id = int(user_id)
-                await _sync_user_bookmarks(redis, user_id)
-        except Exception as e:
-            error_str = str(e).lower()
-            if "relation" in error_str and "does not exist" in error_str:
-                logger.warning(f"数据库表不存在，跳过收藏同步: {e}")
-            else:
-                raise
-
-        await redis.delete(sync_key)
-        logger.info("收藏数据同步完成")
-
-    finally:
-        await redis.close()
-
-
 async def _sync_user_bookmarks(redis: Redis, user_id: int):
     """同步用户收藏到数据库"""
+    from datetime import datetime, timezone
+
     bookmarks_key = bookmark_service._get_user_bookmarks_key(user_id)
 
-    # 获取 Redis 中的所有收藏 post_ids
-    post_ids = await redis.zrange(bookmarks_key, 0, -1)
-    post_ids = [int(pid) for pid in post_ids]
+    # 获取 Redis 中的所有收藏 post_ids 及时间戳
+    bookmark_data = await redis.zrange(bookmarks_key, 0, -1, withscores=True)
+    
+    # 构建 post_id -> timestamp 映射
+    post_timestamps = {int(pid): score for pid, score in bookmark_data}
+    post_ids = list(post_timestamps.keys())
 
     # 获取数据库中现有的收藏
     existing_bookmarks = await Bookmark.filter(user_id=user_id).values_list('post_id', flat=True)
@@ -278,10 +313,18 @@ async def _sync_user_bookmarks(redis: Redis, user_id: int):
         # 添加新收藏
         for post_id in to_add:
             try:
+                # 从 Redis 时间戳转换 created_at
+                timestamp = post_timestamps.get(post_id)
+                if timestamp:
+                    created_at = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+                else:
+                    created_at = datetime.now(timezone.utc)
+                
                 await Bookmark.create(
                     user_id=user_id,
                     post_id=post_id,
-                    folder='default'
+                    folder='default',
+                    created_at=created_at
                 )
             except Exception as e:
                 logger.warning(f"添加收藏失败 user_id={user_id} post_id={post_id}: {e}")
@@ -292,42 +335,6 @@ async def _sync_user_bookmarks(redis: Redis, user_id: int):
                 user_id=user_id,
                 post_id__in=to_remove
             ).delete()
-
-
-async def start_sync_tasks():
-    """
-    启动同步任务
-
-    在应用启动时调用
-    """
-    # 获取同步间隔配置
-    vote_sync_interval = getattr(settings, 'VOTE_SYNC_INTERVAL', 300)  # 默认 5 分钟
-    bookmark_sync_interval = getattr(settings, 'BOOKMARK_SYNC_INTERVAL', 300)  # 默认 5 分钟
-
-    async def vote_sync_loop():
-        """投票同步循环"""
-        while True:
-            try:
-                await sync_votes_to_db()
-            except Exception as e:
-                logger.error(f"投票同步异常: {e}")
-            await asyncio.sleep(vote_sync_interval)
-
-    async def bookmark_sync_loop():
-        """收藏同步循环"""
-        while True:
-            try:
-                await sync_bookmarks_to_db()
-            except Exception as e:
-                logger.error(f"收藏同步异常: {e}")
-            await asyncio.sleep(bookmark_sync_interval)
-
-    # 启动任务
-    logger.info("启动投票和收藏同步任务...")
-    asyncio.create_task(vote_sync_loop())
-    asyncio.create_task(bookmark_sync_loop())
-    logger.info("同步任务启动完成")
-
 
 __all__ = [
     "sync_votes_to_db",

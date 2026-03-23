@@ -16,6 +16,12 @@ async def get_redis_pool() -> redis.ConnectionPool:
                     settings.REDIS_URL,
                     decode_responses=True,
                     max_connections=20,
+                    # ✅ 新增以下配置
+                    socket_keepalive=True,
+                    socket_connect_timeout=5,
+                    socket_timeout=10,
+                    retry_on_timeout=True,
+                    health_check_interval=30,  # 每30秒心跳，防止连接被NAT断开
                 )
     return _pool
 

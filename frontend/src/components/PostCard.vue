@@ -77,6 +77,21 @@ const updateBookmark = (bookmarked, count) => {
   props.post.bookmarked = bookmarked
   props.post.bookmark_count = count
 }
+
+// 获取图片附件
+const imageAttachments = computed(() => {
+  return props.post.attachments?.filter(a => a.attachment_type === 'image') || []
+})
+
+// 获取视频附件
+const videoAttachments = computed(() => {
+  return props.post.attachments?.filter(a => a.attachment_type === 'video') || []
+})
+
+// 是否有附件
+const hasAttachments = computed(() => {
+  return imageAttachments.value.length > 0 || videoAttachments.value.length > 0
+})
 </script>
 
 <template>
@@ -118,6 +133,36 @@ const updateBookmark = (bookmarked, count) => {
       <!-- 内容预览 -->
       <div class="post-preview" v-if="post.content">
         {{ post.content.substring(0, 200) }}{{ post.content.length > 200 ? '...' : '' }}
+      </div>
+
+      <!-- 附件预览区域 -->
+      <div class="attachments-preview" v-if="hasAttachments">
+        <!-- 图片附件 -->
+        <div class="attachment-grid images-grid" v-if="imageAttachments.length > 0">
+          <div
+            v-for="(img, index) in imageAttachments.slice(0, 4)"
+            :key="img.id"
+            class="attachment-item image-item"
+            :class="{ 'more-item': index === 3 && imageAttachments.length > 4 }"
+          >
+            <img :src="img.file_url" :alt="img.file_name" />
+            <div v-if="index === 3 && imageAttachments.length > 4" class="more-overlay">
+              +{{ imageAttachments.length - 4 }}
+            </div>
+          </div>
+        </div>
+
+        <!-- 视频附件 -->
+        <div class="attachment-grid videos-grid" v-if="videoAttachments.length > 0">
+          <div
+            v-for="video in videoAttachments"
+            :key="video.id"
+            class="attachment-item video-item"
+          >
+            <video :src="video.file_url" :controls="false" preload="metadata"></video>
+            <div class="play-icon">▶</div>
+          </div>
+        </div>
       </div>
 
       <!-- 底部操作区 -->
@@ -311,6 +356,120 @@ const updateBookmark = (bookmarked, count) => {
   font-size: 14px;
   line-height: 1.7;
   margin-bottom: 12px;
+}
+
+/* 附件预览区域 */
+.attachments-preview {
+  margin-bottom: 12px;
+}
+
+.attachment-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.images-grid {
+  grid-template-columns: repeat(4, 1fr);
+  max-height: 300px;
+}
+
+.videos-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.attachment-item {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.image-item {
+  aspect-ratio: 16 / 9;
+  cursor: pointer;
+}
+
+.image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.image-item:hover img {
+  transform: scale(1.02);
+}
+
+.image-item.more-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.more-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.video-item {
+  aspect-ratio: 16 / 9;
+  cursor: pointer;
+}
+
+.video-item video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  transition: all 0.2s ease;
+}
+
+.video-item:hover .play-icon {
+  background: rgba(0, 0, 0, 0.8);
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* 响应式优化 */
+@media (max-width: 639px) {
+  .images-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .videos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .play-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
 }
 
 /* 底部操作区 */

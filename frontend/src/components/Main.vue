@@ -196,8 +196,8 @@ const displayPosts = computed(() => posts.value)
 
           <!-- 附件预览 -->
           <div v-if="post.attachments && post.attachments.length > 0" class="post-attachments">
-            <!-- 只显示图片类型附件，最多3张 -->
-            <div class="attachments-grid">
+            <!-- 图片附件 -->
+            <div class="attachments-grid" v-if="post.attachments.filter(a => a.attachment_type === 'image').length > 0">
               <img
                 v-for="attachment in post.attachments
                   .filter(a => a.attachment_type === 'image')
@@ -208,10 +208,23 @@ const displayPosts = computed(() => posts.value)
                 class="attachment-thumbnail"
                 @click.stop="viewImage(attachment.file_url)"
               />
+              <!-- 超过3张显示计数 -->
+              <div v-if="post.attachments.filter(a => a.attachment_type === 'image').length > 3" class="more-count">
+                +{{ post.attachments.filter(a => a.attachment_type === 'image').length - 3 }}
+              </div>
             </div>
-            <!-- 超过3张显示计数 -->
-            <div v-if="post.attachments.filter(a => a.attachment_type === 'image').length > 3" class="more-count">
-              +{{ post.attachments.filter(a => a.attachment_type === 'image').length - 3 }}
+            <!-- 视频附件 -->
+            <div class="attachments-grid videos-grid" v-if="post.attachments.filter(a => a.attachment_type === 'video').length > 0">
+              <div
+                v-for="video in post.attachments
+                  .filter(a => a.attachment_type === 'video')"
+                :key="video.id"
+                class="video-thumbnail"
+                @click.stop="viewImage(video.file_url)"
+              >
+                <video :src="video.file_url" preload="metadata"></video>
+                <div class="play-icon">▶</div>
+              </div>
             </div>
           </div>
 
@@ -426,6 +439,45 @@ const displayPosts = computed(() => posts.value)
 
 .attachment-thumbnail:hover {
   transform: scale(1.05);
+}
+
+/* 视频预览 */
+.videos-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.video-thumbnail {
+  position: relative;
+  width: 120px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #000;
+}
+
+.video-thumbnail video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-thumbnail .play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
 }
 
 .more-count {

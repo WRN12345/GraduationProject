@@ -1087,6 +1087,26 @@ export interface components {
             has_more: boolean;
         };
         /**
+         * AttachmentOut
+         * @description 附件信息
+         */
+        AttachmentOut: {
+            /** Id */
+            id: number;
+            /** Attachment Type */
+            attachment_type: string;
+            /** File Name */
+            file_name: string;
+            /** File Url */
+            file_url: string;
+            /** File Size */
+            file_size: number;
+            /** Mime Type */
+            mime_type: string;
+            /** Sort Order */
+            sort_order: number;
+        };
+        /**
          * PostAuthor
          * @description 帖子作者信息（简化版）
          */
@@ -1136,6 +1156,8 @@ export interface components {
             community_id: number;
             author?: components["schemas"]["PostAuthor"] | null;
             community?: components["schemas"]["PostCommunity"] | null;
+            /** Attachments */
+            attachments?: components["schemas"]["AttachmentOut"][];
             /** Upvotes */
             upvotes: number;
             /** Downvotes */
@@ -1168,6 +1190,14 @@ export interface components {
             created_at: string;
             /** Updated At */
             updated_at: string | null;
+            /** User Vote */
+            user_vote?: number;
+            /** Bookmarked */
+            bookmarked?: boolean;
+            /** Bookmark Count */
+            bookmark_count?: number;
+            /** Comment Count */
+            comment_count?: number;
         };
         /** PostUpdate */
         PostUpdate: {

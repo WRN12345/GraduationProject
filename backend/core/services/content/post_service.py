@@ -641,7 +641,7 @@ class PostService:
             "attachments": [
                 {
                     "id": a.id,
-                    "attachment_type": a.attachment_type,
+                    "attachment_type": a.attachment_type.value if hasattr(a.attachment_type, 'value') else str(a.attachment_type),
                     "file_name": a.file_name,
                     "file_url": a.file_url,
                     "file_size": a.file_size,

@@ -402,44 +402,33 @@ const handleToggleHighlight = async () => {
 
 // 加载帖子详情
 const loadPost = async () => {
-  const postId = route.params.id
-  console.log('[PostDetail] 加载帖子, ID:', postId, '类型:', typeof postId)
-
-  // 验证 ID 是否有效
-  const parsedId = parseInt(postId)
-  if (isNaN(parsedId)) {
-    console.error('[PostDetail] 无效的帖子 ID:', postId)
+  const postId = parseInt(route.params.id)
+  if (isNaN(postId)) {
     loading.value = false
     return
   }
 
   loading.value = true
   try {
-    const response = await client.GET('/v1/posts/{post_id}', {
-      params: {
-        path: { post_id: parsedId }
-      }
-    })
+    const [postResponse, myCommunitiesResponse] = await Promise.all([
+      client.GET('/v1/posts/{post_id}', {
+        params: { path: { post_id: postId } }
+      }),
+      userStore.isLoggedIn
+        ? client.GET('/v1/memberships/my-communities')
+        : Promise.resolve({ data: null })
+    ])
 
-    if (response.data) {
-      post.value = response.data
+    if (postResponse.data) {
+      post.value = postResponse.data
 
-      // 获取用户在该社区的角色信息
-      if (userStore.isLoggedIn) {
-        try {
-          const myCommunitiesResponse = await client.GET('/v1/memberships/my-communities')
-          if (myCommunitiesResponse.data) {
-            const found = myCommunitiesResponse.data.find(c => c.id === post.value.community_id)
-            if (found) {
-              membership.value = { role: found.role }
-            }
-          }
-        } catch (err) {
-          console.error('[PostDetail] 获取社区角色失败:', err)
-        }
+      if (myCommunitiesResponse.data) {
+        const found = myCommunitiesResponse.data.find(c => c.id === post.value.community_id)
+        if (found) membership.value = { role: found.role }
       }
 
       console.log('[PostDetail] 加载成功')
+      console.log('[attachments]', post.value.attachments)
     } else {
       console.log('[PostDetail] 帖子不存在')
     }
