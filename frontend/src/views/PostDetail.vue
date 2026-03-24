@@ -11,7 +11,7 @@
         <!-- 社区信息 -->
         <div class="community-info">
           <span class="community-icon">👾</span>
-          <span class="community-name">{{ post.community?.name || '未知社区' }}</span>
+          <a class="community-name" @click="goToCommunity">{{ post.community?.name || '未知社区' }}</a>
           <span class="separator">•</span>
           <span class="post-time">{{ formatTime(post.created_at) }}</span>
 
@@ -250,6 +250,13 @@ const handleAvatarError = (event) => {
 const goToAuthorProfile = () => {
   if (post.value?.author?.username) {
     router.push(`/user/${post.value.author.username}`)
+  }
+}
+
+// 跳转到社区主页
+const goToCommunity = () => {
+  if (post.value?.community_id) {
+    router.push(`/community/${post.value.community_id}`)
   }
 }
 
@@ -503,6 +510,14 @@ onMounted(() => {
 .community-name {
   font-weight: 500;
   color: #0079d3;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.community-name:hover {
+  color: #0056a3;
+  text-decoration: underline;
 }
 
 .separator {

@@ -35,6 +35,7 @@
         :is-expanded="!isCollapsed"
         :replies-loading="repliesLoading"
         @reply="$emit('reply', comment.id)"
+        @cancel-reply="$emit('cancel-reply')"
         @edit="$emit('edit', comment.id)"
         @delete="$emit('delete', comment.id)"
         @load-more="$emit('load-more', comment.id)"
