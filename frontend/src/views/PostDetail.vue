@@ -69,7 +69,6 @@
 
         <!-- 附件列表 -->
         <div v-if="post.attachments && post.attachments.length > 0" class="post-attachments-section">
-          <h4>附件 ({{ post.attachments.length }})</h4>
           <div class="attachments-list">
             <!-- 图片附件 -->
             <div
@@ -78,10 +77,6 @@
               class="attachment-item image-attachment"
             >
               <img :src="attachment.file_url" :alt="attachment.file_name" @click="viewImage(attachment.file_url)" />
-              <div class="attachment-info">
-                <span class="file-name">{{ attachment.file_name }}</span>
-                <span class="file-size">{{ formatFileSize(attachment.file_size) }}</span>
-              </div>
             </div>
             <!-- 视频附件 -->
             <div
@@ -89,11 +84,7 @@
               :key="attachment.id"
               class="attachment-item video-attachment"
             >
-              <video :src="attachment.file_url" controls />
-              <div class="attachment-info">
-                <span class="file-name">{{ attachment.file_name }}</span>
-                <span class="file-size">{{ formatFileSize(attachment.file_size) }}</span>
-              </div>
+              <video :src="attachment.file_url" controls class="video-player" />
             </div>
             <!-- 文件附件 -->
             <div
@@ -184,7 +175,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Edit2, Trash2, Pin, Star, Share2, Settings, ChevronDown } from 'lucide-vue-next'
+import { Edit2, Trash2, Pin, Star, Share2, Settings, ChevronDown, Play } from 'lucide-vue-next'
 import { ElMessageBox, ElMessage, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus'
 import { client } from '@/api/client'
 import { marked } from 'marked'
@@ -202,6 +193,7 @@ const loading = ref(true)
 const membership = ref(null)  // 用户在社区的成员信息
 const loadingPin = ref(false)  // 置顶操作加载状态
 const loadingHighlight = ref(false)  // 精华操作加载状态
+const videoRefs = ref({})  // 视频元素引用
 
 // 配置 marked
 marked.setOptions({
@@ -273,6 +265,21 @@ const formatTime = (dateString) => {
   if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
 
   return date.toLocaleDateString('zh-CN')
+}
+
+// 切换视频播放/暂停
+const toggleVideoPlay = (event) => {
+  const container = event.currentTarget
+  const video = container.querySelector('video')
+  const overlay = container.querySelector('.video-overlay')
+  
+  if (video.paused) {
+    video.play()
+    overlay.style.opacity = '0'
+  } else {
+    video.pause()
+    overlay.style.opacity = '1'
+  }
 }
 
 // 格式化文件大小
@@ -921,10 +928,57 @@ onMounted(() => {
   align-items: flex-start;
 }
 
-.video-attachment video {
-  max-width: 100%;
+.video-container {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+}
+
+.video-player {
+  width: 100%;
   max-height: 400px;
   border-radius: 8px;
+  display: block;
+}
+
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  transition: opacity 0.3s;
+}
+
+.video-overlay:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.play-button {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.play-button:hover {
+  transform: scale(1.1);
+  background: #fff;
+}
+
+.play-button :deep(svg) {
+  margin-left: 4px; /* Play 图标向右偏移一点，使三角形居中 */
 }
 
 .file-attachment {
