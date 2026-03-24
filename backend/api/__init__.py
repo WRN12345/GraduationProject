@@ -12,10 +12,15 @@ from .v1 import v1
 
 async def lifespan(app: FastAPI):
 
-    # 初始化 Redis 连接池
-    app.state.redis = await redis.from_url(
+    # ✅ 加入保活配置
+    app.state.redis = redis.Redis.from_url(
         settings.REDIS_URL,
-        decode_responses=True
+        decode_responses=True,
+        socket_keepalive=True,
+        socket_connect_timeout=5,
+        socket_timeout=10,
+        retry_on_timeout=True,
+        health_check_interval=30,  # 每30秒自动PING，防止NAT断开
     )
     print("Redis 连接成功")
 
@@ -44,7 +49,7 @@ async def lifespan(app: FastAPI):
     yield # 应用运行期间
 
     # [关闭时执行]
-    await app.state.redis.close()
+    await app.state.redis.aclose()
     print("Redis 连接关闭")
 
 # --- 初始化 APP ---
@@ -73,21 +78,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-# --- 数据库注册 ---
-register_tortoise(
-    app,
-    db_url=settings.DB_URL,  # 直接连接 PostgreSQL
-    modules={"models": ["models.user", "models.vote", "models.comment", "models.community", "models.post", "models.post_attachment", "models.membership", "models.bookmark", "models.audit_log"]},
-    generate_schemas=False,  # 使用 Aerich 管理迁移，不再自动生成 schemas
-    add_exception_handlers=True,
-)
-
 # --- Tortoise ORM 配置导出（供 Aerich 使用）---
 TORTOISE_ORM = {
     "connections": {
-        "default": settings.DB_URL,
+        "default": {
+            "engine": "tortoise.backends.asyncpg",
+            "credentials": {
+                "host": settings.DB_HOST,
+                "port": settings.DB_PORT,
+                "user": settings.DB_USER,
+                "password": settings.DB_PASSWORD,
+                "database": settings.DB_NAME,
+                "minsize": 2,
+                "maxsize": 10,
+                "max_inactive_connection_lifetime": 300,
+                "server_settings": {
+                    "tcp_keepalives_idle": "60",
+                    "tcp_keepalives_interval": "10",
+                    "tcp_keepalives_count": "5",
+                }
+            }
+        }
     },
     "apps": {
         "models": {
@@ -108,3 +119,12 @@ TORTOISE_ORM = {
     "use_tz": True,
     "timezone": "UTC",
 }
+
+# --- 数据库注册 ---
+register_tortoise(
+    app,
+    config=TORTOISE_ORM,
+    generate_schemas=False,  # 使用 Aerich 管理迁移，不再自动生成 schemas
+    add_exception_handlers=True,
+)
+
