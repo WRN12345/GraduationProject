@@ -3,7 +3,7 @@
     <el-button
       text
       size="small"
-      @click="$emit('reply')"
+      @click="isReplying ? $emit('cancel-reply') : $emit('reply')"
     >
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="action-icon">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -111,7 +111,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['reply', 'edit', 'delete', 'load-more', 'toggle-collapse'])
+const emit = defineEmits(['reply', 'cancel-reply', 'edit', 'delete', 'load-more', 'toggle-collapse'])
 
 const handleDelete = () => {
   ElMessageBox.confirm(
