@@ -48,7 +48,6 @@
         </button>
       </form>
 
-
       <div class="card-footer">
         <p v-if="isLogin">
           还没有账号？ 

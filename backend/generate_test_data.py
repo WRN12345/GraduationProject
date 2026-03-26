@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import random
 
 # 数据库配置
-DB_URL = "postgres://postgres:123456@43.161.219.202:5432/super_db"
+DB_URL = "postgres://postgres:wrN123456152806@43.161.219.202:5432/super_db"
 
 # 测试数据
 COMMUNITIES = [
