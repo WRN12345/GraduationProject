@@ -9,9 +9,10 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from passlib.context import CryptContext
-from tortoise.exceptions import DoesNotExist
 from core.config import settings
 from models.user import User
+
+# 延迟导入以避免循环依赖（已移除黑名单服务）
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
@@ -22,13 +23,12 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # --- 密码处理 ---
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-
-
-    return pwd_context.verify(plain_password, hashed_password)
+    truncated = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+    return pwd_context.verify(truncated, hashed_password)
 
 def get_password_hash(password: str) -> str:
 
-    password_bytes = password.encode('utf-8')[:72]
+    password_bytes = password.encode('utf-8')[:72]   #Bcrypt 算法本身只处理输入的前72个字节，若不截断，两个只有第73位不同的密码会被认为相同。
     password_truncated = password_bytes.decode('utf-8', errors='ignore')
     return pwd_context.hash(password_truncated)
 
@@ -72,7 +72,7 @@ def verify_refresh_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         if payload.get("type") != "refresh":
-            raise JWTError("Not a refresh token")
+            raise JWTError("Not a refresh token")# 防止用 access_token 冒充 refresh_token
         return payload
     except JWTError:
         raise HTTPException(
@@ -97,7 +97,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         # 1. 解码并验证 Token
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
 
-        # 获取用户 ID
+        # 2. 获取用户 ID（无状态验证）
         user_id: str = payload.get("id")
 
         if user_id is None:
@@ -145,7 +145,7 @@ async def get_current_user_optional(token: Optional[str] = Depends(oauth2_scheme
         return None
 
     try:
-        # 解码 Token
+        # 解码 Token（无状态验证）
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
 
         # 获取用户 ID

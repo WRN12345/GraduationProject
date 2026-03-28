@@ -169,7 +169,7 @@ class AuthService:
 
     async def logout(self, authorization: str = None) -> dict:
         """
-        用户登出 - 前端直接删除 token，后端只需返回成功
+        用户登出 - JWT 无状态，前端删除本地 Token 即可
 
         Args:
             authorization: Authorization 请求头值（可选）
@@ -177,8 +177,6 @@ class AuthService:
         Returns:
             dict: 登出结果
         """
-        # 登出由前端处理：删除本地存储的 token
-        # 后端不需要做任何操作，token 会在自然过期后失效
         return {
             "message": "登出成功"
         }

@@ -259,7 +259,7 @@ class UserService:
         username: str,
         skip: int = 0,
         limit: int = 20
-    ) -> dict:
+    ) -> list:
         """
         获取用户发布的帖子
 
