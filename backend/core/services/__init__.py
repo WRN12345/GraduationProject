@@ -7,7 +7,6 @@
 
 from .auth import (
     auth_service,
-    token_blacklist_service,
     user_service,
 )
 from .content import (
@@ -32,7 +31,6 @@ from .infrastructure import (
 __all__ = [
     # Auth
     "auth_service",
-    "token_blacklist_service",
     "user_service",
     # Content
     "post_service",

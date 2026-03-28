@@ -128,3 +128,43 @@ const fileMap = new Map()
 
 同样通过 uid 查找并更新对象
 不再 push 新对象
+
+户点击登出 → 前端调用 /v1/logout → 后端将 Token 加入 Redis 黑名单 → 前端清除本地 Token
+后续请求 → 后端检查 Token 是否在黑名单 → 是则返回 401
+
+ Python 基础与进阶语法
+面向对象编程 (OOP)：使用了类 TokenBlacklistService 封装功能，体现了高内聚低耦合的原则。
+单例模式 (Singleton)：在文件末尾通过 token_blacklist_service = TokenBlacklistService() 实例化，并在全局复用，确保整个应用共享同一个连接池，节省内存。
+类型注解 (Type Hinting)：使用了 Optional, str, dict, bool 等注解。这增强了代码的可读性和 IDE 的补全功能，体现了你对现代 Python 语法的掌握。
+异常处理 (Exception Handling)：使用了细致的 try...except 结构，捕获了 JWT 特定的错误（ExpiredSignatureError, InvalidTokenError）和通用的 Exception，保证了系统的健壮性。
+2. 异步编程 (Asynchronous Programming)
+async/await：使用了 redis.asyncio，这意味着代码是非阻塞的。在社区论坛这种高并发场景下，异步处理 Redis IO 操作可以极大提升服务器的吞吐量。
+3. 安全与 Web 开发相关
+JWT (JSON Web Token)：
+解析与验证：使用 jwt.decode 验证签名（verify_signature=True），确保 Token 不是伪造的。
+过期处理：通过获取 exp 字段计算剩余寿命（TTL）。
+黑名单机制：解决了 JWT 状态不可控的弊端（JWT 一旦签发，在到期前默认始终有效）。通过 Redis 记录已登出的 Token，实现真正安全的强制退出。
+4. Redis 数据库应用
+TTL (Time To Live)：使用了 setex (Set with Expiration)。这是核心亮点：黑名单记录的寿命与 Token 剩余寿命一致。这样 Redis 不会无限膨胀，到期自动清理，非常节省内存。
+
+异步非阻塞 ORM 操作 (async/await)
+知识点：使用了异步 ORM 对数据库进行增删改查。相比传统的同步框架（如 Django/Flask 默认模式），异步 ORM 能极大提高论坛在高并发情况下的吞吐量。
+规避 N+1 查询问题 (prefetch_related)
+知识点：在 get_user_posts 和 get_user_comments 中，你使用了 .prefetch_related('author', 'community')。
+答辩话术：“为了避免在循环列表中每次都去数据库查询作者和社区信息（即臭名昭著的 N+1 查询性能瓶颈），我使用了预加载机制，用一次 SQL JOIN/IN 查询就将关联数据提取到内存中，极大提升了接口响应速度。”
+密码安全与哈希校验
+知识点：在 update_password 中，密码没有明文比对，而是借助底层的 get_password_hash 和 verify_password（通常基于 bcrypt 算法）来保证数据库泄露也不会导致用户密码失窃。
+云原生/微服务化存储思想
+知识点：头像上传没有保存在本地磁盘，而是调用了 rustfs_service.upload_file。这体现了动静分离的架构思想，使得你的论坛应用具备了横向扩展（Scale-out）的能力。
+
+
+果在答辩时老师问起这部分设计，你可以用以下专业术语来回答：
+高并发设计：延迟同步机制 (Write-Behind / Async Sync)
+话术：“为了应对论坛可能出现的高频收藏操作（如热帖被疯狂收藏），我没有让每次收藏都直接去写数据库（会造成数据库 IO 瓶颈）。而是先写 Redis，并利用 Redis Set (SYNC_PREFIX:users) 记录变动的用户 ID。后台会有定时任务（或异步 Worker）批量将数据同步到 MySQL，极大提升了接口的 QPS 吞吐量。”
+Redis 高级数据结构的组合应用
+ZSET (有序集合)：在 _get_user_bookmarks_key 中，你巧妙地利用 ZSET，以时间戳作为 Score，这让你可以轻松实现按收藏时间倒序分页（zrevrange），比数据库的 ORDER BY 快得多。
+Hash (哈希表)：用 Hash 结构缓存帖子的详情 (HSET)，避免了频繁把整个 JSON 序列化和反序列化，支持对单个字段的修改。
+网络 I/O 优化：Redis Pipeline (管道技术)
+话术：“在添加/取消收藏时，涉及多个 Redis 命令（如 ZADD, INCR, HSET, EXPIRE）。我使用了 redis.pipeline() 将多条指令打包，一次性发送给 Redis 服务器执行，省去了多次网络往返时间 (RTT - Round Trip Time)，显著降低了响应延迟。”
+缓存穿透/缺失处理 (Cache-Aside Pattern)
+代码中的 get_user_bookmarks 实现了优雅的缓存回源逻辑：先查缓存 -> 找出 missing_ids -> 从 DB 批量查询 -> 写回 Redis -> 返回给前端。
