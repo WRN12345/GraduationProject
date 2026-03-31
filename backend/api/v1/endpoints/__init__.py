@@ -12,3 +12,4 @@ from .communities import router as communities
 from .votes import router as votes
 from .search import router as search
 from .bookmarks import router as bookmarks
+from .drafts import router as drafts

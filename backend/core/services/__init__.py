@@ -18,6 +18,7 @@ from .content import (
     membership_service,
     search_service,
     hot_content_service,
+    draft_service,
 )
 from .infrastructure import (
     hot_rank_service,
@@ -41,6 +42,7 @@ __all__ = [
     "membership_service",
     "search_service",
     "hot_content_service",
+    "draft_service",
     # Infrastructure
     "hot_rank_service",
     "post_cache_service",

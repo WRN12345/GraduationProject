@@ -13,7 +13,8 @@ import {
   Eye,
   Bookmark,
   FileText,
-  X
+  X,
+  Clipboard
 } from 'lucide-vue-next'
 
 defineProps({
@@ -73,6 +74,10 @@ const navigateTo = (path) => {
       <div class="nav-item" :class="{ active: isActive('/my-posts') }" @click="navigateTo('/my-posts')">
         <FileText :size="20" class="icon" />
         <span v-if="!isCollapsed" class="text">我的帖子</span>
+      </div>
+      <div class="nav-item" :class="{ active: isActive('/drafts') }" @click="navigateTo('/drafts')">
+        <Clipboard :size="20" class="icon" />
+        <span v-if="!isCollapsed" class="text">草稿箱</span>
       </div>
     </nav>
 

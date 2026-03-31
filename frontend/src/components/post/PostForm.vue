@@ -104,28 +104,44 @@
       >
         取消
       </button>
-      <button
-        type="submit"
-        class="btn btn-primary"
-        :disabled="isSubmitting || !isFormValid"
-      >
-        <Send :size="16" v-if="!isSubmitting" />
-        <span v-if="isSubmitting">{{ isEditMode ? '更新中...' : '发布中...' }}</span>
-        <span v-else>{{ isEditMode ? '更新帖子' : '发布帖子' }}</span>
-      </button>
+      <div class="footer-right">
+        <button
+          v-if="!isEditMode"
+          type="button"
+          class="btn btn-draft"
+          @click="handleSaveDraft"
+          :disabled="isSavingDraft || (!form.title && !form.content)"
+        >
+          <Save :size="16" v-if="!isSavingDraft" />
+          <span v-if="isSavingDraft">保存中...</span>
+          <span v-else>保存草稿</span>
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          :disabled="isSubmitting || !isFormValid"
+        >
+          <Send :size="16" v-if="!isSubmitting" />
+          <span v-if="isSubmitting">{{ isEditMode ? '更新中...' : '发布中...' }}</span>
+          <span v-else>{{ isEditMode ? '更新帖子' : '发布帖子' }}</span>
+        </button>
+      </div>
     </div>
   </form>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
-import { Users, FileText, AlignLeft, Info, Send, Paperclip } from 'lucide-vue-next'
+import { useRoute } from 'vue-router'
+import { Users, FileText, AlignLeft, Info, Send, Paperclip, Save } from 'lucide-vue-next'
 import { client } from '@/api/client'
 import { useDraft } from '@/composables/useDraft'
+import { ElMessage } from 'element-plus'
 import CommunitySelector from './CommunitySelector.vue'
 import MarkdownEditor from './MarkdownEditor.vue'
 import FileUploader from '@/components/upload/FileUploader.vue'
 
+const route = useRoute()
 const emit = defineEmits(['submit', 'cancel'])
 
 const props = defineProps({
@@ -177,8 +193,10 @@ const attachmentList = ref([])
 const isUploading = ref(false)
 
 // 草稿功能
-const { draft, hasDraft, loadDraft, saveDraft, clearDraft, startAutoSave, stopAutoSave } = useDraft()
+const { draft, hasDraft, loadDraft, saveDraft, clearDraft, startAutoSave, stopAutoSave, saveDraftToServer, updateDraftToServer, deleteDraftFromServer } = useDraft()
 const draftRestored = ref(false)
+const isSavingDraft = ref(false)
+const currentDraftId = ref(null) // 当前编辑的服务端草稿ID
 
 // 计算属性
 const isFormValid = computed(() => {
@@ -268,6 +286,48 @@ const discardDraft = () => {
   draftRestored.value = true
 }
 
+// 保存草稿到服务端
+const handleSaveDraft = async () => {
+  if (!form.title && !form.content) {
+    ElMessage.warning('请至少输入标题或内容')
+    return
+  }
+
+  isSavingDraft.value = true
+  try {
+    const draftData = {
+      title: form.title || '',
+      content: form.content || '',
+      community_id: form.community_id || null,
+      attachment_ids: attachmentList.value
+        .filter(f => f.attachmentId)
+        .map(f => f.attachmentId)
+    }
+
+    let result
+    if (currentDraftId.value) {
+      // 更新已有草稿
+      result = await updateDraftToServer(currentDraftId.value, draftData)
+    } else {
+      // 创建新草稿
+      result = await saveDraftToServer(draftData)
+    }
+
+    if (result.data) {
+      currentDraftId.value = result.data.id
+      clearDraft() // 清除本地草稿（已保存到服务端）
+      ElMessage.success('草稿已保存')
+    } else if (result.error) {
+      ElMessage.error('保存草稿失败: ' + (result.error.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('[表单] 保存草稿失败:', error)
+    ElMessage.error('保存草稿失败')
+  } finally {
+    isSavingDraft.value = false
+  }
+}
+
 // 处理文件列表更新
 const handleFileListUpdate = (files) => {
   attachmentList.value = files
@@ -333,8 +393,17 @@ const onSubmit = async () => {
 
       if (response.data) {
         console.log('[表单] 发布成功, ID:', response.data.id, '完整数据:', response.data)
-        // 清除草稿
+        // 清除本地草稿
         clearDraft()
+        // 如果是从服务端草稿发布的，删除该草稿
+        if (currentDraftId.value) {
+          try {
+            await deleteDraftFromServer(currentDraftId.value)
+            console.log('[表单] 已删除服务端草稿:', currentDraftId.value)
+          } catch (e) {
+            console.warn('[表单] 删除服务端草稿失败:', e)
+          }
+        }
         // 通知父组件
         emit('submit', response.data.id)
       } else {
@@ -351,18 +420,50 @@ const onSubmit = async () => {
 }
 
 // 取消
-const handleCancel = () => {
+const handleCancel = async () => {
   // 如果有内容且不是编辑模式，询问是否保存草稿
   if (!props.isEditMode && (form.title || form.content)) {
-    if (confirm('是否保存草稿？')) {
-      saveDraft(form)
+    if (confirm('是否将内容保存为草稿？')) {
+      await handleSaveDraft()
     }
   }
   emit('cancel')
 }
 
+// 加载服务端草稿数据
+const loadServerDraft = async (draftId) => {
+  try {
+    const response = await client.GET('/v1/drafts/{draft_id}', {
+      params: {
+        path: { draft_id: draftId }
+      }
+    })
+
+    if (response.data) {
+      const draftData = response.data
+      form.title = draftData.title || ''
+      form.content = draftData.content || ''
+      form.community_id = draftData.community_id || null
+      currentDraftId.value = draftData.id
+      draftRestored.value = true
+
+      // 处理附件
+      if (draftData.attachment_ids && draftData.attachment_ids.length > 0) {
+        // 附件需要从ID列表恢复（如果有附件信息的话）
+        console.log('[表单] 草稿附件 IDs:', draftData.attachment_ids)
+      }
+
+      console.log('[表单] 已加载服务端草稿:', draftData.id)
+      return true
+    }
+  } catch (error) {
+    console.error('[表单] 加载服务端草稿失败:', error)
+  }
+  return false
+}
+
 // 生命周期
-onMounted(() => {
+onMounted(async () => {
   console.log('[表单] 组件挂载')
   // 加载社区列表
   loadCommunities()
@@ -381,10 +482,16 @@ onMounted(() => {
       }))
     }
   } else {
-    // 检查草稿
-    loadDraft()
-    // 启动自动保存
-    startAutoSave(form)
+    // 检查是否有服务端草稿ID（从草稿箱跳转过来）
+    const draftId = route.query.draft_id
+    if (draftId) {
+      await loadServerDraft(parseInt(draftId))
+    } else {
+      // 检查本地草稿
+      loadDraft()
+      // 启动自动保存
+      startAutoSave(form)
+    }
   }
 
   // 自动聚焦标题输入框
@@ -500,12 +607,18 @@ onUnmounted(() => {
 
 .form-footer {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
   padding: 16px 24px;
   border-top: 1px solid #edeff1;
   background: #fafafa;
   border-radius: 0 0 12px 12px;
+}
+
+.footer-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .btn {
@@ -528,6 +641,16 @@ onUnmounted(() => {
 
 .btn-secondary:hover:not(:disabled) {
   background: #edeff1;
+}
+
+.btn-draft {
+  background: #f0f7ff;
+  color: #0079d3;
+  border: 1px solid #0079d3;
+}
+
+.btn-draft:hover:not(:disabled) {
+  background: #e0efff;
 }
 
 .btn-primary {
@@ -580,7 +703,14 @@ onUnmounted(() => {
 
   .form-footer {
     padding: 12px 16px;
-    flex-direction: column-reverse;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .footer-right {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
   }
 
   .btn {
