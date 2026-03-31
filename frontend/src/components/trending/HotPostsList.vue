@@ -2,9 +2,13 @@
 import { useRouter } from 'vue-router'
 import { Award, Users } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { HotPost } from '@/composables/useTrending'
+import { useFormatTime } from '@/composables/useFormatTime'
 
 const router = useRouter()
+const { formatTime } = useFormatTime()
+const { t } = useI18n()
 
 // 彩虹色卡
 const rainbowColors = [
@@ -36,11 +40,11 @@ const getHotColor = (index: number) => {
 // 热度等级计算（基于排名位置）
 const getHotLevel = (index: number) => {
   // 根据排名来判断热度等级，而不是百分比
-  if (index === 0) return { label: '极热', color: '#ff0000' }
-  if (index === 1) return { label: '极热', color: '#ff0000' }
-  if (index === 2) return { label: '热门', color: '#ff7f00' }
-  if (index < 10) return { label: '上升', color: '#00ff00' }
-  return { label: '普通', color: '#0000ff' }
+  if (index === 0) return { label: t('hotPosts.extremelyHot'), color: '#ff0000' }
+  if (index === 1) return { label: t('hotPosts.extremelyHot'), color: '#ff0000' }
+  if (index === 2) return { label: t('hotPosts.hot'), color: '#ff7f00' }
+  if (index < 10) return { label: t('hotPosts.rising'), color: '#00ff00' }
+  return { label: t('hotPosts.normal'), color: '#0000ff' }
 }
 
 // 计算最大热度值（用于进度条宽度）
@@ -58,20 +62,6 @@ const getHotPercentage = (hotRank: number) => {
   return Math.max(0, Math.min(100, (hotRank / maxHotRank.value) * 100))
 }
 
-// 格式化时间
-const formatTime = (dateString: string | undefined) => {
-  if (!dateString) return '未知时间'
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = (now.getTime() - date.getTime()) / 1000 // 秒
-
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
-
-  return date.toLocaleDateString('zh-CN')
-}
 
 // 跳转到帖子详情
 const goToPost = (postId: number) => {
@@ -115,12 +105,12 @@ const getTooltipData = (post: HotPost, index: number) => {
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
-      <p>加载中...</p>
+      <p>{{ t('common.loading') }}</p>
     </div>
 
     <!-- 空状态 -->
     <div v-else-if="posts.length === 0" class="empty-state">
-      <p>暂无热门帖子</p>
+      <p>{{ t('hotPosts.noHotPosts') }}</p>
     </div>
 
     <!-- 列表内容 -->

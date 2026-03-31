@@ -5,7 +5,7 @@
 
       <div class="card-header">
         <Shield :size="40" class="header-icon" />
-        <h2 class="title">{{ isLogin ? '欢迎回来' : '创建账号' }}</h2>
+        <h2 class="title">{{ isLogin ? t('login.welcomeBack') : t('login.createAccount') }}</h2>
         <p class="subtitle">SUPER</p>
       </div>
 
@@ -18,7 +18,7 @@
           <input
             type="text"
             v-model="form.username"
-            placeholder="用户名 / 邮箱"
+            :placeholder="t('login.usernamePlaceholder')"
           />
         </div>
 
@@ -28,7 +28,7 @@
           <input
             type="password"
             v-model="form.password"
-            placeholder="密码"
+            :placeholder="t('login.passwordPlaceholder')"
           />
         </div>
 
@@ -37,25 +37,25 @@
           <input
             type="password"
             v-model="form.confirmPassword"
-            placeholder="确认密码"
+            :placeholder="t('login.confirmPasswordPlaceholder')"
           />
         </div>
 
 
         <button type="submit" class="submit-btn" :disabled="isLoading">
           <component :is="isLogin ? LogIn : UserPlus" :size="18" class="btn-icon" />
-          {{ isLoading ? '处理中...' : (isLogin ? '登 录' : '注 册') }}
+          {{ isLoading ? t('login.processing') : (isLogin ? t('login.login') : t('login.register')) }}
         </button>
       </form>
 
       <div class="card-footer">
         <p v-if="isLogin">
-          还没有账号？ 
-          <span @click="toggleMode" class="link">立即注册</span>
+          {{ t('login.noAccount') }}
+          <span @click="toggleMode" class="link">{{ t('login.registerNow') }}</span>
         </p>
         <p v-else>
-          已有账号？ 
-          <span @click="toggleMode" class="link">直接登录</span>
+          {{ t('login.hasAccount') }}
+          <span @click="toggleMode" class="link">{{ t('login.loginDirectly') }}</span>
         </p>
       </div>
     </div>
@@ -68,6 +68,9 @@ import { useRouter } from 'vue-router';
 import { User, Lock, LogIn, UserPlus, Shield } from 'lucide-vue-next';
 import { ElMessage } from 'element-plus';
 import { useUserStore } from '@/stores/user';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -103,23 +106,23 @@ const handleSubmit = async () => {
 
   // 表单验证
   if (!form.username.trim()) {
-    ElMessage.error('请输入用户名');
+    ElMessage.error(t('login.enterUsername'));
     return;
   }
 
   if (!form.password) {
-    ElMessage.error('请输入密码');
+    ElMessage.error(t('login.enterPassword'));
     return;
   }
 
   // 注册模式下验证密码
   if (!isLogin.value) {
     if (!form.confirmPassword) {
-      ElMessage.error('请确认密码');
+      ElMessage.error(t('login.confirmPassword'));
       return;
     }
     if (form.password !== form.confirmPassword) {
-      ElMessage.error('两次输入的密码不一致');
+      ElMessage.error(t('login.passwordMismatch'));
       return;
     }
   }
@@ -138,7 +141,7 @@ const handleSubmit = async () => {
       const result = await userStore.register(form.username, form.password, form.username);
       console.log('[Login] 注册成功:', result);
       // 注册成功后切换到登录模式
-      ElMessage.success('注册成功，请登录');
+      ElMessage.success(t('login.registerSuccess'));
       toggleMode();
     }
   } catch (error) {

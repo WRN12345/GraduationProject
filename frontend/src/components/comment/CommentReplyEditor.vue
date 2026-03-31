@@ -4,7 +4,7 @@
     <div class="pill-editor">
       <!-- 回复前缀标签 -->
       <span class="reply-prefix">
-        <span class="reply-label">回复</span>
+        <span class="reply-label">{{ t('comment.reply') }}</span>
         <span class="reply-author">@{{ parentComment.author_name }}</span>
       </span>
       
@@ -25,12 +25,12 @@
       </div>
       
       <!-- 内嵌发送按钮 -->
-      <button 
-        class="send-btn" 
+      <button
+        class="send-btn"
         :class="{ 'send-btn-active': isValid }"
         :disabled="!isValid"
         @click="handleSubmit"
-        title="发送"
+        :title="t('comment.send')"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="send-icon">
           <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -43,7 +43,10 @@
 
 <script setup>
 import { ref, computed, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
+
+const { t } = useI18n()
 
 const props = defineProps({
   postId: {
@@ -56,7 +59,7 @@ const props = defineProps({
   },
   placeholder: {
     type: String,
-    default: '写下你的回复...'
+    default: ''
   },
   minLength: {
     type: Number,
@@ -93,9 +96,9 @@ if (props.autoFocus) {
 const handleSubmit = () => {
   if (!isValid.value) {
     if (content.value.length < props.minLength) {
-      ElMessage.warning(`回复内容至少需要 ${props.minLength} 个字符`)
+      ElMessage.warning(t('comment.replyMinLengthWarning', { min: props.minLength }))
     } else {
-      ElMessage.warning(`回复内容不能超过 ${props.maxLength} 个字符`)
+      ElMessage.warning(t('comment.replyMaxLengthWarning', { max: props.maxLength }))
     }
     return
   }

@@ -1,6 +1,9 @@
 <script setup>
 import { ElMessageBox } from 'element-plus'
 import { Crown, Shield, ShieldOff, Ban, Unlock } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   permissions: {
@@ -17,12 +20,13 @@ const emit = defineEmits(['transfer', 'promote', 'demote', 'ban', 'unban'])
 
 // 转让版主
 const handleTransfer = () => {
+  const memberName = props.member.nickname || props.member.username
   ElMessageBox.confirm(
-    `确定要将版主转让给「${props.member.nickname || props.member.username}」吗？转让后你将成为管理员。`,
-    '确认转让版主',
+    t('memberActions.confirmTransferMessage', { name: memberName }),
+    t('memberActions.confirmTransfer'),
     {
-      confirmButtonText: '确认转让',
-      cancelButtonText: '取消',
+      confirmButtonText: t('memberActions.confirmTransferBtn'),
+      cancelButtonText: t('communityForm.cancel'),
       type: 'warning',
       distinguishCancelAndClose: true
     }
@@ -35,12 +39,13 @@ const handleTransfer = () => {
 
 // 提升为管理员
 const handlePromote = () => {
+  const memberName = props.member.nickname || props.member.username
   ElMessageBox.confirm(
-    `确定要将「${props.member.nickname || props.member.username}」提升为管理员吗？`,
-    '确认提升',
+    t('memberActions.confirmPromoteMessage', { name: memberName }),
+    t('memberActions.confirmPromote'),
     {
-      confirmButtonText: '确认提升',
-      cancelButtonText: '取消',
+      confirmButtonText: t('memberActions.confirmPromoteBtn'),
+      cancelButtonText: t('communityForm.cancel'),
       type: 'info'
     }
   ).then(() => {
@@ -52,12 +57,13 @@ const handlePromote = () => {
 
 // 降级为成员
 const handleDemote = () => {
+  const memberName = props.member.nickname || props.member.username
   ElMessageBox.confirm(
-    `确定要将「${props.member.nickname || props.member.username}」降级为普通成员吗？`,
-    '确认降级',
+    t('memberActions.confirmDemoteMessage', { name: memberName }),
+    t('memberActions.confirmDemote'),
     {
-      confirmButtonText: '确认降级',
-      cancelButtonText: '取消',
+      confirmButtonText: t('memberActions.confirmDemoteBtn'),
+      cancelButtonText: t('communityForm.cancel'),
       type: 'warning'
     }
   ).then(() => {
@@ -69,12 +75,13 @@ const handleDemote = () => {
 
 // 封禁用户
 const handleBan = () => {
+  const memberName = props.member.nickname || props.member.username
   ElMessageBox.confirm(
-    `确定要封禁「${props.member.nickname || props.member.username}」吗？封禁后将无法访问社区。`,
-    '确认封禁',
+    t('memberActions.confirmBanMessage', { name: memberName }),
+    t('memberActions.confirmBan'),
     {
-      confirmButtonText: '确认封禁',
-      cancelButtonText: '取消',
+      confirmButtonText: t('memberActions.confirmBanBtn'),
+      cancelButtonText: t('communityForm.cancel'),
       type: 'warning'
     }
   ).then(() => {
@@ -86,12 +93,13 @@ const handleBan = () => {
 
 // 解封用户
 const handleUnban = () => {
+  const memberName = props.member.nickname || props.member.username
   ElMessageBox.confirm(
-    `确定要解封「${props.member.nickname || props.member.username}」吗？`,
-    '确认解封',
+    t('memberActions.confirmUnbanMessage', { name: memberName }),
+    t('memberActions.confirmUnban'),
     {
-      confirmButtonText: '确认解封',
-      cancelButtonText: '取消',
+      confirmButtonText: t('memberActions.confirmUnbanBtn'),
+      cancelButtonText: t('communityForm.cancel'),
       type: 'success'
     }
   ).then(() => {
@@ -113,7 +121,7 @@ const handleUnban = () => {
       @click="handleTransfer"
     >
       <Crown :size="14" />
-      转让版主
+      {{ t('memberActions.transferOwnership') }}
     </el-button>
 
     <!-- 提升为管理员（仅 owner 对 member 可见） -->
@@ -124,7 +132,7 @@ const handleUnban = () => {
       @click="handlePromote"
     >
       <Shield :size="14" />
-      提升管理
+      {{ t('memberActions.promoteToAdmin') }}
     </el-button>
 
     <!-- 降级为成员（仅 owner 对 admin 可见） -->
@@ -136,7 +144,7 @@ const handleUnban = () => {
       @click="handleDemote"
     >
       <ShieldOff :size="14" />
-      降级成员
+      {{ t('memberActions.demoteToMember') }}
     </el-button>
 
     <!-- 封禁（owner/admin 对 member 可见） -->
@@ -148,7 +156,7 @@ const handleUnban = () => {
       @click="handleBan"
     >
       <Ban :size="14" />
-      封禁
+      {{ t('memberActions.ban') }}
     </el-button>
 
     <!-- 解封（owner/admin 对 banned 可见） -->
@@ -160,7 +168,7 @@ const handleUnban = () => {
       @click="handleUnban"
     >
       <Unlock :size="14" />
-      解封
+      {{ t('memberActions.unban') }}
     </el-button>
   </div>
 </template>

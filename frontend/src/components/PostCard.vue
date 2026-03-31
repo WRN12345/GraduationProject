@@ -4,6 +4,11 @@ import { useRouter } from 'vue-router'
 import { MessageCircle, Share2, Pin, Star } from 'lucide-vue-next'
 import VoteButtons from './VoteButtons.vue'
 import BookmarkButton from './BookmarkButton.vue'
+import { useFormatTime } from '@/composables/useFormatTime'
+import { useI18n } from 'vue-i18n'
+
+const { formatTime } = useFormatTime()
+const { t } = useI18n()
 
 const props = defineProps({
   post: {
@@ -49,20 +54,6 @@ const handleAvatarError = (event) => {
   event.target.style.display = 'none'
 }
 
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '未知时间'
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = (now - date) / 1000 // 秒
-
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
-
-  return date.toLocaleDateString('zh-CN')
-}
 
 // 更新投票状态
 const updateVote = (state) => {
@@ -110,21 +101,21 @@ const hasAttachments = computed(() => {
         </div>
         <span class="community-icon">👾</span>
         <span class="community-name" @click.stop="router.push(`/community/${post.community?.id}`)">
-          {{ post.community?.name || '未知社区' }}
+          {{ post.community?.name || t('main.unknownCommunity') }}
         </span>
-        <span class="meta-info">· 由 {{ post.author?.username || '匿名用户' }} 发布 · {{ formatTime(post.created_at) }}</span>
+        <span class="meta-info">· {{ t('main.postedBy', { user: post.author?.username || t('common.anonymousUser') }) }} · {{ formatTime(post.created_at) }}</span>
       </div>
 
       <div class="post-title-row">
         <!-- 状态标识 -->
         <div class="status-badges">
-          <span v-if="post.is_pinned" class="status-badge pinned-badge" title="置顶帖子">
+          <span v-if="post.is_pinned" class="status-badge pinned-badge" :title="t('postCard.pinned')">
             <Pin :size="14" />
-            <span>置顶</span>
+            <span>{{ t('postCard.pinned') }}</span>
           </span>
-          <span v-if="post.is_highlighted" class="status-badge highlighted-badge" title="精华帖子">
+          <span v-if="post.is_highlighted" class="status-badge highlighted-badge" :title="t('postCard.highlighted')">
             <Star :size="14" />
-            <span>精华</span>
+            <span>{{ t('postCard.highlighted') }}</span>
           </span>
         </div>
         <h3 class="post-title">{{ post.title }}</h3>
@@ -194,11 +185,11 @@ const hasAttachments = computed(() => {
 
         <!-- 右侧：评论 转发 -->
         <div class="footer-right">
-          <button class="action-btn" title="评论" @click="handleContentClick">
+          <button class="action-btn" :title="t('postCard.comment')" @click="handleContentClick">
             <MessageCircle :size="18" />
             <span>{{ post.comment_count || 0 }}</span>
           </button>
-          <button class="action-btn" title="转发">
+          <button class="action-btn" :title="t('postCard.share')">
             <Share2 :size="18" />
           </button>
         </div>

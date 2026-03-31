@@ -7,14 +7,14 @@
 
     <!-- 空状态 -->
     <div v-else-if="!loading && comments.length === 0" class="comment-empty">
-      <el-empty description="暂无评论，快来抢沙发吧~" />
+      <el-empty :description="t('comment.noComments')" />
     </div>
 
     <!-- 错误状态 -->
     <div v-else-if="error" class="comment-error">
       <el-alert type="error" :closable="false">
         {{ error }}
-        <el-button text type="info" @click="$emit('retry')">重试</el-button>
+        <el-button text type="info" @click="$emit('retry')">{{ t('comment.retry') }}</el-button>
       </el-alert>
     </div>
 
@@ -45,14 +45,14 @@
           :loading="loading"
           @click="$emit('load-more')"
         >
-          加载更多评论
+          {{ t('comment.loadMore') }}
         </el-button>
       </div>
 
       <!-- 加载更多时的加载状态 -->
       <div v-if="loading && comments.length > 0" class="loading-more">
         <el-icon class="is-loading"><Loading /></el-icon>
-        <span>加载中...</span>
+        <span>{{ t('comment.loading') }}</span>
       </div>
     </template>
   </div>
@@ -60,8 +60,11 @@
 
 <script setup>
 import { Loading } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import CommentItem from './CommentItem.vue'
 import CommentSkeleton from './CommentSkeleton.vue'
+
+const { t } = useI18n()
 
 defineProps({
   comments: {

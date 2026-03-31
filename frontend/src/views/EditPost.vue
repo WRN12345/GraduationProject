@@ -3,17 +3,17 @@
     <div class="edit-post-card">
       <!-- Header -->
       <div class="card-header">
-        <button class="back-btn" @click="goBack" title="返回">
+        <button class="back-btn" @click="goBack" :title="t('common.back')">
           <ArrowLeft :size="20" />
-          <span>返回</span>
+          <span>{{ t('common.back') }}</span>
         </button>
-        <h2 class="title">编辑帖子</h2>
+        <h2 class="title">{{ t('editPost.title') }}</h2>
       </div>
 
       <!-- Loading state -->
       <div v-if="loading" class="loading-state">
         <div class="spinner"></div>
-        <p>加载中...</p>
+        <p>{{ t('common.loading') }}</p>
       </div>
 
       <!-- Form -->
@@ -27,8 +27,8 @@
 
       <!-- Error state -->
       <div v-else class="error-state">
-        <p>帖子不存在或无法加载</p>
-        <button class="btn btn-primary" @click="goBack">返回</button>
+        <p>{{ t('editPost.notFound') }}</p>
+        <button class="btn btn-primary" @click="goBack">{{ t('common.back') }}</button>
       </div>
     </div>
   </div>
@@ -41,6 +41,9 @@ import { ArrowLeft } from 'lucide-vue-next'
 import { client } from '@/api/client'
 import PostForm from '@/components/post/PostForm.vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -65,7 +68,7 @@ const loadPost = async () => {
     }
   } catch (error) {
     console.error('Failed to load post:', error)
-    ElMessage.error('加载帖子失败')
+    ElMessage.error(t('editPost.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -86,11 +89,11 @@ const handleSubmit = async (formData) => {
         attachment_ids: formData.attachment_ids || []
       }
     })
-    ElMessage.success('编辑成功')
+    ElMessage.success(t('editPost.editSuccess'))
     router.push(`/post/${route.params.id}`)
   } catch (error) {
     console.error('Update failed:', error)
-    ElMessage.error('更新失败')
+    ElMessage.error(t('editPost.updateFailed'))
   }
 }
 

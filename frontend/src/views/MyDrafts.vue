@@ -2,14 +2,14 @@
   <div class="my-drafts-page">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h1>我的草稿箱</h1>
-      <p class="subtitle">{{ total }} 篇草稿</p>
+      <h1>{{ t('myDrafts.title') }}</h1>
+      <p class="subtitle">{{ t('myDrafts.count', { count: total }) }}</p>
     </div>
 
     <!-- 加载状态 -->
     <div v-if="loading && drafts.length === 0" class="loading-state">
       <div class="spinner"></div>
-      <p>加载中...</p>
+      <p>{{ t('common.loading') }}</p>
     </div>
 
     <!-- 空状态 -->
@@ -18,9 +18,9 @@
         <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
         <polyline points="14 2 14 8 20 8"></polyline>
       </svg>
-      <h3>还没有草稿</h3>
-      <p>在创建帖子时，你可以随时保存为草稿</p>
-      <button class="btn-primary" @click="goToCreatePost">创建新帖子</button>
+      <h3>{{ t('myDrafts.noDrafts') }}</h3>
+      <p>{{ t('myDrafts.draftTip') }}</p>
+      <button class="btn-primary" @click="goToCreatePost">{{ t('myDrafts.createPost') }}</button>
     </div>
 
     <!-- 草稿列表 -->
@@ -38,10 +38,10 @@
             {{ draft.community.name }}
           </span>
           <span class="community-name no-community" v-else>
-            未选择社区
+            {{ t('myDrafts.noCommunity') }}
           </span>
           <span class="meta-info">
-            · 最后编辑 {{ formatTime(draft.updated_at) }}
+            · {{ t('common.lastEdited', { time: formatTime(draft.updated_at) }) }}
           </span>
         </div>
 
@@ -50,7 +50,7 @@
           {{ draft.title }}
         </h3>
         <h3 class="draft-title no-title" v-else>
-          无标题
+          {{ t('myDrafts.noTitle') }}
         </h3>
 
         <!-- 内容预览 -->
@@ -58,13 +58,13 @@
           {{ draft.content.substring(0, 200) }}{{ draft.content.length > 200 ? '...' : '' }}
         </div>
         <div class="draft-preview no-content" v-else>
-          暂无内容
+          {{ t('myDrafts.noContent') }}
         </div>
 
         <!-- 底部操作区 -->
         <div class="draft-footer">
           <span class="draft-time">
-            创建于 {{ formatTime(draft.created_at) }}
+            {{ t('common.createdAt', { time: formatTime(draft.created_at) }) }}
           </span>
           <div class="draft-actions">
             <button class="btn-action btn-edit" @click="editDraft(draft)">
@@ -72,21 +72,21 @@
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
               </svg>
-              继续编辑
+              {{ t('myDrafts.continueEdit') }}
             </button>
             <button class="btn-action btn-publish" @click="publishDraft(draft)">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
               </svg>
-              发布
+              {{ t('myDrafts.publish') }}
             </button>
             <button class="btn-action btn-delete" @click="confirmDelete(draft)">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
               </svg>
-              删除
+              {{ t('common.delete') }}
             </button>
           </div>
         </div>
@@ -95,25 +95,25 @@
       <!-- 加载更多 -->
       <div v-if="hasMore && !loading" class="load-more">
         <button class="btn-load-more" @click="loadMore" :disabled="loadingMore">
-          {{ loadingMore ? '加载中...' : '加载更多' }}
+          {{ loadingMore ? t('common.loading') : t('main.loadMore') }}
         </button>
       </div>
 
       <div v-if="loading && drafts.length > 0" class="loading-more">
         <div class="spinner"></div>
-        <p>加载中...</p>
+        <p>{{ t('common.loading') }}</p>
       </div>
     </div>
 
     <!-- 删除确认对话框 -->
     <div v-if="showDeleteDialog" class="dialog-overlay" @click.self="showDeleteDialog = false">
       <div class="dialog-card">
-        <h3>确认删除</h3>
-        <p>确定要删除这篇草稿吗？此操作不可撤销。</p>
+        <h3>{{ t('myDrafts.confirmDelete') }}</h3>
+        <p>{{ t('myDrafts.confirmDeleteMessage') }}</p>
         <div class="dialog-actions">
-          <button class="btn-cancel" @click="showDeleteDialog = false">取消</button>
+          <button class="btn-cancel" @click="showDeleteDialog = false">{{ t('common.cancel') }}</button>
           <button class="btn-confirm-delete" @click="handleDelete" :disabled="deleting">
-            {{ deleting ? '删除中...' : '确认删除' }}
+            {{ deleting ? t('myDrafts.deleting') : t('myDrafts.confirmDelete') }}
           </button>
         </div>
       </div>
@@ -126,8 +126,12 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { client } from '@/api/client'
 import { ElMessage } from 'element-plus'
+import { useFormatTime } from '@/composables/useFormatTime'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
+const { formatTime } = useFormatTime()
+const { t } = useI18n()
 
 // 响应式数据
 const drafts = ref([])
@@ -141,20 +145,6 @@ const showDeleteDialog = ref(false)
 const deleting = ref(false)
 const pendingDeleteDraft = ref(null)
 
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '未知时间'
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = (now - date) / 1000
-
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
-
-  return date.toLocaleDateString('zh-CN')
-}
 
 // 获取草稿列表
 const fetchDrafts = async () => {
@@ -170,15 +160,15 @@ const fetchDrafts = async () => {
     })
 
     if (response.error) {
-      throw new Error(response.error.message || '获取草稿失败')
+      throw new Error(response.error.message || t('myDrafts.fetchFailed'))
     }
 
     drafts.value = response.data.items
     total.value = response.data.total
     hasMore.value = response.data.has_more
   } catch (error) {
-    console.error('获取草稿失败:', error)
-    ElMessage.error('获取草稿失败')
+    console.error('fetch drafts failed:', error)
+    ElMessage.error(t('myDrafts.fetchFailed'))
   } finally {
     loading.value = false
   }
@@ -200,14 +190,14 @@ const loadMore = async () => {
     })
 
     if (response.error) {
-      throw new Error(response.error.message || '加载更多失败')
+      throw new Error(response.error.message || t('myDrafts.loadMoreFailed'))
     }
 
     drafts.value.push(...response.data.items)
     hasMore.value = response.data.has_more
   } catch (error) {
-    console.error('加载更多失败:', error)
-    ElMessage.error('加载更多失败')
+    console.error('load more drafts failed:', error)
+    ElMessage.error(t('myDrafts.loadMoreFailed'))
     skip.value -= limit.value
   } finally {
     loadingMore.value = false
@@ -249,16 +239,16 @@ const handleDelete = async () => {
     })
 
     if (response.error) {
-      throw new Error(response.error.message || '删除失败')
+      throw new Error(response.error.message || t('myDrafts.deleteFailed'))
     }
 
     // 从列表中移除
     drafts.value = drafts.value.filter(d => d.id !== pendingDeleteDraft.value.id)
     total.value -= 1
-    ElMessage.success('草稿已删除')
+    ElMessage.success(t('myDrafts.draftDeleted'))
   } catch (error) {
-    console.error('删除草稿失败:', error)
-    ElMessage.error('删除草稿失败')
+    console.error('delete draft failed:', error)
+    ElMessage.error(t('myDrafts.deleteFailed'))
   } finally {
     deleting.value = false
     showDeleteDialog.value = false

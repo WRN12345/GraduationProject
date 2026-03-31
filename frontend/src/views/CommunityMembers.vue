@@ -4,8 +4,8 @@
     <header class="page-header">
       <div class="header-content">
         <div>
-          <h1>{{ communityName }} - 成员管理</h1>
-          <p class="subtitle">共 {{ sortedMemberList.length }} 位成员</p>
+          <h1>{{ communityName }} - {{ $t('communityMembersPage.memberManagement') }}</h1>
+          <p class="subtitle">{{ $t('communityMembersPage.totalMembers', { count: sortedMemberList.length }) }}</p>
         </div>
       </div>
 
@@ -17,20 +17,20 @@
         @click="handleLeave"
       >
         <LogOut :size="16" />
-        退出社区
+        {{ $t('communityMembersPage.leaveCommunity') }}
       </el-button>
     </header>
 
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
-      <p>加载中...</p>
+      <p>{{ $t('common.loading') }}</p>
     </div>
 
     <!-- 错误状态 -->
     <div v-else-if="error" class="error-state">
       <p>{{ error }}</p>
-      <button class="retry-btn" @click="loadMembers">重试</button>
+      <button class="retry-btn" @click="loadMembers">{{ $t('main.retry') }}</button>
     </div>
 
     <!-- 成员列表 -->
@@ -63,18 +63,20 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import { client } from '@/api/client'
 import { ElMessage } from 'element-plus'
 import { LogOut } from 'lucide-vue-next'
 import MemberListItem from '@/components/community/MemberListItem.vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 
 const communityId = parseInt(route.params.id)
-const communityName = ref('社区')
+const communityName = ref(t('communityMembersPage.defaultCommunityName'))
 const rawMemberList = ref([])
 const membership = ref(null)
 const loading = ref(false)
@@ -113,10 +115,10 @@ const isModerator = computed(() => isOwner.value || isAdmin.value)
 // 按角色分组
 const groupedMembers = computed(() => {
   const groups = {
-    2: { role: 2, roleName: '版主', members: [] },
-    1: { role: 1, roleName: '管理员', members: [] },
-    0: { role: 0, roleName: '成员', members: [] },
-    '-1': { role: -1, roleName: '已封禁', members: [] }
+    2: { role: 2, roleName: t('communityMembersPage.owner'), members: [] },
+    1: { role: 1, roleName: t('communityMembersPage.admin'), members: [] },
+    0: { role: 0, roleName: t('communityMembersPage.member'), members: [] },
+    '-1': { role: -1, roleName: t('communityMembersPage.banned'), members: [] }
   }
 
   sortedMemberList.value.forEach(member => {
@@ -177,7 +179,7 @@ const loadMembers = async () => {
     }
   } catch (err) {
     console.error('[成员管理] 加载失败:', err)
-    error.value = '加载成员列表失败，请稍后重试'
+    error.value = t('communityMembersPage.loadError')
   } finally {
     loading.value = false
   }
@@ -191,11 +193,11 @@ const handleBan = async (memberId) => {
         path: { community_id: communityId, user_id: memberId }
       }
     })
-    ElMessage.success('已封禁用户')
+    ElMessage.success(t('communityMembersPage.bannedSuccess'))
     await loadMembers()
   } catch (err) {
     console.error('[成员管理] 封禁失败:', err)
-    ElMessage.error(err.response?.data?.detail || '封禁失败')
+    ElMessage.error(err.response?.data?.detail || t('communityMembersPage.banFailed'))
   }
 }
 
@@ -207,11 +209,11 @@ const handleUnban = async (memberId) => {
         path: { community_id: communityId, user_id: memberId }
       }
     })
-    ElMessage.success('已解封用户')
+    ElMessage.success(t('communityMembersPage.unbannedSuccess'))
     await loadMembers()
   } catch (err) {
     console.error('[成员管理] 解封失败:', err)
-    ElMessage.error(err.response?.data?.detail || '解封失败')
+    ElMessage.error(err.response?.data?.detail || t('communityMembersPage.unbanFailed'))
   }
 }
 
@@ -223,11 +225,11 @@ const handlePromote = async (memberId) => {
         path: { community_id: communityId, user_id: memberId }
       }
     })
-    ElMessage.success('已提升为管理员')
+    ElMessage.success(t('communityMembersPage.promotedSuccess'))
     await loadMembers()
   } catch (err) {
     console.error('[成员管理] 提升失败:', err)
-    ElMessage.error(err.response?.data?.detail || '提升失败')
+    ElMessage.error(err.response?.data?.detail || t('communityMembersPage.promoteFailed'))
   }
 }
 
@@ -239,11 +241,11 @@ const handleDemote = async (memberId) => {
         path: { community_id: communityId, user_id: memberId }
       }
     })
-    ElMessage.success('已降级为成员')
+    ElMessage.success(t('communityMembersPage.demotedSuccess'))
     await loadMembers()
   } catch (err) {
     console.error('[成员管理] 降级失败:', err)
-    ElMessage.error(err.response?.data?.detail || '降级失败')
+    ElMessage.error(err.response?.data?.detail || t('communityMembersPage.demoteFailed'))
   }
 }
 
@@ -256,18 +258,18 @@ const handleTransfer = async (memberId) => {
       },
       body: { user_id: memberId }
     })
-    ElMessage.success('已转让版主')
+    ElMessage.success(t('communityMembersPage.transferredSuccess'))
     router.push('/my-communities')
   } catch (err) {
     console.error('[成员管理] 转让失败:', err)
-    ElMessage.error(err.response?.data?.detail || '转让失败')
+    ElMessage.error(err.response?.data?.detail || t('communityMembersPage.transferFailed'))
   }
 }
 
 // 退出社区
 const handleLeave = async () => {
   if (isOwner.value) {
-    ElMessage.warning('版主需要先转让版主才能退出社区')
+    ElMessage.warning(t('communityMembersPage.ownerMustTransfer'))
     return
   }
 
@@ -277,11 +279,11 @@ const handleLeave = async () => {
         path: { community_id: communityId }
       }
     })
-    ElMessage.success('已退出社区')
+    ElMessage.success(t('communityMembersPage.leftSuccess'))
     router.push('/my-communities')
   } catch (err) {
     console.error('[成员管理] 退出失败:', err)
-    ElMessage.error(err.response?.data?.detail || '退出失败')
+    ElMessage.error(err.response?.data?.detail || t('communityMembersPage.leaveFailed'))
   }
 }
 

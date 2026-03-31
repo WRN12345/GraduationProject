@@ -2,6 +2,9 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { FileText, Flame, Clock } from 'lucide-vue-next'
+import { useFormatTime } from '@/composables/useFormatTime'
+
+const { formatTime } = useFormatTime()
 
 const props = defineProps({
   // 搜索建议相关
@@ -71,20 +74,6 @@ const viewAllResults = () => {
   }
 }
 
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = (now - date) / 1000 // 秒
-
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
-
-  return date.toLocaleDateString('zh-CN')
-}
 
 // 获取头像文字（首字母）
 const getAvatarText = (user) => {

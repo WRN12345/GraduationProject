@@ -3,11 +3,11 @@
     <div class="create-post-card">
       <!-- 头部 -->
       <div class="card-header">
-        <button class="back-btn" @click="goBack" title="返回">
+        <button class="back-btn" @click="goBack" :title="t('common.back')">
           <ArrowLeft :size="20" />
-          <span>返回</span>
+          <span>{{ t('common.back') }}</span>
         </button>
-        <h2 class="title">创建帖子</h2>
+        <h2 class="title">{{ t('createPost.title') }}</h2>
       </div>
 
       <!-- 表单 -->
@@ -21,10 +21,12 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ArrowLeft } from 'lucide-vue-next'
 import PostForm from '@/components/post/PostForm.vue'
 
 const router = useRouter()
+const { t } = useI18n()
 
 const goBack = () => {
   // 如果有历史记录，返回上一页；否则返回首页
@@ -41,7 +43,7 @@ const handleSubmit = (postId) => {
   // 验证 ID 是否有效
   if (!postId || postId === 'undefined' || postId === 'null') {
     console.error('[CreatePost] 无效的帖子 ID:', postId)
-    alert('发布成功但无法跳转到详情页，请手动刷新查看')
+    alert(t('createPost.publishSuccessButNoNav'))
     router.push('/')
     return
   }

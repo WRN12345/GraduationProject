@@ -1,33 +1,33 @@
 <template>
   <div class="my-communities">
     <header class="page-header">
-      <h1>我的社区</h1>
+      <h1>{{ t('myCommunities.title') }}</h1>
       <button class="btn-create" @click="goToCreateCommunity">
         <Plus :size="20" />
-        <span>创建社区</span>
+        <span>{{ t('myCommunities.createCommunity') }}</span>
       </button>
     </header>
 
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
-      <p>加载中...</p>
+      <p>{{ t('common.loading') }}</p>
     </div>
 
     <!-- 错误状态 -->
     <div v-else-if="error" class="error-state">
       <p>{{ error }}</p>
-      <button class="retry-btn" @click="loadCommunities">重试</button>
+      <button class="retry-btn" @click="loadCommunities">{{ t('main.retry') }}</button>
     </div>
 
     <!-- 空状态 -->
     <div v-else-if="communities.length === 0" class="empty-state">
       <Users :size="64" />
-      <h3>还没有加入任何社区</h3>
-      <p>去探索并加入你感兴趣的社区吧！</p>
+      <h3>{{ t('myCommunities.noCommunities') }}</h3>
+      <p>{{ t('myCommunities.exploreTip') }}</p>
       <button class="btn-explore" @click="goToExplore">
         <Search :size="18" />
-        <span>探索社区</span>
+        <span>{{ t('myCommunities.exploreCommunities') }}</span>
       </button>
     </div>
 
@@ -44,7 +44,7 @@
           <span class="community-name">{{ community.name }}</span>
           <div class="header-actions">
             <span class="role-badge" :class="getRoleClass(community.role)">
-              {{ community.role_display }}
+              {{ getRoleDisplay(community.role) }}
             </span>
             <button
               v-if="canManageMembers(community.role)"
@@ -52,26 +52,26 @@
               @click="goToMembers($event, community.id)"
             >
               <Settings :size="14" />
-              成员管理
+              {{ t('myCommunities.memberManagement') }}
             </button>
           </div>
         </div>
 
-        <p class="description">{{ community.description || '暂无描述' }}</p>
+        <p class="description">{{ community.description || t('common.noDescription') }}</p>
 
         <div class="stats">
           <span class="stat">
             <Users :size="14" />
-            {{ community.member_count }} 成员
+            {{ community.member_count }} {{ t('common.members') }}
           </span>
           <span class="stat">
             <FileText :size="14" />
-            {{ community.post_count }} 帖子
+            {{ community.post_count }} {{ t('common.posts') }}
           </span>
         </div>
 
         <div class="footer">
-          <span class="join-time">加入于 {{ formatTime(community.joined_at) }}</span>
+          <span class="join-time">{{ t('common.joinedAt', { time: formatTime(community.joined_at) }) }}</span>
         </div>
       </div>
     </div>
@@ -83,8 +83,12 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Users, Plus, Search, FileText, Settings } from 'lucide-vue-next'
 import { client } from '@/api/client'
+import { useFormatTime } from '@/composables/useFormatTime'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
+const { formatTime } = useFormatTime()
+const { t } = useI18n()
 
 // 状态
 const communities = ref([])
@@ -112,10 +116,20 @@ const loadCommunities = async () => {
     }
   } catch (err) {
     console.error('[我的社区] 加载失败:', err)
-    error.value = '加载失败，请稍后重试'
+    error.value = t('myCommunities.loadError')
   } finally {
     loading.value = false
   }
+}
+
+// 获取角色显示文本
+const getRoleDisplay = (role) => {
+  const roleKeyMap = {
+    2: 'communityInfoCard.owner',
+    1: 'communityInfoCard.admin',
+    0: 'communityInfoCard.member'
+  }
+  return t(roleKeyMap[role] || 'communityInfoCard.member')
 }
 
 // 获取角色样式类
@@ -128,18 +142,6 @@ const getRoleClass = (role) => {
   return classMap[role] || 'member'
 }
 
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '未知时间'
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = (now - date) / 1000 // 秒
-
-  if (diff < 86400) return '今天'
-  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
-
-  return date.toLocaleDateString('zh-CN')
-}
 
 // 跳转到社区详情
 const goToDetail = (communityId) => {

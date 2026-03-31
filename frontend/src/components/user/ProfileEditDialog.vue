@@ -1,13 +1,13 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="编辑个人资料"
+    :title="$t('profileEditDialog.title')"
     width="500px"
     :close-on-click-modal="false"
   >
     <el-form :model="form" :rules="rules" ref="formRef" label-width="80px">
       <!-- 头像编辑 -->
-      <el-form-item label="头像">
+      <el-form-item :label="$t('profileEditDialog.avatarLabel')">
         <div class="avatar-upload">
           <el-upload
             :action="uploadUrl"
@@ -22,43 +22,43 @@
               <Plus :size="28" />
             </div>
           </el-upload>
-          <div class="avatar-tip">支持 JPG、PNG 格式,最大 5MB</div>
+          <div class="avatar-tip">{{ $t('profileEditDialog.avatarTip') }}</div>
         </div>
       </el-form-item>
 
       <!-- 用户名 -->
-      <el-form-item label="用户名" prop="username">
-        <el-input v-model="form.username" placeholder="3-20个字符" />
+      <el-form-item :label="$t('profileEditDialog.usernameLabel')" prop="username">
+        <el-input v-model="form.username" :placeholder="$t('profileEditDialog.usernamePlaceholder')" />
       </el-form-item>
 
       <!-- 昵称 -->
-      <el-form-item label="昵称" prop="nickname">
-        <el-input v-model="form.nickname" placeholder="显示名称" />
+      <el-form-item :label="$t('profileEditDialog.nicknameLabel')" prop="nickname">
+        <el-input v-model="form.nickname" :placeholder="$t('profileEditDialog.nicknamePlaceholder')" />
       </el-form-item>
 
       <!-- 邮箱 -->
-      <el-form-item label="邮箱" prop="email">
+      <el-form-item :label="$t('profileEditDialog.emailLabel')" prop="email">
         <el-input v-model="form.email" type="email" placeholder="your@email.com" />
       </el-form-item>
 
       <!-- 个人简介 -->
-      <el-form-item label="个人简介" prop="bio">
+      <el-form-item :label="$t('profileEditDialog.bioLabel')" prop="bio">
         <el-input
           v-model="form.bio"
           type="textarea"
           :rows="3"
           maxlength="5000"
           show-word-limit
-          placeholder="介绍一下自己..."
+          :placeholder="$t('profileEditDialog.bioPlaceholder')"
         />
       </el-form-item>
     </el-form>
 
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('profileEditDialog.cancel') }}</el-button>
         <el-button type="primary" @click="handleSubmit" :loading="loading">
-          保存
+          {{ $t('profileEditDialog.save') }}
         </el-button>
       </span>
     </template>
@@ -69,6 +69,9 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: Boolean,
@@ -115,18 +118,18 @@ watch(() => props.user, (newUser) => {
 }, { immediate: true })
 
 // 表单验证规则
-const rules = {
+const rules = computed(() => ({
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度为3-20个字符', trigger: 'blur' }
+    { required: true, message: t('profileEditDialog.usernameRequired'), trigger: 'blur' },
+    { min: 3, max: 20, message: t('profileEditDialog.usernameLength'), trigger: 'blur' }
   ],
   nickname: [
-    { max: 50, message: '昵称不能超过50个字符', trigger: 'blur' }
+    { max: 50, message: t('profileEditDialog.nicknameMaxLength'), trigger: 'blur' }
   ],
   email: [
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+    { type: 'email', message: t('profileEditDialog.emailInvalid'), trigger: 'blur' }
   ]
-}
+}))
 
 // 上传配置
 const uploadUrl = computed(() => '/api/v1/users/avatar')
@@ -148,11 +151,11 @@ const beforeAvatarUpload = (file) => {
   const isLt5M = file.size / 1024 / 1024 < 5
 
   if (!isImage) {
-    ElMessage.error('只能上传图片文件!')
+    ElMessage.error(t('profileEditDialog.avatarTypeError'))
     return false
   }
   if (!isLt5M) {
-    ElMessage.error('头像大小不能超过 5MB!')
+    ElMessage.error(t('profileEditDialog.avatarSizeError'))
     return false
   }
   return true
@@ -163,7 +166,7 @@ const handleAvatarSuccess = (response) => {
   form.avatar = response.avatar_url
   avatarChanged.value = true
   // 注意：后端已经自动更新了数据库中的头像，不需要再次调用 profile API
-  ElMessage.success('头像上传成功')
+  ElMessage.success(t('profileEditDialog.avatarUploadSuccess'))
 }
 
 // 提交表单
@@ -188,7 +191,7 @@ const handleSubmit = async () => {
 
         if (!usernameResponse.ok) {
           const error = await usernameResponse.json()
-          throw new Error(error.detail || '用户名修改失败')
+          throw new Error(error.detail || t('profileEditDialog.usernameChangeFailed'))
         }
       }
       // 更新其他资料
@@ -213,16 +216,16 @@ const handleSubmit = async () => {
 
       if (!profileResponse.ok) {
         const error = await profileResponse.json()
-        console.log('profile错误详情:', JSON.stringify(error, null, 2)) 
-        throw new Error(error.detail || '资料更新失败')
+        console.log('profile错误详情:', JSON.stringify(error, null, 2))
+        throw new Error(error.detail || t('profileEditDialog.profileUpdateFailed'))
       }
 
-      ElMessage.success('个人资料更新成功')
+      ElMessage.success(t('profileEditDialog.updateSuccess'))
       emit('success')
       dialogVisible.value = false
     } catch (error) {
       console.error('更新个人资料失败:', error)
-      ElMessage.error(error.message || '更新失败，请重试')
+      ElMessage.error(error.message || t('profileEditDialog.updateFailed'))
     } finally {
       loading.value = false
     }

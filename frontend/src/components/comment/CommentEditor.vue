@@ -20,12 +20,12 @@
       <span v-if="content.length > 0" class="char-count">{{ content.length }}/{{ maxLength }}</span>
       
       <!-- 内嵌发送按钮 -->
-      <button 
-        class="send-btn" 
+      <button
+        class="send-btn"
         :class="{ 'send-btn-active': isValid }"
         :disabled="!isValid"
         @click="handleSubmit"
-        title="发送"
+        :title="t('comment.send')"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="send-icon">
           <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -38,7 +38,10 @@
 
 <script setup>
 import { ref, computed, nextTick, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
+
+const { t } = useI18n()
 
 const props = defineProps({
   postId: {
@@ -47,7 +50,7 @@ const props = defineProps({
   },
   placeholder: {
     type: String,
-    default: '添加评论...'
+    default: ''
   },
   minLength: {
     type: Number,
@@ -87,9 +90,9 @@ watch(() => props.autofocus, (val) => {
 const handleSubmit = () => {
   if (!isValid.value) {
     if (content.value.length < props.minLength) {
-      ElMessage.warning(`评论内容至少需要 ${props.minLength} 个字符`)
+      ElMessage.warning(t('comment.minLengthWarning', { min: props.minLength }))
     } else {
-      ElMessage.warning(`评论内容不能超过 ${props.maxLength} 个字符`)
+      ElMessage.warning(t('comment.maxLengthWarning', { max: props.maxLength }))
     }
     return
   }

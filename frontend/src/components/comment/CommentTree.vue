@@ -2,14 +2,14 @@
   <div class="comment-tree">
     <!-- 头部统计和操作 -->
     <div class="comment-header">
-      <h3 class="comment-title">评论 ({{ totalComments }})</h3>
+      <h3 class="comment-title">{{ t('comment.title', { count: totalComments }) }}</h3>
       <el-button
         text
         :icon="RefreshCw"
         @click="refreshComments"
         :loading="commentsLoading"
       >
-        刷新
+        {{ t('comment.refresh') }}
       </el-button>
     </div>
 
@@ -17,11 +17,11 @@
     <CommentEditor
       v-if="userStore.isLoggedIn"
       :post-id="postId"
-      placeholder="写下你的评论..."
+      :placeholder="t('comment.placeholder')"
       @submit="handleCreateComment"
     />
     <div v-else class="login-tip">
-      请 <router-link to="/login">登录</router-link> 后发表评论
+      {{ t('comment.loginTip') }} <router-link to="/login">{{ t('comment.login') }}</router-link> {{ t('comment.loginSuffix') }}
     </div>
 
     <!-- 输入区与评论列表之间的分割线 -->
@@ -50,12 +50,15 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import { RefreshCw } from 'lucide-vue-next'
 import { ElMessage } from 'element-plus'
 import { client } from '@/api/client'
 import CommentEditor from './CommentEditor.vue'
 import CommentList from './CommentList.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   postId: {
@@ -131,8 +134,8 @@ const loadRootComments = async (refresh = false) => {
     }
   } catch (error) {
     console.error('加载评论失败:', error)
-    commentsError.value = '加载失败，请重试'
-    ElMessage.error('加载评论失败')
+    commentsError.value = t('comment.loadFailed')
+    ElMessage.error(t('comment.loadCommentsFailed'))
   } finally {
     commentsLoading.value = false
   }
@@ -164,11 +167,11 @@ const handleCreateComment = async (content) => {
       comments.value.unshift(response.data)
       totalComments.value++
       emit('comment-created', response.data)
-      ElMessage.success('发表成功')
+      ElMessage.success(t('comment.postSuccess'))
     }
   } catch (error) {
     console.error('发表评论失败:', error)
-    ElMessage.error('发表失败')
+    ElMessage.error(t('comment.postFailed'))
   }
 }
 

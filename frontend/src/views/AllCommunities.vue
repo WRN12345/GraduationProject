@@ -1,26 +1,26 @@
 <template>
   <div class="all-communities">
     <header class="page-header">
-      <h1>全部社区</h1>
+      <h1>{{ t('allCommunities.title') }}</h1>
     </header>
 
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
-      <p>加载中...</p>
+      <p>{{ t('common.loading') }}</p>
     </div>
 
     <!-- 错误状态 -->
     <div v-else-if="error" class="error-state">
       <p>{{ error }}</p>
-      <button class="retry-btn" @click="loadCommunities">重试</button>
+      <button class="retry-btn" @click="loadCommunities">{{ t('main.retry') }}</button>
     </div>
 
     <!-- 空状态 -->
     <div v-else-if="communities.length === 0" class="empty-state">
       <Compass :size="64" />
-      <h3>还没有任何社区</h3>
-      <p>快去创建一个吧！</p>
+      <h3>{{ t('allCommunities.noCommunities') }}</h3>
+      <p>{{ t('allCommunities.goCreate') }}</p>
     </div>
 
     <!-- 社区网格 -->
@@ -36,21 +36,21 @@
           <span class="community-name">{{ community.name }}</span>
         </div>
 
-        <p class="description">{{ community.description || '暂无描述' }}</p>
+        <p class="description">{{ community.description || t('common.noDescription') }}</p>
 
         <div class="stats">
           <span class="stat">
             <Users :size="14" />
-            {{ community.member_count }} 成员
+            {{ community.member_count }} {{ t('common.members') }}
           </span>
           <span class="stat">
             <FileText :size="14" />
-            {{ community.post_count }} 帖子
+            {{ community.post_count }} {{ t('common.posts') }}
           </span>
         </div>
 
         <div class="footer">
-          <span class="join-time">创建于 {{ formatTime(community.created_at) }}</span>
+          <span class="join-time">{{ t('common.createdAt', { time: formatTime(community.created_at) }) }}</span>
         </div>
       </div>
     </div>
@@ -62,8 +62,12 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Compass, Users, FileText } from 'lucide-vue-next'
 import { client } from '@/api/client'
+import { useFormatTime } from '@/composables/useFormatTime'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
+const { formatTime } = useFormatTime()
+const { t } = useI18n()
 
 // 状态
 const communities = ref([])
@@ -90,25 +94,13 @@ const loadCommunities = async () => {
       console.log('[全部社区] 加载成功，数量:', communities.value.length)
     }
   } catch (err) {
-    console.error('[全部社区] 加载失败:', err)
-    error.value = '加载失败，请稍后重试'
+    console.error('[AllCommunities] load failed:', err)
+    error.value = t('allCommunities.loadError')
   } finally {
     loading.value = false
   }
 }
 
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '未知时间'
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = (now - date) / 1000 / 60 // 分钟
-
-  if (diff < 1440) return '今天'
-  if (diff < 43200) return `${Math.floor(diff / 1440)} 小时前`
-
-  return date.toLocaleDateString('zh-CN')
-}
 
 // 跳转到社区详情
 const goToDetail = (communityId) => {

@@ -6,20 +6,20 @@
       <span v-if="roleDisplay" class="role-badge" :class="roleClass">{{ roleDisplay }}</span>
     </div>
 
-    <p class="description">{{ community.description || '暂无描述' }}</p>
+    <p class="description">{{ community.description || t('common.noDescription') }}</p>
 
     <div class="stats">
       <div class="stat-item">
         <Users :size="16" />
-        <span>{{ community.member_count || 0 }} 成员</span>
+        <span>{{ community.member_count || 0 }} {{ t('common.members') }}</span>
       </div>
       <div class="stat-item">
         <FileText :size="16" />
-        <span>{{ community.post_count || 0 }} 帖子</span>
+        <span>{{ community.post_count || 0 }} {{ t('common.posts') }}</span>
       </div>
       <div class="stat-item" v-if="community.created_at">
         <Calendar :size="16" />
-        <span>创建于 {{ formatTime(community.created_at) }}</span>
+        <span>{{ t('common.createdAt', { time: formatTime(community.created_at) }) }}</span>
       </div>
     </div>
 
@@ -27,17 +27,17 @@
       <!-- 未加入社区时显示加入按钮 -->
       <button v-if="!isMember" class="btn-primary" @click="handleJoin">
         <UserPlus :size="16" />
-        <span>加入社区</span>
+        <span>{{ t('communityInfoCard.joinCommunity') }}</span>
       </button>
       <!-- 已加入社区时显示发帖和退出按钮 -->
       <template v-else>
         <button class="btn-primary" @click="goToCreatePost">
           <Plus :size="16" />
-          <span>发帖</span>
+          <span>{{ t('communityInfoCard.createPost') }}</span>
         </button>
         <button class="btn-secondary" @click="handleLeave" v-if="canLeave">
           <LogOut :size="16" />
-          <span>退出社区</span>
+          <span>{{ t('communityInfoCard.leaveCommunity') }}</span>
         </button>
       </template>
     </div>
@@ -47,8 +47,13 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { Users, FileText, Calendar, Plus, LogOut, UserPlus } from 'lucide-vue-next'
+import { useFormatTime } from '@/composables/useFormatTime'
 import { client } from '@/api/client'
+
+const { t } = useI18n()
+const { formatTime } = useFormatTime()
 
 const props = defineProps({
   community: {
@@ -71,12 +76,12 @@ const roleDisplay = computed(() => {
   if (props.role === undefined || props.role === null) {
     return ''
   }
-  const roleMap = {
-    2: '版主',
-    1: '管理员',
-    0: '成员'
+  const roleKeyMap = {
+    2: 'communityInfoCard.owner',
+    1: 'communityInfoCard.admin',
+    0: 'communityInfoCard.member'
   }
-  return roleMap[props.role] || '成员'
+  return t(roleKeyMap[props.role] || 'communityInfoCard.member')
 })
 
 // 角色样式类
@@ -103,13 +108,6 @@ const canLeave = computed(() => {
   return props.role !== 2
 })
 
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '未知时间'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('zh-CN')
-}
-
 // 跳转到创建帖子页面
 const goToCreatePost = () => {
   router.push(`/create-post?community_id=${props.community.id}`)
@@ -117,7 +115,7 @@ const goToCreatePost = () => {
 
 // 退出社区
 const handleLeave = async () => {
-  if (!confirm(`确定要退出「${props.community.name}」吗？`)) {
+  if (!confirm(t('communityInfoCard.confirmLeave', { name: props.community.name }))) {
     return
   }
 
@@ -129,14 +127,14 @@ const handleLeave = async () => {
     })
 
     if (response.data) {
-      alert('已退出社区')
+      alert(t('communityInfoCard.leftSuccess'))
       emit('leave')
       // 跳转回我的社区页面
       router.push('/my-communities')
     }
   } catch (error) {
     console.error('[CommunityInfoCard] 退出社区失败:', error)
-    alert('退出失败：' + (error?.message || '未知错误'))
+    alert(t('communityInfoCard.leaveFailed', { error: error?.message || t('common.unknownTime') }))
   }
 }
 
@@ -146,12 +144,12 @@ const handleJoin = async () => {
     const response = await client.POST(`/v1/communities/${props.community.id}/join`)
 
     if (response.data) {
-      alert('已成功加入社区')
+      alert(t('communityInfoCard.joinSuccess'))
       emit('join', { role: 0 })  // 0 = 普通成员
     }
   } catch (error) {
     console.error('[CommunityInfoCard] 加入社区失败:', error)
-    alert('加入失败：' + (error?.message || '未知错误'))
+    alert(t('communityInfoCard.joinFailed', { error: error?.message || t('common.unknownTime') }))
   }
 }
 </script>

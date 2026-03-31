@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {
   Search,
   MessageCircle,
@@ -37,6 +38,9 @@ const emit = defineEmits(['open-mobile-sidebar'])
 
 // 路由
 const router = useRouter()
+
+// 国际化
+const { t } = useI18n()
 
 // --- 搜索相关逻辑 ---
 const searchText = ref('')
@@ -231,7 +235,7 @@ const handlePasswordUpdate = async () => {
 <template>
   <header class="header-container">
     <!-- 汉堡菜单按钮（移动端） -->
-    <button class="mobile-menu-btn" @click="emit('open-mobile-sidebar')" title="打开菜单">
+    <button class="mobile-menu-btn" @click="emit('open-mobile-sidebar')" :title="t('header.openMenu')">
       <Menu :size="24" />
     </button>
 
@@ -248,7 +252,7 @@ const handlePasswordUpdate = async () => {
           <Search :size="18" class="search-icon" />
           <input
             type="text"
-            placeholder="查找所需一切信息"
+            :placeholder="t('header.searchPlaceholder')"
             v-model="searchText"
             @focus="handleSearchFocus"
             @blur="handleSearchBlur"
@@ -275,30 +279,30 @@ const handlePasswordUpdate = async () => {
 
     <!-- 3. 右侧功能区 -->
     <div class="actions-section">
-      <button class="btn-icon" title="消息"><MessageCircle :size="20" /></button>
+      <button class="btn-icon" :title="t('header.messages')"><MessageCircle :size="20" /></button>
       <div class="create-menu-container">
         <button
           class="btn-icon"
           :class="{ active: isCreateMenuOpen }"
-          title="创建"
+          :title="t('header.create')"
           @click="toggleCreateMenu"
         >
-          <Plus :size="20" /><span>创建</span>
+          <Plus :size="20" /><span>{{ t('header.create') }}</span>
         </button>
 
         <!-- 创建下拉菜单 -->
         <div class="create-dropdown" v-if="isCreateMenuOpen">
           <div class="create-menu-item" @click="goToCreatePost">
             <FileText :size="20" class="menu-icon" />
-            <span class="menu-text">创建帖子</span>
+            <span class="menu-text">{{ t('header.createPost') }}</span>
           </div>
           <div class="create-menu-item" @click="goToCreateCommunity">
             <Building2 :size="20" class="menu-icon" />
-            <span class="menu-text">创建社区</span>
+            <span class="menu-text">{{ t('header.createCommunity') }}</span>
           </div>
         </div>
       </div>
-      <button class="btn-icon" title="通知"><Bell :size="20" /></button>
+      <button class="btn-icon" :title="t('header.notifications')"><Bell :size="20" /></button>
 
       <!-- 个人头像容器 (Dropdown Trigger) -->
       <div class="user-menu-container">
@@ -324,7 +328,7 @@ const handlePasswordUpdate = async () => {
                 <div class="status-dot large"></div>
               </div>
               <div class="user-text-info">
-                <div class="user-display-name">{{ userInfo?.nickname || '查看个人资料' }}</div>
+                <div class="user-display-name">{{ userInfo?.nickname || t('header.viewProfile') }}</div>
                 <div class="user-handle">@{{ userInfo?.username || 'user' }}</div>
               </div>
             </div>
@@ -336,11 +340,11 @@ const handlePasswordUpdate = async () => {
           <div class="menu-section">
             <div class="menu-item" @click="openProfileEdit">
               <Shirt :size="20" class="menu-icon" />
-              <span class="menu-text">编辑资料</span>
+              <span class="menu-text">{{ t('header.editProfile') }}</span>
             </div>
             <div class="menu-item" @click="openPasswordEdit">
               <Lock :size="20" class="menu-icon" />
-              <span class="menu-text">修改密码</span>
+              <span class="menu-text">{{ t('header.changePassword') }}</span>
             </div>
           </div>
 
@@ -350,7 +354,7 @@ const handlePasswordUpdate = async () => {
           <div class="menu-section">
             <div class="menu-item" @click="handleLogout">
               <LogOut :size="20" class="menu-icon" />
-              <span class="menu-text">退出登录</span>
+              <span class="menu-text">{{ t('header.logout') }}</span>
             </div>
           </div>
         </div>

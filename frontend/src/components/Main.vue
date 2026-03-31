@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {
   ThumbsUp,
   ThumbsDown,
@@ -12,8 +13,11 @@ import {
 } from 'lucide-vue-next'
 import { client } from '@/api/client'
 import { marked } from 'marked'
+import { useFormatTime } from '@/composables/useFormatTime'
 
 const router = useRouter()
+const { t } = useI18n()
+const { formatTime } = useFormatTime()
 
 // 状态
 const posts = ref([])
@@ -34,20 +38,6 @@ marked.setOptions({
   gfm: true,
 })
 
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '未知时间'
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = (now - date) / 1000 // 秒
-
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
-
-  return date.toLocaleDateString('zh-CN')
-}
 
 // 渲染 Markdown（预览，只显示前200个字符）
 const renderPreview = (content) => {
@@ -104,7 +94,7 @@ const loadPosts = async (reset = false) => {
     }
   } catch (err) {
     console.error('[主页] 加载失败:', err)
-    error.value = '加载失败，请稍后重试'
+    error.value = t('main.loadError')
   } finally {
     loading.value = false
   }
@@ -153,20 +143,20 @@ const displayPosts = computed(() => posts.value)
     <!-- 加载状态 -->
     <div v-if="loading && posts.length === 0" class="loading-state">
       <div class="spinner"></div>
-      <p>加载中...</p>
+      <p>{{ t('main.loading') }}</p>
     </div>
 
     <!-- 错误状态 -->
     <div v-else-if="error" class="error-state">
       <p>{{ error }}</p>
-      <button class="retry-btn" @click="loadPosts(true)">重试</button>
+      <button class="retry-btn" @click="loadPosts(true)">{{ t('main.retry') }}</button>
     </div>
 
     <!-- 空状态 -->
     <div v-else-if="posts.length === 0" class="empty-state">
       <ArrowBigUp :size="64" />
-      <h3>还没有帖子</h3>
-      <p>成为第一个发布内容的人吧！</p>
+      <h3>{{ t('main.noPosts') }}</h3>
+      <p>{{ t('main.beFirst') }}</p>
     </div>
 
     <!-- 帖子列表 -->
@@ -182,9 +172,9 @@ const displayPosts = computed(() => posts.value)
           <div class="post-header">
             <span class="community-icon">👾</span>
             <span class="community-name" @click.stop="goToCommunity(post.community?.id)">
-              {{ post.community?.name || '未知社区' }}
+              {{ post.community?.name || t('main.unknownCommunity') }}
             </span>
-            <span class="meta-info">· 由 {{ post.author?.username || '匿名用户' }} 发布 · {{ formatTime(post.created_at) }}</span>
+            <span class="meta-info">· {{ t('main.postedBy', { user: post.author?.username || t('main.anonymousUser') }) }} · {{ formatTime(post.created_at) }}</span>
           </div>
 
           <h3 class="post-title">{{ post.title }}</h3>
@@ -264,10 +254,10 @@ const displayPosts = computed(() => posts.value)
               <input
                 type="text"
                 v-model="commentInputs[post.id]"
-                placeholder="善语结善缘，恶语伤人心"
+                :placeholder="t('main.commentPlaceholder')"
                 class="comment-field"
               />
-              <button class="send-btn" title="发送" :disabled="!commentInputs[post.id]?.trim()">
+              <button class="send-btn" :title="t('main.send')" :disabled="!commentInputs[post.id]?.trim()">
                 <Send :size="16" />
               </button>
             </div>
@@ -282,13 +272,13 @@ const displayPosts = computed(() => posts.value)
           @click="loadMore"
           :disabled="loading"
         >
-          <span v-if="loading">加载中...</span>
-          <span v-else>加载更多</span>
+          <span v-if="loading">{{ t('main.loading') }}</span>
+          <span v-else>{{ t('main.loadMore') }}</span>
         </button>
       </div>
 
       <div v-else-if="posts.length > 0" class="no-more">
-        <p>已经到底了</p>
+        <p>{{ t('main.noMore') }}</p>
       </div>
     </div>
   </div>

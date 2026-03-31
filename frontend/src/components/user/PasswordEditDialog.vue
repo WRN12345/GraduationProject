@@ -1,34 +1,34 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="修改密码"
+    :title="$t('passwordEditDialog.title')"
     width="450px"
     :close-on-click-modal="false"
   >
     <el-form :model="form" :rules="rules" ref="formRef" label-width="80px">
-      <el-form-item label="旧密码" prop="old_password">
+      <el-form-item :label="$t('passwordEditDialog.oldPasswordLabel')" prop="old_password">
         <el-input
           v-model="form.old_password"
           type="password"
-          placeholder="请输入当前密码"
+          :placeholder="$t('passwordEditDialog.oldPasswordPlaceholder')"
           show-password
         />
       </el-form-item>
 
-      <el-form-item label="新密码" prop="new_password">
+      <el-form-item :label="$t('passwordEditDialog.newPasswordLabel')" prop="new_password">
         <el-input
           v-model="form.new_password"
           type="password"
-          placeholder="6-30个字符"
+          :placeholder="$t('passwordEditDialog.newPasswordPlaceholder')"
           show-password
         />
       </el-form-item>
 
-      <el-form-item label="确认密码" prop="confirm_password">
+      <el-form-item :label="$t('passwordEditDialog.confirmPasswordLabel')" prop="confirm_password">
         <el-input
           v-model="form.confirm_password"
           type="password"
-          placeholder="再次输入新密码"
+          :placeholder="$t('passwordEditDialog.confirmPasswordPlaceholder')"
           show-password
         />
       </el-form-item>
@@ -36,9 +36,9 @@
 
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('passwordEditDialog.cancel') }}</el-button>
         <el-button type="primary" @click="handleSubmit" :loading="loading">
-          确认修改
+          {{ $t('passwordEditDialog.confirmChange') }}
         </el-button>
       </span>
     </template>
@@ -48,6 +48,9 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: Boolean
@@ -72,25 +75,25 @@ const form = reactive({
 // 自定义验证规则
 const validateConfirmPassword = (rule, value, callback) => {
   if (value !== form.new_password) {
-    callback(new Error('两次输入的密码不一致'))
+    callback(new Error(t('passwordEditDialog.passwordMismatch')))
   } else {
     callback()
   }
 }
 
-const rules = {
+const rules = computed(() => ({
   old_password: [
-    { required: true, message: '请输入当前密码', trigger: 'blur' }
+    { required: true, message: t('passwordEditDialog.oldPasswordRequired'), trigger: 'blur' }
   ],
   new_password: [
-    { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, max: 30, message: '密码长度为6-30个字符', trigger: 'blur' }
+    { required: true, message: t('passwordEditDialog.newPasswordRequired'), trigger: 'blur' },
+    { min: 6, max: 30, message: t('passwordEditDialog.passwordLength'), trigger: 'blur' }
   ],
   confirm_password: [
-    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    { required: true, message: t('passwordEditDialog.confirmPasswordRequired'), trigger: 'blur' },
     { validator: validateConfirmPassword, trigger: 'blur' }
   ]
-}
+}))
 
 const getAuthHeaders = () => {
   const tokenStr = localStorage.getItem('token')
@@ -125,10 +128,10 @@ const handleSubmit = async () => {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.detail || '密码修改失败')
+        throw new Error(error.detail || t('passwordEditDialog.changeFailed'))
       }
 
-      ElMessage.success('密码修改成功，请重新登录')
+      ElMessage.success(t('passwordEditDialog.changeSuccess'))
       emit('success')
       dialogVisible.value = false
 
@@ -138,7 +141,7 @@ const handleSubmit = async () => {
       form.confirm_password = ''
     } catch (error) {
       console.error('修改密码失败:', error)
-      ElMessage.error(error.message || '修改失败，请重试')
+      ElMessage.error(error.message || t('passwordEditDialog.changeFailed'))
     } finally {
       loading.value = false
     }

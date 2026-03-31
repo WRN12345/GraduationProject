@@ -17,7 +17,7 @@
         <div class="communities-section">
           <div class="section-header">
             <h2 class="section-title">
-              我的社区
+              {{ t('communityManage.myCommunities') }}
               <span class="count">({{ communities.length }})</span>
             </h2>
             <button class="refresh-btn" @click="loadCommunities" :disabled="loading">
@@ -27,13 +27,13 @@
 
           <div v-if="loading && communities.length === 0" class="loading-state">
             <div class="spinner"></div>
-            <p>加载中...</p>
+            <p>{{ t('common.loading') }}</p>
           </div>
 
           <div v-else-if="communities.length === 0" class="empty-state">
             <Users :size="48" />
-            <p>还没有创建任何社区</p>
-            <p class="hint">在左侧创建你的第一个社区吧！</p>
+            <p>{{ t('communityManage.noCommunities') }}</p>
+            <p class="hint">{{ t('communityManage.createFirst') }}</p>
           </div>
 
           <div v-else class="communities-list">
@@ -70,8 +70,13 @@ import {
   Users,
   RefreshCw
 } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import { client } from '@/api/client'
 import CommunityForm from '@/components/community/CommunityForm.vue'
+import { useFormatTime } from '@/composables/useFormatTime'
+
+const { formatTime } = useFormatTime()
+const { t } = useI18n()
 
 const communities = ref([])
 const loading = ref(false)
@@ -86,16 +91,6 @@ const formatCount = (count) => {
   return count.toString()
 }
 
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '未知时间'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
 
 // 加载社区列表
 const loadCommunities = async () => {

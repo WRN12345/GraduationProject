@@ -19,7 +19,7 @@
         type="button"
         class="toolbar-btn"
         :class="{ active: showPreview }"
-        title="切换预览"
+        :title="t('markdownEditor.togglePreview')"
         @click="togglePreview"
       >
         <Eye :size="16" />
@@ -34,7 +34,7 @@
           ref="textareaRef"
           v-model="content"
           class="editor-textarea"
-          placeholder="支持 Markdown 格式..."
+          :placeholder="t('markdownEditor.placeholder')"
           @input="handleInput"
           @scroll="syncScroll"
         ></textarea>
@@ -50,6 +50,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   Bold,
   Italic,
@@ -77,23 +78,25 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
+const { t } = useI18n()
+
 const content = ref(props.modelValue)
 const showPreview = ref(false)
 const textareaRef = ref(null)
 const previewRef = ref(null)
 
 // 工具栏配置
-const tools = [
-  { name: 'bold', title: '粗体 (Ctrl+B)', icon: Bold, action: 'bold' },
-  { name: 'italic', title: '斜体 (Ctrl+I)', icon: Italic, action: 'italic' },
-  { name: 'link', title: '链接 (Ctrl+K)', icon: Link, action: 'link' },
-  { name: 'code', title: '代码 (Ctrl+`)', icon: Code, action: 'code' },
-  { name: 'heading1', title: '一级标题', icon: Heading1, action: 'h1' },
-  { name: 'heading2', title: '二级标题', icon: Heading2, action: 'h2' },
-  { name: 'quote', title: '引用 (Ctrl+Q)', icon: Quote, action: 'quote' },
-  { name: 'list', title: '无序列表 (Ctrl+U)', icon: List, action: 'ul' },
-  { name: 'orderedList', title: '有序列表 (Ctrl+O)', icon: ListOrdered, action: 'ol' },
-]
+const tools = computed(() => [
+  { name: 'bold', title: t('markdownEditor.boldTitle'), icon: Bold, action: 'bold' },
+  { name: 'italic', title: t('markdownEditor.italicTitle'), icon: Italic, action: 'italic' },
+  { name: 'link', title: t('markdownEditor.linkTitle'), icon: Link, action: 'link' },
+  { name: 'code', title: t('markdownEditor.codeTitle'), icon: Code, action: 'code' },
+  { name: 'heading1', title: t('markdownEditor.heading1Title'), icon: Heading1, action: 'h1' },
+  { name: 'heading2', title: t('markdownEditor.heading2Title'), icon: Heading2, action: 'h2' },
+  { name: 'quote', title: t('markdownEditor.quoteTitle'), icon: Quote, action: 'quote' },
+  { name: 'list', title: t('markdownEditor.unorderedListTitle'), icon: List, action: 'ul' },
+  { name: 'orderedList', title: t('markdownEditor.orderedListTitle'), icon: ListOrdered, action: 'ol' },
+])
 
 // 配置 marked
 marked.setOptions({
@@ -103,12 +106,12 @@ marked.setOptions({
 
 // 渲染 Markdown
 const renderedContent = computed(() => {
-  if (!content.value) return '<p class="empty-placeholder">预览将显示在这里...</p>'
+  if (!content.value) return `<p class="empty-placeholder">${t('markdownEditor.previewPlaceholder')}</p>`
   try {
     return marked(content.value)
   } catch (error) {
     console.error('Markdown 渲染错误:', error)
-    return '<p class="error">渲染错误</p>'
+    return `<p class="error">${t('markdownEditor.renderError')}</p>`
   }
 })
 
@@ -153,39 +156,39 @@ const executeTool = (action) => {
 
   switch (action) {
     case 'bold':
-      replacement = `**${selectedText || '粗体文本'}**`
+      replacement = `**${selectedText || t('markdownEditor.boldText')}**`
       cursorOffset = selectedText ? replacement.length : 2
       break
     case 'italic':
-      replacement = `*${selectedText || '斜体文本'}*`
+      replacement = `*${selectedText || t('markdownEditor.italicText')}*`
       cursorOffset = selectedText ? replacement.length : 1
       break
     case 'link':
-      replacement = `[${selectedText || '链接文本'}](url)`
+      replacement = `[${selectedText || t('markdownEditor.linkText')}](url)`
       cursorOffset = selectedText ? replacement.length - 4 : 1
       break
     case 'code':
-      replacement = `\`${selectedText || '代码'}\``
+      replacement = `\`${selectedText || t('markdownEditor.codeText')}\``
       cursorOffset = selectedText ? replacement.length : 1
       break
     case 'h1':
-      replacement = `# ${selectedText || '一级标题'}`
+      replacement = `# ${selectedText || t('markdownEditor.heading1Text')}`
       cursorOffset = replacement.length
       break
     case 'h2':
-      replacement = `## ${selectedText || '二级标题'}`
+      replacement = `## ${selectedText || t('markdownEditor.heading2Text')}`
       cursorOffset = replacement.length
       break
     case 'quote':
-      replacement = `> ${selectedText || '引用文本'}`
+      replacement = `> ${selectedText || t('markdownEditor.quoteText')}`
       cursorOffset = replacement.length
       break
     case 'ul':
-      replacement = `- ${selectedText || '列表项'}`
+      replacement = `- ${selectedText || t('markdownEditor.listItemText')}`
       cursorOffset = replacement.length
       break
     case 'ol':
-      replacement = `1. ${selectedText || '列表项'}`
+      replacement = `1. ${selectedText || t('markdownEditor.listItemText')}`
       cursorOffset = replacement.length
       break
   }

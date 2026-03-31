@@ -8,7 +8,7 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="action-icon">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
-      <span>{{ isReplying ? '取消' : '回复' }}</span>
+      <span>{{ isReplying ? t('comment.cancel') : t('comment.reply') }}</span>
     </el-button>
 
     <!-- 整合的展开/收起按钮 -->
@@ -17,7 +17,7 @@
         v-if="comment.reply_count > 0"
         key="toggle"
         class="expand-toggle-btn"
-        :class="{ 
+        :class="{
           'is-expanded': isExpanded,
           'is-loading': repliesLoading
         }"
@@ -26,15 +26,15 @@
       >
         <!-- 细线条箭头图标 -->
         <span class="toggle-icon">
-          <svg 
-            v-if="!repliesLoading" 
-            width="10" 
-            height="10" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
+          <svg
+            v-if="!repliesLoading"
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
             stroke-width="2"
-            stroke-linecap="round" 
+            stroke-linecap="round"
             stroke-linejoin="round"
           >
             <polyline points="9 18 15 12 9 6"/>
@@ -44,7 +44,7 @@
         
         <!-- 文字说明 -->
         <span class="toggle-text">
-          {{ repliesLoading ? '加载中...' : (isExpanded ? '收起' : `${comment.reply_count} 条回复`) }}
+          {{ repliesLoading ? t('comment.loading') : (isExpanded ? t('comment.collapse') : t('comment.repliesCount', { count: comment.reply_count })) }}
         </span>
       </button>
     </Transition>
@@ -59,7 +59,7 @@
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
         </svg>
-        <span>编辑</span>
+        <span>{{ t('comment.edit') }}</span>
       </el-button>
     </template>
 
@@ -74,7 +74,7 @@
           <polyline points="3 6 5 6 21 6"/>
           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
         </svg>
-        <span>删除</span>
+        <span>{{ t('comment.delete') }}</span>
       </el-button>
     </template>
   </div>
@@ -83,6 +83,9 @@
 <script setup>
 import { Loading } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   comment: {
@@ -115,11 +118,11 @@ const emit = defineEmits(['reply', 'cancel-reply', 'edit', 'delete', 'load-more'
 
 const handleDelete = () => {
   ElMessageBox.confirm(
-    '确定要删除这条评论吗？删除后无法恢复。',
-    '确认删除',
+    t('comment.confirmDeleteMessage'),
+    t('comment.confirmDeleteTitle'),
     {
-      confirmButtonText: '确认删除',
-      cancelButtonText: '取消',
+      confirmButtonText: t('comment.confirmDeleteBtn'),
+      cancelButtonText: t('comment.cancel'),
       type: 'warning',
       center: true,
       customClass: 'delete-confirm-box',
