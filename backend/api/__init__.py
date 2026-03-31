@@ -112,6 +112,7 @@ TORTOISE_ORM = {
                 "models.membership",
                 "models.bookmark",
                 "models.audit_log",
+                "models.draft",
             ],
             "default_connection": "default",
         }

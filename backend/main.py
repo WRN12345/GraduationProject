@@ -54,8 +54,9 @@ async def check_database_tables():
         
         # 检查核心表是否存在
         required_tables = [
-            'users', 'communities', 'posts', 'comments', 
-            'votes', 'bookmarks', 'community_memberships', 'post_attachments'
+            'users', 'communities', 'posts', 'comments',
+            'votes', 'bookmarks', 'community_memberships', 'post_attachments',
+            'drafts'
         ]
         
         existing_tables = await conn.fetch(
