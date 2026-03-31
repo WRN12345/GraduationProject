@@ -74,6 +74,12 @@ const routes = [
         meta: { title: '我的帖子' }
       },
       {
+        path: 'drafts',
+        name: 'MyDrafts',
+        component: () => import('../views/MyDrafts.vue'),
+        meta: { title: '我的草稿箱' }
+      },
+      {
         path: 'community/:id',
         name: 'CommunityDetail',
         component: () => import('../views/CommunityDetail.vue'),
