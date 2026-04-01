@@ -78,8 +78,8 @@ const closeMobileSidebar = () => {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: #ffffff;
-  border-bottom: 1px solid #edeff1;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .layout-body {
@@ -98,7 +98,7 @@ const closeMobileSidebar = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay-bg);
   z-index: 998;
   opacity: 0;
   visibility: hidden;
@@ -129,12 +129,12 @@ const closeMobileSidebar = () => {
 }
 
 .aside-content::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 .aside-content::-webkit-scrollbar-thumb:hover {
-  background: #999;
+  background: var(--text-tertiary);
 }
 
 .layout-aside.collapsed {
@@ -155,8 +155,8 @@ const closeMobileSidebar = () => {
   top: 0;
   width: 36px;
   height: 36px;
-  background: #ffffff;
-  border: 1px solid #edeff1;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
   border-radius: 6px;
   cursor: pointer;
   display: flex;
@@ -165,7 +165,7 @@ const closeMobileSidebar = () => {
   transition: all 0.3s ease;
   z-index: 100;
   padding: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-sm);
   flex-shrink: 0;
 }
 
@@ -187,18 +187,18 @@ const closeMobileSidebar = () => {
 }
 
 .layout-main::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 .layout-main::-webkit-scrollbar-thumb:hover {
-  background: #999;
+  background: var(--text-tertiary);
 }
 
 .sidebar-toggle:hover {
-  background: #f6f7f8;
-  border-color: #0079d3;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  background: var(--bg-secondary);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
 }
 
 /* === 响应式断点 === */
@@ -210,8 +210,8 @@ const closeMobileSidebar = () => {
     left: -270px;
     width: 270px;
     height: calc(100vh - 56px);
-    background: #fff;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+    background: var(--bg-primary);
+    box-shadow: var(--shadow-md);
   }
 
   .layout-aside.mobile-open {
@@ -235,8 +235,8 @@ const closeMobileSidebar = () => {
     left: -270px;
     width: 270px;
     height: calc(100vh - 56px);
-    background: #fff;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+    background: var(--bg-primary);
+    box-shadow: var(--shadow-md);
   }
 
   .layout-aside.mobile-open {
@@ -259,8 +259,8 @@ const closeMobileSidebar = () => {
     position: fixed;
     left: -270px;
     height: calc(100vh - 56px);
-    background: #fff;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+    background: var(--bg-primary);
+    box-shadow: var(--shadow-md);
   }
 
   .layout-aside.mobile-open {

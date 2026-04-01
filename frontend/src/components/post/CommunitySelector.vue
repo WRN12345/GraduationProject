@@ -7,7 +7,7 @@
         <span class="member-count">{{ formatCount(selectedCommunity.member_count) }}</span>
       </div>
       <div v-else class="placeholder">
-        <span>选择一个社区</span>
+        <span>{{ t('communitySelector.placeholder') }}</span>
       </div>
       <ChevronDown :size="16" class="dropdown-icon" :class="{ active: isOpen }" />
     </div>
@@ -21,7 +21,7 @@
           ref="searchInput"
           v-model="searchQuery"
           type="text"
-          placeholder="搜索社区..."
+          :placeholder="t('communitySelector.searchPlaceholder')"
           class="search-input"
         />
       </div>
@@ -49,9 +49,9 @@
 
         <!-- 空状态 -->
         <div v-if="filteredCommunities.length === 0" class="empty-state">
-          <span v-if="loading">加载中...</span>
-          <span v-else-if="searchQuery">未找到匹配的社区</span>
-          <span v-else>暂无社区</span>
+          <span v-if="loading">{{ t('common.loading') }}</span>
+          <span v-else-if="searchQuery">{{ t('communitySelector.noMatch') }}</span>
+          <span v-else>{{ t('communitySelector.noCommunities') }}</span>
         </div>
       </div>
     </div>
@@ -64,6 +64,9 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import { ChevronDown, Search } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: {
@@ -152,7 +155,7 @@ watch(searchQuery, (newVal) => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: #fff;
+  background: var(--bg-card);
   border: 2px solid #edeff1;
   border-radius: 8px;
   cursor: pointer;
@@ -206,7 +209,7 @@ watch(searchQuery, (newVal) => {
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);

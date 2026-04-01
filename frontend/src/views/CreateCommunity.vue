@@ -3,11 +3,11 @@
     <div class="create-community-card">
       <!-- 头部 -->
       <div class="card-header">
-        <button class="back-btn" @click="goBack" title="返回">
+        <button class="back-btn" @click="goBack" :title="t('common.back')">
           <ArrowLeft :size="20" />
-          <span>返回</span>
+          <span>{{ t('common.back') }}</span>
         </button>
-        <h2 class="title">创建社区</h2>
+        <h2 class="title">{{ t('createCommunity.title') }}</h2>
       </div>
 
       <!-- 表单 -->
@@ -21,10 +21,12 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ArrowLeft } from 'lucide-vue-next'
 import CommunityForm from '@/components/community/CommunityForm.vue'
 
 const router = useRouter()
+const { t } = useI18n()
 
 const goBack = () => {
   // 如果有历史记录，返回上一页；否则返回首页
@@ -41,7 +43,7 @@ const handleSubmit = (community) => {
   // 验证 ID 是否有效
   if (!community || !community.id) {
     console.error('[CreateCommunity] 无效的社区数据:', community)
-    alert('创建成功但无法跳转，请手动刷新查看')
+    alert(t('createCommunity.createSuccessButNoNav'))
     router.push('/my-communities')
     return
   }
@@ -64,7 +66,7 @@ const handleSubmit = (community) => {
 .create-community-card {
   width: 100%;
   max-width: 600px;
-  background: #ffffff;
+  background: var(--bg-card);
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }

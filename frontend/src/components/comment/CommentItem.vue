@@ -54,7 +54,7 @@
       <!-- 折叠状态提示 - 点击线条或此按钮可展开 -->
       <div v-if="isCollapsed && hiddenReplyCount > 0" class="collapsed-hint" @click="toggleCollapse">
         <span class="collapse-icon">▶</span>
-        <span>展开 {{ hiddenReplyCount }} 条回复</span>
+        <span>{{ t('comment.expandReplies', { count: hiddenReplyCount }) }}</span>
       </div>
     </div>
 
@@ -102,7 +102,7 @@
         class="load-more-replies"
       >
         <el-button text @click="$emit('load-more', comment.id)">
-          加载更多回复 ({{ comment.reply_count - (comment.replies?.length || 0) }})
+          {{ t('comment.loadMoreReplies', { count: comment.reply_count - (comment.replies?.length || 0) }) }}
         </el-button>
       </div>
     </Transition>
@@ -111,7 +111,7 @@
     <Transition name="fade">
       <div v-if="repliesLoading" class="replies-loading">
         <el-icon class="is-loading"><Loading /></el-icon>
-        <span>加载中...</span>
+        <span>{{ t('comment.loading') }}</span>
       </div>
     </Transition>
   </div>
@@ -119,6 +119,7 @@
 
 <script setup>
 import { ref, computed, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import { Loading } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -126,6 +127,8 @@ import { client } from '@/api/client'
 import CommentContent from './CommentContent.vue'
 import CommentActions from './CommentActions.vue'
 import CommentReplyEditor from './CommentReplyEditor.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   comment: {

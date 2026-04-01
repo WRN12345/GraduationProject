@@ -420,7 +420,7 @@ defineExpose({
   right: 0;
   padding: 8px;
   background: rgba(0, 0, 0, 0.6);
-  color: white;
+  color: var(--text-inverse);
   font-size: 12px;
 }
 
@@ -453,7 +453,7 @@ defineExpose({
 
 .action-btn {
   cursor: pointer;
-  color: white;
+  color: var(--text-inverse);
   background: rgba(0, 0, 0, 0.5);
   padding: 8px;
   border-radius: 4px;

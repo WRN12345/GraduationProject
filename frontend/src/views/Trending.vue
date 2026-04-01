@@ -1,10 +1,13 @@
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useTrending } from '@/composables/useTrending'
 import HotPostsList from '@/components/trending/HotPostsList.vue'
 import HotCommunitiesList from '@/components/trending/HotCommunitiesList.vue'
 import HotUsersList from '@/components/trending/HotUsersList.vue'
 import { RotateCw, TrendingUp, FileText, Users, User } from 'lucide-vue-next'
+
+const { t } = useI18n()
 
 // 使用热门内容 composable
 const { hotPosts, hotCommunities, hotUsers, loading, error, refreshTrending } = useTrending({
@@ -16,9 +19,9 @@ const { hotPosts, hotCommunities, hotUsers, loading, error, refreshTrending } = 
 const activeTab = ref('posts')
 
 const tabs = [
-  { id: 'posts', label: '热门帖子', icon: FileText },
-  { id: 'communities', label: '热门社区', icon: Users },
-  { id: 'users', label: '活跃用户', icon: User }
+  { id: 'posts', label: t('trending.hotPosts'), icon: FileText },
+  { id: 'communities', label: t('trending.hotCommunities'), icon: Users },
+  { id: 'users', label: t('trending.activeUsers'), icon: User }
 ]
 
 // 刷新处理
@@ -56,7 +59,7 @@ const handleRefresh = async () => {
         :class="{ loading: loading || isRefreshing }"
       >
         <RotateCw :size="14" :class="{ spinning: isRefreshing }" />
-        <span>刷新</span>
+        <span>{{ t('trending.refresh') }}</span>
       </button>
     </div>
 
@@ -65,7 +68,7 @@ const handleRefresh = async () => {
       <div class="error-content">
         <p class="error-message">{{ error }}</p>
         <button class="retry-button" @click="handleRefresh">
-          重试
+          {{ t('main.retry') }}
         </button>
       </div>
     </div>
@@ -137,7 +140,7 @@ const handleRefresh = async () => {
 }
 
 .tab-button.active {
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   color: #1c1c1c;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   font-weight: 600;
@@ -150,7 +153,7 @@ const handleRefresh = async () => {
   gap: 6px;
   padding: 8px 14px;
   background-color: #0079d3;
-  color: #ffffff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   font-size: 13px;
@@ -190,7 +193,7 @@ const handleRefresh = async () => {
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   padding: 40px 20px;
@@ -209,7 +212,7 @@ const handleRefresh = async () => {
 .retry-button {
   padding: 10px 24px;
   background-color: #0079d3;
-  color: #ffffff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   font-size: 14px;
@@ -226,7 +229,7 @@ const handleRefresh = async () => {
 
 /* 内容区域 */
 .content {
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   padding: 16px;

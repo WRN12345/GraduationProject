@@ -3,13 +3,13 @@
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
-      <p>加载中...</p>
+      <p>{{ t('main.loading') }}</p>
     </div>
 
     <!-- 错误状态 -->
     <div v-else-if="error" class="error-state">
       <p>{{ error }}</p>
-      <button class="retry-btn" @click="router.push('/my-communities')">返回我的社区</button>
+      <button class="retry-btn" @click="router.push('/my-communities')">{{ t('communityDetail.backToMyCommunities') }}</button>
     </div>
 
     <!-- 社区内容 -->
@@ -28,7 +28,7 @@
       <section class="posts-section">
         <div class="posts-header">
           <div class="posts-title">
-            <h2>社区帖子</h2>
+            <h2>{{ t('communityDetail.communityPosts') }}</h2>
             <span class="post-count">({{ community.post_count || 0 }})</span>
           </div>
           <!-- 成员管理按钮（仅 owner/admin 可见） -->
@@ -38,7 +38,7 @@
             class="members-link"
           >
             <Users :size="16" />
-            成员管理
+            {{ t('communityDetail.memberManagement') }}
           </router-link>
         </div>
         <PostList
@@ -54,6 +54,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { client } from '@/api/client'
 import { Users } from 'lucide-vue-next'
 import CommunityInfoCard from '@/components/community/CommunityInfoCard.vue'
@@ -61,6 +62,7 @@ import PostList from '@/components/PostList.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
 // 解析并验证社区 ID
 const parsedId = parseInt(route.params.id)
@@ -73,20 +75,20 @@ const error = ref(null)
 
 // 如果没有有效的 communityId，直接显示错误
 if (!communityId) {
-  error.value = '无效的社区 ID'
+  error.value = t('communityDetail.invalidId')
   loading.value = false
 }
 
 // 空状态文案
 const emptyTitle = computed(() => {
-  return `「${community.value?.name || ''}」还没有帖子`
+  return t('communityDetail.noPostsYet', { name: community.value?.name || '' })
 })
 
 const emptyMessage = computed(() => {
   if (membership.value?.role === 2) {
-    return '作为版主，快来发布第一篇帖子吧！'
+    return t('communityDetail.ownerFirstPost')
   }
-  return '成为第一个发帖的人吧！'
+  return t('communityDetail.beFirstPost')
 })
 
 // 加载社区详情和用户角色
@@ -105,7 +107,7 @@ const loadData = async () => {
     if (response.data) {
       community.value = response.data
     } else {
-      error.value = '社区不存在'
+      error.value = t('communityDetail.notFound')
       loading.value = false
       return
     }
@@ -122,11 +124,11 @@ const loadData = async () => {
       }
     }
   } catch (err) {
-    console.error('[社区详情] 加载失败:', err)
+    console.error('[CommunityDetail] load failed:', err)
     if (err.response?.status === 404) {
-      error.value = '社区不存在'
+      error.value = t('communityDetail.notFound')
     } else {
-      error.value = '加载失败，请稍后重试'
+      error.value = t('communityDetail.loadError')
     }
   } finally {
     loading.value = false
@@ -185,7 +187,7 @@ onMounted(() => {
 .retry-btn {
   padding: 10px 24px;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   cursor: pointer;
@@ -239,7 +241,7 @@ onMounted(() => {
   gap: 6px;
   padding: 8px 16px;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   border-radius: 20px;
   font-size: 14px;
   font-weight: 600;

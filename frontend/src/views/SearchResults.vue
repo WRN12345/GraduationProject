@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { Search } from 'lucide-vue-next'
 import { useSearch } from '@/composables/useSearch'
 import SearchTabs from '@/components/search/SearchTabs.vue'
@@ -8,6 +9,7 @@ import SearchResultsList from '@/components/search/SearchResultsList.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
 // 从 URL 获取搜索参数
 const searchQuery = ref(route.query.q || '')
@@ -126,8 +128,8 @@ onMounted(() => {
     <!-- 无搜索关键词提示 -->
     <div v-if="!searchQuery" class="no-query-state">
       <Search :size="64" />
-      <h3>请输入搜索关键词</h3>
-      <p>在顶部搜索框中输入内容，然后按 Enter 搜索</p>
+      <h3>{{ t('searchResults.enterKeyword') }}</h3>
+      <p>{{ t('searchResults.searchTip') }}</p>
     </div>
   </div>
 </template>

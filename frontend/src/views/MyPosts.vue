@@ -1,22 +1,24 @@
 <template>
   <div class="my-posts-page">
     <div class="page-header">
-      <h1>我的帖子</h1>
-      <p class="subtitle" v-if="total > 0">共 {{ total }} 个帖子</p>
+      <h1>{{ t('myPosts.title') }}</h1>
+      <p class="subtitle" v-if="total > 0">{{ t('myPosts.count', { count: total }) }}</p>
     </div>
 
     <PostList
       :api-endpoint="'/v1/posts/my'"
-      :empty-title="'还没有发布任何帖子'"
-      :empty-message="'快去创建你的第一个帖子吧！'"
+      :empty-title="t('myPosts.noPosts')"
+      :empty-message="t('myPosts.createFirst')"
     />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import PostList from '@/components/PostList.vue'
 
+const { t } = useI18n()
 const total = ref(0)
 </script>
 

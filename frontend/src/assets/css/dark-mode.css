@@ -1,0 +1,999 @@
+/*
+ * 全局暗色模式覆盖样式
+ * 使用 [data-theme="dark"] 选择器 + !important 覆盖组件内的硬编码颜色
+ * 所有颜色统一使用 App.vue 中定义的 CSS 变量，确保颜色一致性
+ */
+
+/* ============================================================
+ * 1. Element Plus 组件暗色模式覆盖
+ * ============================================================ */
+
+[data-theme="dark"] {
+  /* Element Plus CSS 变量覆盖 */
+  --el-bg-color: var(--bg-primary);
+  --el-bg-color-overlay: var(--bg-card);
+  --el-bg-color-page: var(--bg-primary);
+  --el-text-color-primary: var(--text-primary);
+  --el-text-color-regular: var(--text-secondary);
+  --el-text-color-secondary: var(--text-tertiary);
+  --el-text-color-placeholder: var(--text-tertiary);
+  --el-border-color: var(--border-color);
+  --el-border-color-light: var(--border-light);
+  --el-border-color-lighter: var(--border-light);
+  --el-border-color-extra-light: var(--border-light);
+  --el-fill-color: var(--bg-secondary);
+  --el-fill-color-light: var(--bg-secondary);
+  --el-fill-color-lighter: var(--bg-primary);
+  --el-fill-color-blank: var(--bg-primary);
+  --el-mask-color: var(--overlay-bg);
+  --el-color-white: var(--bg-primary);
+}
+
+/* Dialog / MessageBox */
+[data-theme="dark"] .el-dialog {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+}
+[data-theme="dark"] .el-dialog__header {
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .el-dialog__body {
+  color: var(--text-secondary) !important;
+}
+[data-theme="dark"] .el-overlay {
+  background-color: var(--overlay-bg) !important;
+}
+[data-theme="dark"] .el-message-box {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+[data-theme="dark"] .el-message-box__title {
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .el-message-box__message {
+  color: var(--text-secondary) !important;
+}
+[data-theme="dark"] .el-message-box__btns .el-button--default {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Dropdown */
+[data-theme="dark"] .el-dropdown-menu {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+[data-theme="dark"] .el-dropdown-menu__item {
+  color: var(--text-secondary) !important;
+}
+[data-theme="dark"] .el-dropdown-menu__item:hover {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .el-dropdown-menu__item--divided::before {
+  background-color: var(--border-color) !important;
+}
+
+/* Form / Input */
+[data-theme="dark"] .el-input__wrapper {
+  background-color: var(--bg-input) !important;
+  box-shadow: 0 0 0 1px var(--border-color) inset !important;
+}
+[data-theme="dark"] .el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--text-tertiary) inset !important;
+}
+[data-theme="dark"] .el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--color-primary) inset !important;
+}
+[data-theme="dark"] .el-input__inner {
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .el-textarea__inner {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 0 0 1px var(--border-color) inset !important;
+}
+[data-theme="dark"] .el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px var(--color-primary) inset !important;
+}
+[data-theme="dark"] .el-form-item__label {
+  color: var(--text-secondary) !important;
+}
+
+/* Button */
+[data-theme="dark"] .el-button--default {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .el-button--default:hover {
+  background-color: var(--bg-hover) !important;
+  border-color: var(--text-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .el-button--primary {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+[data-theme="dark"] .el-button--text {
+  color: var(--color-primary) !important;
+}
+
+/* Upload */
+[data-theme="dark"] .el-upload-dragger {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-color) !important;
+}
+[data-theme="dark"] .el-upload-dragger:hover {
+  border-color: var(--color-primary) !important;
+}
+
+/* Empty */
+[data-theme="dark"] .el-empty__description p {
+  color: var(--text-secondary) !important;
+}
+
+/* Alert */
+[data-theme="dark"] .el-alert {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Message (ElMessage) */
+[data-theme="dark"] .el-message {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Skeleton */
+[data-theme="dark"] .el-skeleton__item {
+  background-color: var(--bg-secondary) !important;
+}
+
+/* Loading overlay */
+[data-theme="dark"] .el-loading-mask {
+  background-color: var(--overlay-bg) !important;
+}
+
+/* Popover / Tooltip */
+[data-theme="dark"] .el-popover {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-secondary) !important;
+}
+[data-theme="dark"] .el-popper.is-dark {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .el-tooltip__trigger {
+  color: inherit;
+}
+
+/* Tabs */
+[data-theme="dark"] .el-tabs__item {
+  color: var(--text-secondary) !important;
+}
+[data-theme="dark"] .el-tabs__item.is-active {
+  color: var(--color-primary) !important;
+}
+[data-theme="dark"] .el-tabs__nav-wrap::after {
+  background-color: var(--border-color) !important;
+}
+
+/* ============================================================
+ * 2. 通用背景色覆盖 — 白色/浅色 → 深色
+ * ============================================================ */
+
+/* --- 卡片/容器白色背景 → 暗色 --- */
+[data-theme="dark"] .post-card,
+[data-theme="dark"] .community-card,
+[data-theme="dark"] .draft-card,
+[data-theme="dark"] .comment-card,
+[data-theme="dark"] .comment-list-item,
+[data-theme="dark"] .voted-item,
+[data-theme="dark"] .user-info-card,
+[data-theme="dark"] .community-info-card,
+[data-theme="dark"] .form-body,
+[data-theme="dark"] .form-section,
+[data-theme="dark"] .communities-section,
+[data-theme="dark"] .dialog-card,
+[data-theme="dark"] .search-dropdown,
+[data-theme="dark"] .create-menu,
+[data-theme="dark"] .user-menu,
+[data-theme="dark"] .community-dropdown,
+[data-theme="dark"] .community-selector,
+[data-theme="dark"] .editor-toolbar,
+[data-theme="dark"] .editor-input-wrapper,
+[data-theme="dark"] .editor-preview,
+[data-theme="dark"] .markdown-editor,
+[data-theme="dark"] .create-post-card,
+[data-theme="dark"] .edit-post-card,
+[data-theme="dark"] .create-community-card,
+[data-theme="dark"] .login-card,
+[data-theme="dark"] .post-detail-card,
+[data-theme="dark"] .comment-section,
+[data-theme="dark"] .member-list-item {
+  background: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* --- 页面级浅灰背景 → 更深背景 --- */
+[data-theme="dark"] .page-container,
+[data-theme="dark"] .create-post-container,
+[data-theme="dark"] .edit-post-container,
+[data-theme="dark"] .create-community-container,
+[data-theme="dark"] .post-detail-container {
+  background: var(--bg-primary) !important;
+}
+
+/* --- hover/active 浅色背景 → 暗色 --- */
+[data-theme="dark"] .nav-item:hover,
+[data-theme="dark"] .action-btn:hover,
+[data-theme="dark"] .vote-action-btn:hover,
+[data-theme="dark"] .btn-icon:hover,
+[data-theme="dark"] .create-menu-item:hover,
+[data-theme="dark"] .menu-item:hover,
+[data-theme="dark"] .menu-item-user:hover,
+[data-theme="dark"] .avatar-trigger:hover,
+[data-theme="dark"] .mobile-menu-btn:hover,
+[data-theme="dark"] .clear-icon:hover,
+[data-theme="dark"] .community-item:hover,
+[data-theme="dark"] .setting-item:hover,
+[data-theme="dark"] .author-action-btn:hover,
+[data-theme="dark"] .vote-btn:hover:not(:disabled),
+[data-theme="dark"] .bookmark-btn:hover:not(:disabled),
+[data-theme="dark"] .tab-button:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+/* --- 按钮/输入框 浅灰背景 → 暗色 --- */
+[data-theme="dark"] .btn-secondary,
+[data-theme="dark"] .cancel-btn,
+[data-theme="dark"] .load-more-btn,
+[data-theme="dark"] .btn-back,
+[data-theme="dark"] .tab-button.active,
+[data-theme="dark"] .comment-input,
+[data-theme="dark"] .comment-input:focus-within,
+[data-theme="dark"] .pill-editor,
+[data-theme="dark"] .pill-editor:focus-within,
+[data-theme="dark"] .search-tab,
+[data-theme="dark"] .user-tab,
+[data-theme="dark"] .role-badge.member,
+[data-theme="dark"] .badge-count,
+[data-theme="dark"] .expand-toggle-btn {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* --- 代码块 / pre 背景 --- */
+[data-theme="dark"] .markdown-content code,
+[data-theme="dark"] .editor-preview code,
+[data-theme="dark"] .markdown-content pre,
+[data-theme="dark"] .editor-preview pre,
+[data-theme="dark"] code,
+[data-theme="dark"] pre {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* --- 加载骨架/占位 --- */
+[data-theme="dark"] .loading-spinner,
+[data-theme="dark"] .skeleton {
+  border-color: var(--border-color) !important;
+}
+
+/* ============================================================
+ * 3. 文字颜色覆盖 — 深色 → 浅色
+ * ============================================================ */
+
+/* --- 主要文字 #1c1c1c / #333 / #000 → 浅色 --- */
+[data-theme="dark"] .post-title,
+[data-theme="dark"] .post-preview,
+[data-theme="dark"] .post-meta .author-name,
+[data-theme="dark"] .community-name,
+[data-theme="dark"] .community-description,
+[data-theme="dark"] .description,
+[data-theme="dark"] .draft-title,
+[data-theme="dark"] .draft-content-preview,
+[data-theme="dark"] .comment-content,
+[data-theme="dark"] .comment-author,
+[data-theme="dark"] .content-text,
+[data-theme="dark"] .user-name,
+[data-theme="dark"] .user-bio,
+[data-theme="dark"] .section-title-text,
+[data-theme="dark"] .form-title,
+[data-theme="dark"] .page-title,
+[data-theme="dark"] .info-value,
+[data-theme="dark"] .stat-value,
+[data-theme="dark"] .tab-button.active,
+[data-theme="dark"] .search-result-title,
+[data-theme="dark"] .suggestion-title,
+[data-theme="dark"] .member-name,
+[data-theme="dark"] .hot-post-title,
+[data-theme="dark"] .hot-community-name,
+[data-theme="dark"] .hot-user-name,
+[data-theme="dark"] .label,
+[data-theme="dark"] .editor-toolbar button,
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
+[data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6 {
+  color: var(--text-primary) !important;
+}
+
+/* --- 次要文字 #666 / #878a8c → 浅灰 --- */
+[data-theme="dark"] .post-meta,
+[data-theme="dark"] .post-time,
+[data-theme="dark"] .meta-text,
+[data-theme="dark"] .time-text,
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] .label-hint,
+[data-theme="dark"] .member-count,
+[data-theme="dark"] .post-count,
+[data-theme="dark"] .search-hint,
+[data-theme="dark"] .empty-text {
+  color: var(--text-secondary) !important;
+}
+
+/* --- 占位符文字 --- */
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder,
+[data-theme="dark"] .el-input__inner::placeholder,
+[data-theme="dark"] .el-textarea__inner::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+/* --- 链接颜色 --- */
+[data-theme="dark"] a {
+  color: var(--color-primary) !important;
+}
+[data-theme="dark"] a:hover {
+  color: var(--color-primary-light) !important;
+}
+
+/* ============================================================
+ * 4. 边框颜色覆盖 — 浅色 → 深色
+ * ============================================================ */
+
+[data-theme="dark"] .post-card,
+[data-theme="dark"] .community-card,
+[data-theme="dark"] .draft-card,
+[data-theme="dark"] .comment-card,
+[data-theme="dark"] .comment-list-item,
+[data-theme="dark"] .user-info-card,
+[data-theme="dark"] .community-info-card,
+[data-theme="dark"] .member-list-item,
+[data-theme="dark"] .search-result-item,
+[data-theme="dark"] .user-list-item,
+[data-theme="dark"] .hot-post-item,
+[data-theme="dark"] .hot-community-item,
+[data-theme="dark"] .hot-user-item,
+[data-theme="dark"] .voted-item {
+  border-color: var(--border-color) !important;
+}
+
+/* --- 输入框边框 --- */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+[data-theme="dark"] .community-selector,
+[data-theme="dark"] .form-input,
+[data-theme="dark"] .form-textarea {
+  border-color: var(--border-color) !important;
+  background: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] .community-selector:focus,
+[data-theme="dark"] .form-input:focus,
+[data-theme="dark"] .form-textarea:focus {
+  border-color: var(--color-primary) !important;
+}
+
+/* ============================================================
+ * 5. 特殊元素覆盖
+ * ============================================================ */
+
+/* --- 头像边框 --- */
+[data-theme="dark"] .avatar,
+[data-theme="dark"] .user-avatar,
+[data-theme="dark"] .community-avatar,
+[data-theme="dark"] .post-author-avatar,
+[data-theme="dark"] .comment-avatar {
+  border-color: var(--border-color) !important;
+}
+
+/* --- 图片占位背景 --- */
+[data-theme="dark"] .image-placeholder,
+[data-theme="dark"] .post-image-wrapper {
+  background: var(--bg-secondary) !important;
+}
+
+/* --- 分隔线 --- */
+[data-theme="dark"] .divider,
+[data-theme="dark"] .separator,
+[data-theme="dark"] hr {
+  background-color: var(--border-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* --- 加载旋转器 --- */
+[data-theme="dark"] .loading-spinner,
+[data-theme="dark"] .spinner {
+  border-color: var(--border-color) !important;
+  border-top-color: var(--color-primary) !important;
+}
+
+/* --- 滚动条 --- */
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb) !important;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary) !important;
+}
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--scrollbar-track) !important;
+}
+
+/* --- 置顶/精华/高亮标记 --- */
+[data-theme="dark"] .pinned-badge {
+  background: rgba(214, 48, 49, 0.15) !important;
+  color: #ff6b6b !important;
+}
+[data-theme="dark"] .highlighted-badge {
+  background: rgba(212, 136, 6, 0.15) !important;
+  color: #ffc107 !important;
+}
+
+/* --- 管理员标记 --- */
+[data-theme="dark"] .role-badge.admin {
+  background: rgba(255, 69, 0, 0.15) !important;
+  color: #ff6b35 !important;
+}
+
+/* --- 搜索高亮 --- */
+[data-theme="dark"] mark,
+[data-theme="dark"] .content-text mark {
+  background: rgba(255, 193, 7, 0.25) !important;
+  color: #ffc107 !important;
+}
+
+/* --- 主题切换开关 --- */
+[data-theme="dark"] .theme-switch-thumb {
+  background: var(--bg-secondary) !important;
+  color: #818cf8 !important;
+}
+
+/* --- 删除按钮 hover --- */
+[data-theme="dark"] .btn-delete,
+[data-theme="dark"] .author-action-btn.delete:hover {
+  background: rgba(234, 67, 53, 0.15) !important;
+  color: #ff6b6b !important;
+}
+
+/* --- 草稿警告提示 --- */
+[data-theme="dark"] .draft-warning {
+  background: rgba(255, 215, 0, 0.1) !important;
+  border-color: rgba(255, 215, 0, 0.3) !important;
+  color: #ffc107 !important;
+}
+
+/* --- 评论输入区 --- */
+[data-theme="dark"] .comment-input-wrapper,
+[data-theme="dark"] .pill-editor-wrapper {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* --- 评论回复编辑器 --- */
+[data-theme="dark"] .comment-reply-editor .pill-editor {
+  background: var(--bg-secondary) !important;
+}
+
+/* --- 评论展开/收起按钮 --- */
+[data-theme="dark"] .expand-toggle-btn:hover:not(:disabled) {
+  color: var(--text-primary) !important;
+}
+
+/* --- 评论操作按钮 --- */
+[data-theme="dark"] .comment-actions .el-button:hover {
+  color: var(--text-primary) !important;
+  background: transparent !important;
+}
+
+/* --- 评论骨架 --- */
+[data-theme="dark"] .comment-skeleton {
+  border-color: var(--border-color) !important;
+}
+
+/* --- 评论编辑区 --- */
+[data-theme="dark"] .comment-editing {
+  background: var(--bg-secondary) !important;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+/* --- 热度排名数字 --- */
+[data-theme="dark"] .rank-number {
+  color: var(--text-secondary) !important;
+}
+
+/* --- 搜索标签 --- */
+[data-theme="dark"] .search-tab.active,
+[data-theme="dark"] .user-tab.active {
+  background: var(--color-primary) !important;
+  color: var(--text-inverse) !important;
+}
+
+/* --- 搜索结果列表按钮 --- */
+[data-theme="dark"] .search-results-list .btn-outline {
+  background: transparent !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* --- Trending 页面内容区 --- */
+[data-theme="dark"] .trending-content,
+[data-theme="dark"] .trending-page .content-area {
+  background: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* --- 登录页 --- */
+[data-theme="dark"] .login-container {
+  background: var(--bg-primary) !important;
+}
+[data-theme="dark"] .login-card {
+  background: var(--bg-card) !important;
+}
+[data-theme="dark"] .login-card input,
+[data-theme="dark"] .login-card .input-wrapper input {
+  background: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* --- Not Found 页面 --- */
+[data-theme="dark"] .not-found-page {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* --- Element Plus 按钮在暗色模式下的文字颜色修正 --- */
+[data-theme="dark"] .el-button--text,
+[data-theme="dark"] .el-button.is-text {
+  color: var(--color-primary) !important;
+}
+[data-theme="dark"] .el-button--text:hover,
+[data-theme="dark"] .el-button.is-text:hover {
+  color: var(--color-primary-light) !important;
+  background-color: rgba(91, 163, 230, 0.1) !important;
+}
+
+/* --- Element Plus 文字组件 --- */
+[data-theme="dark"] .el-text {
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .el-text--info {
+  color: var(--text-secondary) !important;
+}
+
+/* --- 图片查看器遮罩 --- */
+[data-theme="dark"] .image-viewer-overlay {
+  background: rgba(0, 0, 0, 0.85) !important;
+}
+
+/* --- 图片查看器关闭按钮 --- */
+[data-theme="dark"] .image-viewer-close {
+  background: rgba(0, 0, 0, 0.5) !important;
+  color: var(--text-inverse) !important;
+}
+
+/* --- 文件上传区域 --- */
+[data-theme="dark"] .file-uploader {
+  border-color: var(--border-color) !important;
+}
+[data-theme="dark"] .upload-trigger {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-secondary) !important;
+}
+
+/* --- 社区表单 --- */
+[data-theme="dark"] .community-form input,
+[data-theme="dark"] .community-form textarea {
+  background: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* --- PostForm 底部栏 --- */
+[data-theme="dark"] .post-form-footer {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* --- Markdown 编辑器预览 --- */
+[data-theme="dark"] .editor-preview {
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .editor-preview h1,
+[data-theme="dark"] .editor-preview h2,
+[data-theme="dark"] .editor-preview h3,
+[data-theme="dark"] .editor-preview h4,
+[data-theme="dark"] .editor-preview h5,
+[data-theme="dark"] .editor-preview h6 {
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+[data-theme="dark"] .editor-preview blockquote {
+  border-color: var(--border-color) !important;
+  color: var(--text-secondary) !important;
+}
+[data-theme="dark"] .editor-preview a {
+  color: var(--color-primary) !important;
+}
+[data-theme="dark"] .editor-preview table {
+  border-color: var(--border-color) !important;
+}
+[data-theme="dark"] .editor-preview th,
+[data-theme="dark"] .editor-preview td {
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .editor-preview th {
+  background: var(--bg-secondary) !important;
+}
+
+/* --- Markdown 内容（帖子详情） --- */
+[data-theme="dark"] .markdown-content h1,
+[data-theme="dark"] .markdown-content h2,
+[data-theme="dark"] .markdown-content h3,
+[data-theme="dark"] .markdown-content h4,
+[data-theme="dark"] .markdown-content h5,
+[data-theme="dark"] .markdown-content h6 {
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+[data-theme="dark"] .markdown-content blockquote {
+  border-color: var(--border-color) !important;
+  color: var(--text-secondary) !important;
+}
+[data-theme="dark"] .markdown-content a {
+  color: var(--color-primary) !important;
+}
+[data-theme="dark"] .markdown-content table {
+  border-color: var(--border-color) !important;
+}
+[data-theme="dark"] .markdown-content th,
+[data-theme="dark"] .markdown-content td {
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .markdown-content th {
+  background: var(--bg-secondary) !important;
+}
+[data-theme="dark"] .markdown-content img {
+  border-color: var(--border-color) !important;
+}
+
+/* --- 帖子详情操作栏 --- */
+[data-theme="dark"] .post-actions .action-btn {
+  color: var(--text-secondary) !important;
+}
+[data-theme="dark"] .post-actions .action-btn:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+/* --- 用户详情页标签 --- */
+[data-theme="dark"] .user-tabs .tab-button.active {
+  background: var(--color-primary) !important;
+  color: var(--text-inverse) !important;
+}
+
+/* ============================================================
+ * 6. 各页面容器背景
+ * ============================================================ */
+
+[data-theme="dark"] .user-detail-page,
+[data-theme="dark"] .community-detail,
+[data-theme="dark"] .community-members,
+[data-theme="dark"] .search-results-page,
+[data-theme="dark"] .my-posts-page,
+[data-theme="dark"] .my-bookmarks-page,
+[data-theme="dark"] .my-communities,
+[data-theme="dark"] .all-communities,
+[data-theme="dark"] .my-drafts-page,
+[data-theme="dark"] .community-manage-container,
+[data-theme="dark"] .trending-page {
+  background: var(--bg-primary) !important;
+}
+
+/* ============================================================
+ * 7. 兜底选择器 — 确保所有白色背景的元素都被覆盖
+ * ============================================================ */
+
+/* 所有带 card 的类名 */
+[data-theme="dark"] [class*="card"],
+[data-theme="dark"] [class*="Card"] {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* 所有带 dialog 的类名 */
+[data-theme="dark"] [class*="dialog"],
+[data-theme="dark"] [class*="Dialog"],
+[data-theme="dark"] [class*="modal"],
+[data-theme="dark"] [class*="Modal"] {
+  background-color: var(--bg-card) !important;
+}
+
+/* 所有带 dropdown 的类名 */
+[data-theme="dark"] [class*="dropdown"],
+[data-theme="dark"] [class*="Dropdown"] {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* ============================================================
+ * 8. 主内容区域背景
+ * ============================================================ */
+
+[data-theme="dark"] .layout-main {
+  background-color: var(--bg-primary) !important;
+}
+
+[data-theme="dark"] .layout-aside {
+  background-color: var(--bg-primary) !important;
+}
+
+[data-theme="dark"] .layout-header {
+  background-color: var(--bg-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .app-layout {
+  background-color: var(--bg-primary) !important;
+}
+
+/* ============================================================
+ * 9. Element Plus 深度选择器覆盖
+ * ============================================================ */
+
+[data-theme="dark"] .el-popper.is-light {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+[data-theme="dark"] .el-popper.is-light .el-popper__arrow::before {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .el-overlay-dialog {
+  background-color: var(--overlay-bg) !important;
+}
+
+[data-theme="dark"] .el-input__prefix .el-icon,
+[data-theme="dark"] .el-input__suffix .el-icon {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .el-upload-list__item {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* ============================================================
+ * 10. 搜索建议组件
+ * ============================================================ */
+
+[data-theme="dark"] .search-suggestions {
+  background: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .suggestion-item {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .suggestion-item:hover {
+  background: var(--bg-hover) !important;
+}
+
+/* ============================================================
+ * 11. body 和 #app 全屏覆盖
+ * ============================================================ */
+
+[data-theme="dark"] body {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] #app {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ============================================================
+ * 12. 强制覆盖 — 皗色模式下所有文字和背景
+ * 这些规则优先级最高，确保核心内容可见
+ * ============================================================ */
+
+/* --- 强制：所有文字颜色继承父元素 --- */
+[data-theme="dark"] .layout-main,
+[data-theme="dark"] .layout-main * {
+  color: var(--text-primary);
+}
+
+/* --- 强制：所有卡片/帖子内文字颜色 --- */
+[data-theme="dark"] .post-card,
+[data-theme="dark"] .post-card * {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .post-card .post-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .post-card .post-preview {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .post-card .community-name {
+  color: var(--color-primary) !important;
+}
+
+[data-theme="dark"] .post-card .meta-info {
+  color: var(--text-tertiary) !important;
+}
+
+[data-theme="dark"] .post-card .post-header {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .post-card .post-footer * {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .post-card .vote-action-btn,
+[data-theme="dark"] .post-card .action-btn {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .post-card .vote-action-btn:hover,
+[data-theme="dark"] .post-card .action-btn:hover {
+  color: var(--text-primary) !important;
+  background: var(--bg-hover) !important;
+}
+
+[data-theme="dark"] .post-card .comment-field {
+  background: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .post-card .comment-field::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+[data-theme="dark"] .post-card .comment-field:focus {
+  border-color: var(--color-primary) !important;
+}
+
+[data-theme="dark"] .post-card .send-btn {
+  color: var(--color-primary) !important;
+}
+
+/* --- 强制：PostList 中的帖子 --- */
+[data-theme="dark"] .post-list .post-card,
+[data-theme="dark"] .post-list .post-card * {
+  color: var(--text-primary);
+}
+
+/* --- 强制：PostDetail 页面 --- */
+[data-theme="dark"] .post-detail-card,
+[data-theme="dark"] .post-detail-card * {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .post-detail-card .post-content,
+[data-theme="dark"] .post-detail-card .markdown-content,
+[data-theme="dark"] .post-detail-card .markdown-content * {
+  color: var(--text-primary);
+}
+
+/* --- 强制：UserDetail 页面 --- */
+[data-theme="dark"] .user-info-card,
+[data-theme="dark"] .user-info-card * {
+  color: var(--text-primary);
+}
+
+/* --- 强制：CommunityDetail 页面 --- */
+[data-theme="dark"] .community-detail,
+[data-theme="dark"] .community-detail * {
+  color: var(--text-primary);
+}
+
+/* --- 强制：所有页面标题 --- */
+[data-theme="dark"] .page-header,
+[data-theme="dark"] .page-header * {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .page-header h1,
+[data-theme="dark"] .page-header h2,
+[data-theme="dark"] .page-header h3 {
+  color: var(--text-primary) !important;
+}
+
+/* --- 强制：搜索结果 --- */
+[data-theme="dark"] .search-results-page,
+[data-theme="dark"] .search-results-page * {
+  color: var(--text-primary);
+}
+
+/* --- 强制：Trending 页面 --- */
+[data-theme="dark"] .trending-page,
+[data-theme="dark"] .trending-page * {
+  color: var(--text-primary);
+}
+
+/* --- 强制：登录页面 --- */
+[data-theme="dark"] .login-container,
+[data-theme="dark"] .login-container * {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .login-card .title,
+[data-theme="dark"] .login-card .subtitle,
+[data-theme="dark"] .login-card label {
+  color: var(--text-primary) !important;
+}
+
+/* --- 强制：表单页面 --- */
+[data-theme="dark"] .create-post-container,
+[data-theme="dark"] .create-post-container *,
+[data-theme="dark"] .edit-post-container,
+[data-theme="dark"] .edit-post-container *,
+[data-theme="dark"] .create-community-container,
+[data-theme="dark"] .create-community-container * {
+  color: var(--text-primary);
+}
+
+/* --- 强制：草稿页面 --- */
+[data-theme="dark"] .my-drafts-page,
+[data-theme="dark"] .my-drafts-page * {
+  color: var(--text-primary);
+}
+
+/* --- 强制：我的帖子/收藏/社区页面 --- */
+[data-theme="dark"] .my-posts-page,
+[data-theme="dark"] .my-posts-page *,
+[data-theme="dark"] .my-bookmarks-page,
+[data-theme="dark"] .my-bookmarks-page *,
+[data-theme="dark"] .my-communities,
+[data-theme="dark"] .my-communities *,
+[data-theme="dark"] .all-communities,
+[data-theme="dark"] .all-communities * {
+  color: var(--text-primary);
+}
+
+/* --- 强制：社区成员页面 --- */
+[data-theme="dark"] .community-members,
+[data-theme="dark"] .community-members * {
+  color: var(--text-primary);
+}
+
+/* --- 强制：社区管理页面 --- */
+[data-theme="dark"] .community-manage-container,
+[data-theme="dark"] .community-manage-container * {
+  color: var(--text-primary);
+}

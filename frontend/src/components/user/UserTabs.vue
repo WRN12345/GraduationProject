@@ -1,5 +1,8 @@
 <script setup>
 import { FileText, MessageCircle, ThumbsUp, ThumbsDown } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: {
@@ -27,10 +30,10 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const tabs = [
-  { value: 'posts', label: '帖子', icon: FileText },
-  { value: 'comments', label: '评论', icon: MessageCircle },
-  { value: 'upvoted', label: '点赞', icon: ThumbsUp },
-  { value: 'downvoted', label: '点踩', icon: ThumbsDown }
+  { value: 'posts', label: t('userTabs.posts'), icon: FileText },
+  { value: 'comments', label: t('userTabs.comments'), icon: MessageCircle },
+  { value: 'upvoted', label: t('userTabs.upvoted'), icon: ThumbsUp },
+  { value: 'downvoted', label: t('userTabs.downvoted'), icon: ThumbsDown }
 ]
 
 const selectTab = (tab) => {
@@ -112,7 +115,7 @@ const hasCount = (tabValue) => {
 
 .tab-item.active {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .tab-label {
@@ -140,7 +143,7 @@ const hasCount = (tabValue) => {
 
 .tab-item.active .tab-count {
   background: rgba(255, 255, 255, 0.25);
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 /* 响应式 */

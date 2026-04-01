@@ -2,7 +2,7 @@
   <div class="post-detail-container">
     <div v-if="loading" class="loading">
       <div class="spinner"></div>
-      <p>加载中...</p>
+      <p>{{ $t('postDetail.loading') }}</p>
     </div>
 
     <div v-else-if="post" class="post-detail-card">
@@ -11,19 +11,19 @@
         <!-- 社区信息 -->
         <div class="community-info">
           <span class="community-icon">👾</span>
-          <a class="community-name" @click="goToCommunity">{{ post.community?.name || '未知社区' }}</a>
+          <a class="community-name" @click="goToCommunity">{{ post.community?.name || $t('postDetail.unknownCommunity') }}</a>
           <span class="separator">•</span>
           <span class="post-time">{{ formatTime(post.created_at) }}</span>
 
           <!-- 作者专属操作按钮 - 编辑和删除 -->
           <div v-if="canEdit || canDelete" class="author-actions">
-            <button v-if="canEdit" class="author-action-btn" @click="handleEdit" title="编辑帖子">
+            <button v-if="canEdit" class="author-action-btn" @click="handleEdit" :title="$t('postDetail.editPost')">
               <Edit2 :size="14" />
-              <span>编辑</span>
+              <span>{{ $t('common.edit') }}</span>
             </button>
-            <button v-if="canDelete" class="author-action-btn delete" @click="handleDelete" title="删除帖子">
+            <button v-if="canDelete" class="author-action-btn delete" @click="handleDelete" :title="$t('postDetail.deletePost')">
               <Trash2 :size="14" />
-              <span>删除</span>
+              <span>{{ $t('common.delete') }}</span>
             </button>
           </div>
         </div>
@@ -33,11 +33,11 @@
           <div class="status-badges" v-if="post.is_pinned || post.is_highlighted">
             <span v-if="post.is_pinned" class="status-badge pinned-badge">
               <Pin :size="16" />
-              <span>置顶</span>
+              <span>{{ $t('postDetail.pinned') }}</span>
             </span>
             <span v-if="post.is_highlighted" class="status-badge highlighted-badge">
               <Star :size="16" />
-              <span>精华</span>
+              <span>{{ $t('postDetail.highlighted') }}</span>
             </span>
           </div>
           <h1 class="post-title">{{ post.title }}</h1>
@@ -53,11 +53,11 @@
           />
           <div v-else class="author-avatar">{{ avatarText }}</div>
           <div class="author-details">
-            <div class="author-name">{{ post.author?.username || '匿名用户' }}</div>
+            <div class="author-name">{{ post.author?.username || $t('postDetail.anonymousUser') }}</div>
             <div class="post-meta">
-              <span>{{ post.score || 0 }} 分</span>
+              <span>{{ post.score || 0 }} {{ $t('postDetail.score') }}</span>
               <span class="separator">•</span>
-              <span>{{ post.upvotes || 0 }} 赞</span>
+              <span>{{ post.upvotes || 0 }} {{ $t('postDetail.upvotes') }}</span>
             </div>
           </div>
         </div>
@@ -97,7 +97,7 @@
                 <span class="file-name">{{ attachment.file_name }}</span>
                 <span class="file-size">{{ formatFileSize(attachment.file_size) }}</span>
               </div>
-              <button class="download-btn" @click="downloadFile(attachment)">下载</button>
+              <button class="download-btn" @click="downloadFile(attachment)">{{ $t('postDetail.download') }}</button>
             </div>
           </div>
         </div>
@@ -129,7 +129,7 @@
             />
 
             <!-- 转发按钮 -->
-            <button class="action-btn" title="转发">
+            <button class="action-btn" :title="$t('postDetail.share')">
               <Share2 :size="18" />
             </button>
           </div>
@@ -139,19 +139,19 @@
             <el-dropdown trigger="click" @command="handleModeratorCommand">
               <button class="moderator-dropdown-btn" :disabled="loadingPin || loadingHighlight">
                 <Settings :size="16" />
-                <span v-if="loadingPin || loadingHighlight">处理中...</span>
-                <span v-else>版主操作</span>
+                <span v-if="loadingPin || loadingHighlight">{{ $t('postDetail.processing') }}</span>
+                <span v-else>{{ $t('postDetail.moderatorActions') }}</span>
                 <ChevronDown :size="14" />
               </button>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item :command="'pin'">
                     <Pin :size="14" />
-                    <span>{{ post.is_pinned ? '取消置顶' : '置顶帖子' }}</span>
+                    <span>{{ post.is_pinned ? $t('postDetail.unpin') : $t('postDetail.pinPost') }}</span>
                   </el-dropdown-item>
                   <el-dropdown-item :command="'highlight'">
                     <Star :size="14" />
-                    <span>{{ post.is_highlighted ? '取消精华' : '设为精华' }}</span>
+                    <span>{{ post.is_highlighted ? $t('postDetail.unhighlight') : $t('postDetail.setHighlight') }}</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -167,7 +167,7 @@
     </div>
 
     <div v-else class="error-state">
-      <p>帖子不存在或已被删除</p>
+      <p>{{ $t('postDetail.postNotFound') }}</p>
     </div>
   </div>
 </template>
@@ -175,6 +175,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { Edit2, Trash2, Pin, Star, Share2, Settings, ChevronDown, Play } from 'lucide-vue-next'
 import { ElMessageBox, ElMessage, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus'
 import { client } from '@/api/client'
@@ -183,6 +184,10 @@ import { useUserStore } from '@/stores/user'
 import CommentTree from '@/components/comment/CommentTree.vue'
 import VoteButtons from '@/components/VoteButtons.vue'
 import BookmarkButton from '@/components/BookmarkButton.vue'
+import { useFormatTime } from '@/composables/useFormatTime'
+
+const { t } = useI18n()
+const { formatTime } = useFormatTime()
 
 const route = useRoute()
 const router = useRouter()
@@ -208,7 +213,7 @@ const renderedContent = computed(() => {
     return marked(post.value.content)
   } catch (error) {
     console.error('Markdown 渲染错误:', error)
-    return '<p>渲染错误</p>'
+    return `<p>${t('postDetail.renderError')}</p>`
   }
 })
 
@@ -252,20 +257,6 @@ const goToCommunity = () => {
   }
 }
 
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '未知时间'
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = (now - date) / 1000 // 秒
-
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
-
-  return date.toLocaleDateString('zh-CN')
-}
 
 // 切换视频播放/暂停
 const toggleVideoPlay = (event) => {
@@ -317,11 +308,11 @@ const handleVoteChange = (state) => {
 // 删除帖子
 const handleDelete = () => {
   ElMessageBox.confirm(
-    '确定要删除这篇帖子吗？操作不可逆',
-    '确认删除',
+    t('postDetail.confirmDelete'),
+    t('postDetail.confirmDeleteTitle'),
     {
-      confirmButtonText: '确认删除',
-      cancelButtonText: '取消',
+      confirmButtonText: t('postDetail.confirmDeleteBtn'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning',
       center: true,
       customClass: 'delete-confirm-box',
@@ -334,10 +325,10 @@ const handleDelete = () => {
       await client.DELETE('/v1/posts/{post_id}', {
         params: { path: { post_id: post.value.id } }
       })
-      ElMessage.success('删除成功')
+      ElMessage.success(t('postDetail.deleteSuccess'))
       router.push('/')
     } catch (error) {
-      ElMessage.error('删除失败')
+      ElMessage.error(t('postDetail.deleteFailed'))
     }
   }).catch(() => {
     // 用户取消
@@ -367,11 +358,11 @@ const handleTogglePin = async () => {
     if (response.data) {
       // 更新本地状态
       post.value.is_pinned = newState
-      ElMessage.success(newState ? '帖子已置顶' : '已取消置顶')
+      ElMessage.success(newState ? t('postDetail.pinSuccess') : t('postDetail.unpinSuccess'))
     }
   } catch (error) {
     console.error('置顶操作失败:', error)
-    ElMessage.error('操作失败，请稍后重试')
+    ElMessage.error(t('postDetail.operationFailed'))
   } finally {
     loadingPin.value = false
   }
@@ -404,11 +395,11 @@ const handleToggleHighlight = async () => {
     if (response.data) {
       // 更新本地状态
       post.value.is_highlighted = newState
-      ElMessage.success(newState ? '已设置精华' : '已取消精华')
+      ElMessage.success(newState ? t('postDetail.highlightSuccess') : t('postDetail.unhighlightSuccess'))
     }
   } catch (error) {
     console.error('精华操作失败:', error)
-    ElMessage.error('操作失败，请稍后重试')
+    ElMessage.error(t('postDetail.operationFailed'))
   } finally {
     loadingHighlight.value = false
   }
@@ -491,7 +482,7 @@ onMounted(() => {
 .post-detail-card {
   max-width: 800px;
   margin: 0 auto;
-  background: #ffffff;
+  background: var(--bg-card);
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
@@ -631,7 +622,7 @@ onMounted(() => {
   height: 36px;
   border-radius: 50%;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -974,7 +965,7 @@ onMounted(() => {
 
 .play-button:hover {
   transform: scale(1.1);
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .play-button :deep(svg) {
@@ -983,7 +974,7 @@ onMounted(() => {
 
 .file-attachment {
   padding: 14px;
-  background: white;
+  background: var(--bg-card);
   border-radius: 10px;
   border: 1px solid #eee;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -1016,7 +1007,7 @@ onMounted(() => {
 .download-btn {
   padding: 8px 16px;
   background: #0079d3;
-  color: white;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   font-size: 14px;
@@ -1031,7 +1022,7 @@ onMounted(() => {
 
 .comments-section {
   padding: 24px;
-  background: #ffffff;
+  background: var(--bg-card);
 }
 
 .comments-placeholder {

@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router'
 import { Award, Star, FileText, MessageCircle } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { HotUser } from '@/composables/useTrending'
 
 const props = defineProps<{
@@ -10,6 +11,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const { t } = useI18n()
 
 // 彩虹色卡
 const rainbowColors = [
@@ -36,10 +38,10 @@ const getHotColor = (hotRank: number, maxRank: number) => {
 
 // 热度等级计算（保留用于 tooltip）
 const getHotLevel = (percentage: number) => {
-  if (percentage >= 80) return { label: '极热', color: '#ff0000' }
-  if (percentage >= 50) return { label: '热门', color: '#ff7f00' }
-  if (percentage >= 20) return { label: '上升', color: '#00ff00' }
-  return { label: '普通', color: '#0000ff' }
+  if (percentage >= 80) return { label: t('hotUsers.extremelyHot'), color: '#ff0000' }
+  if (percentage >= 50) return { label: t('hotUsers.hot'), color: '#ff7f00' }
+  if (percentage >= 20) return { label: t('hotUsers.rising'), color: '#00ff00' }
+  return { label: t('hotUsers.normal'), color: '#0000ff' }
 }
 
 // 计算最大热度值
@@ -62,7 +64,7 @@ const goToUser = (username: string) => {
 // 格式化数字
 const formatNumber = (num: number) => {
   if (num >= 10000) {
-    return (num / 10000).toFixed(1) + '万'
+    return (num / 10000).toFixed(1) + t('common.tenThousand')
   }
   if (num >= 1000) {
     return (num / 1000).toFixed(1) + 'k'
@@ -124,12 +126,12 @@ const getTooltipData = (user: HotUser) => {
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
-      <p>加载中...</p>
+      <p>{{ t('common.loading') }}</p>
     </div>
 
     <!-- 空状态 -->
     <div v-else-if="users.length === 0" class="empty-state">
-      <p>暂无活跃用户</p>
+      <p>{{ t('hotUsers.noActiveUsers') }}</p>
     </div>
 
     <!-- 列表内容 -->
@@ -285,7 +287,7 @@ const getTooltipData = (user: HotUser) => {
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 10px;
   cursor: pointer;
@@ -315,7 +317,7 @@ const getTooltipData = (user: HotUser) => {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  color: #ffffff;
+  color: var(--text-inverse);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
@@ -357,7 +359,7 @@ const getTooltipData = (user: HotUser) => {
 }
 
 .avatar-placeholder {
-  color: #ffffff;
+  color: var(--text-inverse);
   font-size: 14px;
   font-weight: 600;
 }
@@ -430,7 +432,7 @@ const getTooltipData = (user: HotUser) => {
   position: fixed;
   transform: translate(-50%, -100%);
   background-color: #1c1c1c;
-  color: #ffffff;
+  color: var(--text-inverse);
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 12px;

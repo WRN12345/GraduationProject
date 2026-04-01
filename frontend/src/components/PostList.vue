@@ -3,13 +3,13 @@
     <!-- 加载状态 -->
     <div v-if="loading && posts.length === 0" class="loading-state">
       <div class="spinner"></div>
-      <p>加载中...</p>
+      <p>{{ t('main.loading') }}</p>
     </div>
 
     <!-- 错误状态 -->
     <div v-else-if="error" class="error-state">
       <p>{{ error }}</p>
-      <button class="retry-btn" @click="loadPosts(true)">重试</button>
+      <button class="retry-btn" @click="loadPosts(true)">{{ t('main.retry') }}</button>
     </div>
 
     <!-- 空状态 -->
@@ -43,19 +43,19 @@
             <div v-else class="author-avatar">{{ getAvatarText(post) }}</div>
             <span class="community-icon">👾</span>
             <span class="community-name" @click.stop="goToCommunity(post.community?.id)">
-              {{ post.community?.name || '未知社区' }}
+              {{ post.community?.name || t('main.unknownCommunity') }}
             </span>
-            <span class="meta-info">· 由 {{ post.author?.username || '匿名用户' }} 发布 · {{ formatTime(post.created_at) }}</span>
+            <span class="meta-info">· {{ t('main.postedBy', { user: post.author?.username || t('common.anonymousUser') }) }} · {{ formatTime(post.created_at) }}</span>
           </div>
 
           <div class="post-title-row">
             <!-- 状态标识 -->
             <div class="status-badges">
               <span v-if="post.is_pinned" class="status-badge pinned-badge">
-                📌 置顶
+                📌 {{ t('postCard.pinned') }}
               </span>
               <span v-if="post.is_highlighted" class="status-badge highlighted-badge">
-                ⭐ 精华
+                ⭐ {{ t('postCard.highlighted') }}
               </span>
             </div>
             <h3 class="post-title">{{ post.title }}</h3>
@@ -95,11 +95,11 @@
 
             <!-- 右侧：评论 转发 -->
             <div class="footer-right">
-              <button class="action-btn" title="评论" @click.stop="goToPost(post.id)">
+              <button class="action-btn" :title="t('postCard.comment')" @click.stop="goToPost(post.id)">
                 <MessageCircle :size="18" />
                 <span>{{ post.comment_count || 0 }}</span>
               </button>
-              <button class="action-btn" title="转发">
+              <button class="action-btn" :title="t('postCard.share')">
                 <Share2 :size="18" />
               </button>
             </div>
@@ -111,10 +111,10 @@
               <input
                 type="text"
                 v-model="commentInputs[post.id]"
-                placeholder="善语结善缘，恶语伤人心"
+                :placeholder="t('main.commentPlaceholder')"
                 class="comment-field"
               />
-              <button class="send-btn" title="发送" :disabled="!commentInputs[post.id]?.trim()">
+              <button class="send-btn" :title="t('main.send')" :disabled="!commentInputs[post.id]?.trim()">
                 <Send :size="16" />
               </button>
             </div>
@@ -129,13 +129,13 @@
           @click="loadMore"
           :disabled="loading"
         >
-          <span v-if="loading">加载中...</span>
-          <span v-else>加载更多</span>
+          <span v-if="loading">{{ t('main.loading') }}</span>
+          <span v-else>{{ t('main.loadMore') }}</span>
         </button>
       </div>
 
       <div v-else-if="posts.length > 0" class="no-more">
-        <p>已经到底了</p>
+        <p>{{ t('main.noMore') }}</p>
       </div>
     </div>
   </div>
@@ -159,6 +159,11 @@ import { client } from '@/api/client'
 import { marked } from 'marked'
 import VoteButtons from '@/components/VoteButtons.vue'
 import BookmarkButton from '@/components/BookmarkButton.vue'
+import { useFormatTime } from '@/composables/useFormatTime'
+import { useI18n } from 'vue-i18n'
+
+const { formatTime } = useFormatTime()
+const { t } = useI18n()
 
 const props = defineProps({
   communityId: {
@@ -171,11 +176,11 @@ const props = defineProps({
   },
   emptyTitle: {
     type: String,
-    default: '还没有帖子'
+    default: ''
   },
   emptyMessage: {
     type: String,
-    default: '成为第一个发布内容的人吧！'
+    default: ''
   }
 })
 
@@ -212,20 +217,6 @@ const handleAvatarError = (event, postId) => {
   event.target.style.display = 'none'
 }
 
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '未知时间'
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = (now - date) / 1000 // 秒
-
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
-
-  return date.toLocaleDateString('zh-CN')
-}
 
 // 渲染 Markdown（预览，只显示前200个字符）
 const renderPreview = (content) => {
@@ -286,7 +277,7 @@ const loadPosts = async (reset = false) => {
     }
   } catch (err) {
     console.error('[PostList] 加载失败:', err)
-    error.value = '加载失败，请稍后重试'
+    error.value = t('main.loadError')
   } finally {
     loading.value = false
   }
@@ -389,7 +380,7 @@ defineExpose({
 .retry-btn {
   padding: 10px 24px;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   cursor: pointer;
@@ -417,7 +408,7 @@ defineExpose({
 
 /* 帖子卡片 - 统一灰色细边框 */
 .post-card {
-  background: #fff;
+  background: var(--bg-card);
   border: 0.5px solid #e0e0e0;
   border-radius: 8px;
   margin-bottom: 16px;
@@ -501,7 +492,7 @@ defineExpose({
   height: 24px;
   border-radius: 50%;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -625,7 +616,7 @@ defineExpose({
 }
 
 .comment-input:focus-within {
-  background: #fff;
+  background: var(--bg-card);
   border-color: #0079d3;
   box-shadow: 0 0 0 2px rgba(0, 121, 211, 0.1);
 }
@@ -676,7 +667,7 @@ defineExpose({
 
 .load-more-btn {
   padding: 12px 32px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #0079d3;
   border-radius: 24px;
   color: #0079d3;
@@ -688,7 +679,7 @@ defineExpose({
 
 .load-more-btn:hover:not(:disabled) {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .load-more-btn:disabled {

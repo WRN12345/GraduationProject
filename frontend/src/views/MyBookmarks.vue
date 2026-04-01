@@ -2,14 +2,14 @@
   <div class="my-bookmarks-page">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h1>我的收藏</h1>
-      <p class="subtitle">{{ total }} 个收藏</p>
+      <h1>{{ t('myBookmarks.title') }}</h1>
+      <p class="subtitle">{{ t('myBookmarks.count', { count: total }) }}</p>
     </div>
 
     <!-- 加载状态 -->
     <div v-if="loading && posts.length === 0" class="loading-state">
       <div class="spinner"></div>
-      <p>加载中...</p>
+      <p>{{ t('common.loading') }}</p>
     </div>
 
     <!-- 空状态 -->
@@ -17,9 +17,9 @@
       <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
       </svg>
-      <h3>还没有收藏</h3>
-      <p>收藏你感兴趣的帖子，方便以后查看</p>
-      <el-button type="primary" @click="goToHome">浏览帖子</el-button>
+      <h3>{{ t('myBookmarks.noBookmarks') }}</h3>
+      <p>{{ t('myBookmarks.bookmarkTip') }}</p>
+      <el-button type="primary" @click="goToHome">{{ t('myBookmarks.browsePosts') }}</el-button>
     </div>
 
     <!-- 帖子列表 -->
@@ -34,9 +34,9 @@
         <!-- 社区信息 -->
         <div class="post-header">
           <span class="community-icon">👾</span>
-          <span class="community-name">{{ post.community?.name || '未知社区' }}</span>
+          <span class="community-name">{{ post.community?.name || t('main.unknownCommunity') }}</span>
           <span class="meta-info">
-            · 由 {{ post.author?.username || '匿名用户' }} 发布
+            · {{ t('main.postedBy', { user: post.author?.username || t('common.anonymousUser') }) }}
             · {{ formatTime(post.created_at) }}
           </span>
         </div>
@@ -74,13 +74,13 @@
       <!-- 加载更多 -->
       <div v-if="hasMore && !loading" class="load-more">
         <el-button @click="loadMore" :loading="loadingMore">
-          加载更多
+          {{ t('main.loadMore') }}
         </el-button>
       </div>
 
       <div v-if="loading && posts.length > 0" class="loading-more">
         <div class="spinner"></div>
-        <p>加载中...</p>
+        <p>{{ t('common.loading') }}</p>
       </div>
     </div>
   </div>
@@ -93,8 +93,12 @@ import { client } from '@/api/client'
 import VoteButtons from '@/components/VoteButtons.vue'
 import BookmarkButton from '@/components/BookmarkButton.vue'
 import { ElMessage } from 'element-plus'
+import { useFormatTime } from '@/composables/useFormatTime'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
+const { formatTime } = useFormatTime()
+const { t } = useI18n()
 
 // 响应式数据
 const posts = ref([])
@@ -105,20 +109,6 @@ const hasMore = ref(false)
 const loading = ref(false)
 const loadingMore = ref(false)
 
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '未知时间'
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = (now - date) / 1000 // 秒
-
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
-
-  return date.toLocaleDateString('zh-CN')
-}
 
 // 去除 HTML 标签
 const stripHtml = (html) => {
@@ -144,8 +134,8 @@ const fetchBookmarks = async () => {
     total.value = response.data.total
     hasMore.value = response.data.has_more
   } catch (error) {
-    console.error('获取收藏失败:', error)
-    ElMessage.error('获取收藏失败')
+    console.error('fetch bookmarks failed:', error)
+    ElMessage.error(t('myBookmarks.fetchFailed'))
   } finally {
     loading.value = false
   }
@@ -169,8 +159,8 @@ const loadMore = async () => {
     posts.value.push(...response.data.items)
     hasMore.value = response.data.has_more
   } catch (error) {
-    console.error('加载更多失败:', error)
-    ElMessage.error('加载更多失败')
+    console.error('load more bookmarks failed:', error)
+    ElMessage.error(t('myBookmarks.loadMoreFailed'))
     skip.value -= limit.value // 回退 skip
   } finally {
     loadingMore.value = false
@@ -252,7 +242,7 @@ onMounted(() => {
 }
 
 .post-card {
-  background: white;
+  background: var(--bg-card);
   border: 1px solid #edf1f5;
   border-radius: 8px;
   padding: 16px;

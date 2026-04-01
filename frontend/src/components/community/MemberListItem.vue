@@ -1,9 +1,13 @@
 <script setup>
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { Calendar, Award } from 'lucide-vue-next'
 import MemberActions from './MemberActions.vue'
+import { useFormatTime } from '@/composables/useFormatTime'
 
 const router = useRouter()
+const { t } = useI18n()
+const { formatTime } = useFormatTime()
 
 const props = defineProps({
   member: {
@@ -40,21 +44,14 @@ const handleAvatarError = (event) => {
 
 // 获取角色名称
 const getRoleName = (role) => {
-  const map = { 2: '版主', 1: '管理员', 0: '成员', '-1': '已封禁' }
-  return map[role] || '成员'
+  const keyMap = { 2: 'memberListItem.owner', 1: 'memberListItem.admin', 0: 'memberListItem.member', '-1': 'memberListItem.banned' }
+  return t(keyMap[role] || 'memberListItem.unknown')
 }
 
 // 获取角色样式类
 const getRoleClass = (role) => {
   const map = { 2: 'owner', 1: 'admin', 0: 'member', '-1': 'banned' }
   return map[role] || 'member'
-}
-
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '未知'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('zh-CN')
 }
 </script>
 
@@ -85,7 +82,7 @@ const formatTime = (dateString) => {
       <div class="member-stats">
         <span class="stat-item">
           <Calendar :size="14" />
-          加入于 {{ formatTime(member.joined_at) }}
+          {{ t('common.joinedAt', { time: formatTime(member.joined_at) }) }}
         </span>
         <span class="stat-item">
           <Award :size="14" />
@@ -115,7 +112,7 @@ const formatTime = (dateString) => {
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   cursor: pointer;
@@ -149,7 +146,7 @@ const formatTime = (dateString) => {
   height: 100%;
   border-radius: 50%;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   align-items: center;
   justify-content: center;
   font-size: 18px;

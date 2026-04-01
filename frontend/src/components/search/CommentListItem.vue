@@ -3,6 +3,9 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { MessageCircle, ArrowRight } from 'lucide-vue-next'
 import { marked } from 'marked'
+import { useFormatTime } from '@/composables/useFormatTime'
+
+const { formatTime } = useFormatTime()
 
 const props = defineProps({
   comment: {
@@ -55,20 +58,6 @@ const handleAvatarError = (event) => {
   }
 }
 
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '未知时间'
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = (now - date) / 1000 // 秒
-
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
-
-  return date.toLocaleDateString('zh-CN')
-}
 
 // 渲染评论内容（去除 HTML 标签）
 const renderContent = (content) => {
@@ -144,7 +133,7 @@ const renderContent = (content) => {
 
 <style scoped>
 .comment-list-item {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   padding: 16px;
@@ -187,7 +176,7 @@ const renderContent = (content) => {
   height: 100%;
   border-radius: 50%;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   align-items: center;
   justify-content: center;
   font-size: 12px;

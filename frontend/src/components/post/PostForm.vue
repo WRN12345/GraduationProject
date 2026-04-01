@@ -3,12 +3,12 @@
     <!-- 草稿恢复提示 -->
     <div v-if="!isEditMode && hasDraft && !draftRestored" class="draft-notice">
       <Info :size="16" />
-      <span>检测到未保存的草稿</span>
+      <span>{{ t('postForm.draftDetected') }}</span>
       <button type="button" class="draft-btn" @click="restoreDraft">
-        恢复草稿
+        {{ t('postForm.restoreDraft') }}
       </button>
       <button type="button" class="draft-btn draft-btn-discard" @click="discardDraft">
-        放弃
+        {{ t('postForm.discard') }}
       </button>
     </div>
 
@@ -17,7 +17,7 @@
       <div class="form-group">
         <label class="form-label">
           <Users :size="16" />
-          <span>选择社区</span>
+          <span>{{ t('postForm.selectCommunity') }}</span>
         </label>
         <CommunitySelector
           v-model="form.community_id"
@@ -34,14 +34,14 @@
       <div class="form-group">
         <label class="form-label">
           <FileText :size="16" />
-          <span>标题</span>
+          <span>{{ t('postForm.title') }}</span>
         </label>
         <input
           ref="titleInputRef"
           v-model="form.title"
           type="text"
           class="form-input"
-          placeholder="给帖子起一个吸引人的标题..."
+          :placeholder="t('postForm.titlePlaceholder')"
           maxlength="300"
           @blur="validateTitle"
         />
@@ -57,7 +57,7 @@
       <div class="form-group">
         <label class="form-label">
           <AlignLeft :size="16" />
-          <span>内容</span>
+          <span>{{ t('postForm.content') }}</span>
         </label>
         <MarkdownEditor
           ref="markdownEditorRef"
@@ -72,8 +72,8 @@
       <div class="form-group">
         <label class="form-label">
           <Paperclip :size="16" />
-          <span>附件</span>
-          <span class="label-hint">(可选)</span>
+          <span>{{ t('postForm.attachment') }}</span>
+          <span class="label-hint">{{ t('postForm.optional') }}</span>
         </label>
         <FileUploader
           ref="fileUploaderRef"
@@ -86,10 +86,10 @@
         />
         <div v-if="isUploading" class="uploading-status">
           <span class="upload-spinner"></span>
-          正在上传附件...
+          {{ t('postForm.uploadingAttachment') }}
         </div>
         <div v-else-if="attachmentList.length > 0" class="attachment-summary">
-          已选择 {{ attachmentList.length }} 个附件
+          {{ t('postForm.selectedAttachments', { count: attachmentList.length }) }}
         </div>
       </div>
     </div>
@@ -102,7 +102,7 @@
         @click="handleCancel"
         :disabled="isSubmitting"
       >
-        取消
+        {{ t('postForm.cancel') }}
       </button>
       <div class="footer-right">
         <button
@@ -113,8 +113,8 @@
           :disabled="isSavingDraft || (!form.title && !form.content)"
         >
           <Save :size="16" v-if="!isSavingDraft" />
-          <span v-if="isSavingDraft">保存中...</span>
-          <span v-else>保存草稿</span>
+          <span v-if="isSavingDraft">{{ t('postForm.saving') }}</span>
+          <span v-else>{{ t('postForm.saveDraft') }}</span>
         </button>
         <button
           type="submit"
@@ -122,8 +122,8 @@
           :disabled="isSubmitting || !isFormValid"
         >
           <Send :size="16" v-if="!isSubmitting" />
-          <span v-if="isSubmitting">{{ isEditMode ? '更新中...' : '发布中...' }}</span>
-          <span v-else>{{ isEditMode ? '更新帖子' : '发布帖子' }}</span>
+          <span v-if="isSubmitting">{{ isEditMode ? t('postForm.updating') : t('postForm.publishing') }}</span>
+          <span v-else>{{ isEditMode ? t('postForm.updatePost') : t('postForm.publishPost') }}</span>
         </button>
       </div>
     </div>
@@ -133,6 +133,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { Users, FileText, AlignLeft, Info, Send, Paperclip, Save } from 'lucide-vue-next'
 import { client } from '@/api/client'
 import { useDraft } from '@/composables/useDraft'
@@ -142,6 +143,7 @@ import MarkdownEditor from './MarkdownEditor.vue'
 import FileUploader from '@/components/upload/FileUploader.vue'
 
 const route = useRoute()
+const { t } = useI18n()
 const emit = defineEmits(['submit', 'cancel'])
 
 const props = defineProps({
@@ -209,15 +211,15 @@ const isFormValid = computed(() => {
 // 验证方法
 const validateTitle = () => {
   if (!form.title.trim()) {
-    errors.value.title = '标题不能为空'
+    errors.value.title = t('postForm.titleEmpty')
     return false
   }
   if (form.title.trim().length < 5) {
-    errors.value.title = '标题至少需要 5 个字符'
+    errors.value.title = t('postForm.titleMinLength')
     return false
   }
   if (form.title.trim().length > 300) {
-    errors.value.title = '标题不能超过 300 个字符'
+    errors.value.title = t('postForm.titleMaxLength')
     return false
   }
   delete errors.value.title
@@ -226,11 +228,11 @@ const validateTitle = () => {
 
 const validateContent = () => {
   if (!form.content.trim()) {
-    errors.value.content = '内容不能为空'
+    errors.value.content = t('postForm.contentEmpty')
     return false
   }
   if (form.content.trim().length < 10) {
-    errors.value.content = '内容至少需要 10 个字符'
+    errors.value.content = t('postForm.contentMinLength')
     return false
   }
   delete errors.value.content
@@ -239,7 +241,7 @@ const validateContent = () => {
 
 const validateCommunity = () => {
   if (!form.community_id) {
-    errors.value.community_id = '请选择一个社区'
+    errors.value.community_id = t('postForm.communityRequired')
     return false
   }
   delete errors.value.community_id
@@ -289,7 +291,7 @@ const discardDraft = () => {
 // 保存草稿到服务端
 const handleSaveDraft = async () => {
   if (!form.title && !form.content) {
-    ElMessage.warning('请至少输入标题或内容')
+    ElMessage.warning(t('postForm.titleOrContentRequired'))
     return
   }
 
@@ -316,13 +318,13 @@ const handleSaveDraft = async () => {
     if (result.data) {
       currentDraftId.value = result.data.id
       clearDraft() // 清除本地草稿（已保存到服务端）
-      ElMessage.success('草稿已保存')
+      ElMessage.success(t('postForm.draftSaved'))
     } else if (result.error) {
-      ElMessage.error('保存草稿失败: ' + (result.error.message || '未知错误'))
+      ElMessage.error(t('postForm.saveDraftFailedWith', { error: result.error.message || '' }))
     }
   } catch (error) {
     console.error('[表单] 保存草稿失败:', error)
-    ElMessage.error('保存草稿失败')
+    ElMessage.error(t('postForm.saveDraftFailed'))
   } finally {
     isSavingDraft.value = false
   }
@@ -351,7 +353,7 @@ const onSubmit = async () => {
   // 检查是否有正在上传的文件
   if (isUploading.value) {
     console.log('[表单] 文件上传中，请稍候')
-    alert('请等待文件上传完成')
+    alert(t('postForm.waitUploadComplete'))
     return
   }
 
@@ -408,12 +410,12 @@ const onSubmit = async () => {
         emit('submit', response.data.id)
       } else {
         console.error('[表单] 发布失败，没有返回数据')
-        alert('发布失败，请重试')
+        alert(t('postForm.publishFailed'))
       }
     }
   } catch (error) {
     console.error('[表单] 发布失败:', error)
-    alert('发布失败：' + (error?.message || '未知错误'))
+    alert(t('postForm.publishFailedWith', { error: error?.message || '' }))
   } finally {
     isSubmitting.value = false
   }
@@ -423,7 +425,7 @@ const onSubmit = async () => {
 const handleCancel = async () => {
   // 如果有内容且不是编辑模式，询问是否保存草稿
   if (!props.isEditMode && (form.title || form.content)) {
-    if (confirm('是否将内容保存为草稿？')) {
+    if (confirm(t('postForm.saveDraftConfirm'))) {
       await handleSaveDraft()
     }
   }
@@ -529,7 +531,7 @@ onUnmounted(() => {
 .draft-btn {
   padding: 4px 12px;
   background: #f57c00;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -581,7 +583,7 @@ onUnmounted(() => {
 
 .form-input:focus {
   border-color: #0079d3;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .form-input::placeholder {
@@ -655,7 +657,7 @@ onUnmounted(() => {
 
 .btn-primary {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .btn-primary:hover:not(:disabled) {

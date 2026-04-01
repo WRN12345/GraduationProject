@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router'
 import { Award, Users, FileText } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { HotCommunity } from '@/composables/useTrending'
 
 const props = defineProps<{
@@ -10,6 +11,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const { t } = useI18n()
 
 // 彩虹色卡
 const rainbowColors = [
@@ -36,10 +38,10 @@ const getHotColor = (hotRank: number, maxRank: number) => {
 
 // 热度等级计算（保留用于 tooltip）
 const getHotLevel = (percentage: number) => {
-  if (percentage >= 80) return { label: '极热', color: '#ff0000' }
-  if (percentage >= 50) return { label: '热门', color: '#ff7f00' }
-  if (percentage >= 20) return { label: '上升', color: '#00ff00' }
-  return { label: '普通', color: '#0000ff' }
+  if (percentage >= 80) return { label: t('hotPosts.extremelyHot'), color: '#ff0000' }
+  if (percentage >= 50) return { label: t('hotPosts.hot'), color: '#ff7f00' }
+  if (percentage >= 20) return { label: t('hotPosts.rising'), color: '#00ff00' }
+  return { label: t('hotPosts.normal'), color: '#0000ff' }
 }
 
 // 计算最大热度值
@@ -61,7 +63,7 @@ const goToCommunity = (communityId: number) => {
 
 // 截断描述文本
 const truncateDescription = (description: string | undefined, maxLength = 50) => {
-  if (!description) return '暂无描述'
+  if (!description) return t('common.noDescription')
   return description.length > maxLength
     ? description.substring(0, maxLength) + '...'
     : description
@@ -70,7 +72,7 @@ const truncateDescription = (description: string | undefined, maxLength = 50) =>
 // 格式化数字
 const formatNumber = (num: number) => {
   if (num >= 10000) {
-    return (num / 10000).toFixed(1) + '万'
+    return (num / 10000).toFixed(1) + t('common.tenThousand')
   }
   if (num >= 1000) {
     return (num / 1000).toFixed(1) + 'k'
@@ -111,12 +113,12 @@ const getTooltipData = (community: HotCommunity) => {
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
-      <p>加载中...</p>
+      <p>{{ t('common.loading') }}</p>
     </div>
 
     <!-- 空状态 -->
     <div v-else-if="communities.length === 0" class="empty-state">
-      <p>暂无热门社区</p>
+      <p>{{ t('hotCommunities.noHotCommunities') }}</p>
     </div>
 
     <!-- 列表内容 -->
@@ -262,7 +264,7 @@ const getTooltipData = (community: HotCommunity) => {
   align-items: center;
   gap: 16px;
   padding: 12px 16px;
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 10px;
   cursor: pointer;
@@ -292,7 +294,7 @@ const getTooltipData = (community: HotCommunity) => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  color: #ffffff;
+  color: var(--text-inverse);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
@@ -391,7 +393,7 @@ const getTooltipData = (community: HotCommunity) => {
   position: fixed;
   transform: translate(-50%, -100%);
   background-color: #1c1c1c;
-  color: #ffffff;
+  color: var(--text-inverse);
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 12px;

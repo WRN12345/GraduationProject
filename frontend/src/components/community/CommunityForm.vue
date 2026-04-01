@@ -6,17 +6,17 @@
       <div class="form-group">
         <label class="form-label">
           <Hash :size="16" />
-          <span>社区名称</span>
+          <span>{{ t('communityForm.nameLabel') }}</span>
         </label>
         <input
           v-model="form.name"
           type="text"
           class="form-input"
-          placeholder="输入社区名称..."
+          :placeholder="t('communityForm.namePlaceholder')"
           maxlength="50"
         />
         <div class="input-footer">
-          <span class="hint">社区名称将作为 URL 的一部分，创建后不可修改</span>
+          <span class="hint">{{ t('communityForm.nameHint') }}</span>
           <span class="char-count">{{ form.name.length }}/50</span>
         </div>
         <span v-if="errors.name" class="error-message">{{ errors.name }}</span>
@@ -26,17 +26,17 @@
       <div class="form-group">
         <label class="form-label">
           <FileText :size="16" />
-          <span>社区描述</span>
+          <span>{{ t('communityForm.descriptionLabel') }}</span>
         </label>
         <textarea
           v-model="form.description"
           class="form-textarea"
-          placeholder="描述这个社区的宗旨和内容..."
+          :placeholder="t('communityForm.descriptionPlaceholder')"
           rows="4"
           maxlength="500"
         ></textarea>
         <div class="input-footer">
-          <span class="hint">简明扼要地告诉用户这个社区是关于什么的</span>
+          <span class="hint">{{ t('communityForm.descriptionHint') }}</span>
           <span class="char-count">{{ form.description.length }}/500</span>
         </div>
         <span v-if="errors.description" class="error-message">{{ errors.description }}</span>
@@ -50,7 +50,7 @@
           @click="handleCancel"
           :disabled="isSubmitting"
         >
-          取消
+          {{ t('communityForm.cancel') }}
         </button>
         <button
           type="submit"
@@ -58,8 +58,8 @@
           :disabled="isSubmitting || !isFormValid"
         >
           <Send :size="16" v-if="!isSubmitting" />
-          <span v-if="isSubmitting">{{ isEdit ? '保存中...' : '创建中...' }}</span>
-          <span v-else>{{ isEdit ? '保存修改' : '创建社区' }}</span>
+          <span v-if="isSubmitting">{{ isEdit ? t('communityForm.saving') : t('communityForm.creating') }}</span>
+          <span v-else>{{ isEdit ? t('communityForm.saveChanges') : t('communityForm.createCommunity') }}</span>
         </button>
       </div>
     </form>
@@ -69,7 +69,10 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import { Hash, FileText, Send } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import { client } from '@/api/client'
+
+const { t } = useI18n()
 
 const props = defineProps({
   isEdit: {
@@ -104,21 +107,21 @@ const isFormValid = computed(() => {
 // 验证方法
 const validateName = () => {
   if (!form.name.trim()) {
-    errors.value.name = '社区名称不能为空'
+    errors.value.name = t('communityForm.nameRequired')
     return false
   }
   if (form.name.trim().length < 3) {
-    errors.value.name = '社区名称至少需要 3 个字符'
+    errors.value.name = t('communityForm.nameMinLength')
     return false
   }
   if (form.name.trim().length > 50) {
-    errors.value.name = '社区名称不能超过 50 个字符'
+    errors.value.name = t('communityForm.nameMaxLength')
     return false
   }
   // 只允许字母、数字、中文和下划线
   const nameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9_]+$/
   if (!nameRegex.test(form.name.trim())) {
-    errors.value.name = '社区名称只能包含中文、字母、数字和下划线'
+    errors.value.name = t('communityForm.nameInvalidChars')
     return false
   }
   delete errors.value.name
@@ -127,15 +130,15 @@ const validateName = () => {
 
 const validateDescription = () => {
   if (!form.description.trim()) {
-    errors.value.description = '社区描述不能为空'
+    errors.value.description = t('communityForm.descriptionRequired')
     return false
   }
   if (form.description.trim().length < 10) {
-    errors.value.description = '社区描述至少需要 10 个字符'
+    errors.value.description = t('communityForm.descriptionMinLength')
     return false
   }
   if (form.description.trim().length > 500) {
-    errors.value.description = '社区描述不能超过 500 个字符'
+    errors.value.description = t('communityForm.descriptionMaxLength')
     return false
   }
   delete errors.value.description
@@ -209,7 +212,7 @@ const handleCancel = () => {
 }
 
 .form-body {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
@@ -246,7 +249,7 @@ const handleCancel = () => {
 .form-input:focus,
 .form-textarea:focus {
   border-color: #0079d3;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .form-input::placeholder,
@@ -315,7 +318,7 @@ const handleCancel = () => {
 
 .btn-primary {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .btn-primary:hover:not(:disabled) {

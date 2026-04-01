@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ArrowBigUp, Calendar, MessageCircle, FileText, ThumbsUp, ThumbsDown, Edit, Camera } from 'lucide-vue-next'
 import { client } from '@/api/client'
 import { marked } from 'marked'
@@ -9,6 +10,10 @@ import BookmarkButton from '@/components/BookmarkButton.vue'
 import UserTabs from '@/components/user/UserTabs.vue'
 import ProfileEditDialog from '@/components/user/ProfileEditDialog.vue'
 import { useUserStore } from '@/stores/user'
+import { useFormatTime } from '@/composables/useFormatTime'
+
+const { formatTime } = useFormatTime()
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -75,26 +80,12 @@ const handleAvatarError = (event) => {
   event.target.style.display = 'none'
 }
 
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '未知时间'
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = (now - date) / 1000
-
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
-
-  return date.toLocaleDateString('zh-CN')
-}
 
 // 格式化加入时间
 const formatJoinTime = (dateString) => {
-  if (!dateString) return '未知'
+  if (!dateString) return t('userDetail.unknown')
   const date = new Date(dateString)
-  return `加入于 ${date.getFullYear()}年${date.getMonth() + 1}月`
+  return t('userDetail.joinedIn', { year: date.getFullYear(), month: date.getMonth() + 1 })
 }
 
 // 渲染 Markdown（预览，只显示前200个字符）
@@ -128,11 +119,11 @@ const fetchUserInfo = async () => {
       userInfo.value = response.data
       console.log('[UserDetail] 用户信息加载成功:', userInfo.value)
     } else if (response.error) {
-      throw new Error(response.error.message || '获取用户信息失败')
+      throw new Error(response.error.message || t('userDetail.fetchUserFailed'))
     }
   } catch (e) {
-    console.error('[UserDetail] 获取用户信息失败:', e)
-    userError.value = e.message || '获取用户信息失败'
+    console.error('[UserDetail] fetch user info failed:', e)
+    userError.value = e.message || t('userDetail.fetchUserFailed')
   } finally {
     userLoading.value = false
   }
@@ -175,11 +166,11 @@ const fetchUserPosts = async (reset = false) => {
       hasMore.value = newPosts.length >= pageSize
       currentPage.value++
     } else if (response.error) {
-      throw new Error(response.error.message || '获取用户帖子失败')
+      throw new Error(response.error.message || t('userDetail.fetchPostsFailed'))
     }
   } catch (e) {
-    console.error('[UserDetail] 获取用户帖子失败:', e)
-    postsError.value = e.message || '获取用户帖子失败'
+    console.error('[UserDetail] fetch user posts failed:', e)
+    postsError.value = e.message || t('userDetail.fetchPostsFailed')
   } finally {
     postsLoading.value = false
   }
@@ -222,11 +213,11 @@ const fetchUserComments = async (reset = false) => {
       hasMore.value = newComments.length >= pageSize
       currentPage.value++
     } else if (response.error) {
-      throw new Error(response.error.message || '获取用户评论失败')
+      throw new Error(response.error.message || t('userDetail.fetchCommentsFailed'))
     }
   } catch (e) {
-    console.error('[UserDetail] 获取用户评论失败:', e)
-    commentsError.value = e.message || '获取用户评论失败'
+    console.error('[UserDetail] fetch user comments failed:', e)
+    commentsError.value = e.message || t('userDetail.fetchCommentsFailed')
   } finally {
     commentsLoading.value = false
   }
@@ -269,11 +260,11 @@ const fetchUserUpvoted = async (reset = false) => {
       hasMore.value = newItems.length >= pageSize
       currentPage.value++
     } else if (response.error) {
-      throw new Error(response.error.message || '获取用户点赞失败')
+      throw new Error(response.error.message || t('userDetail.fetchUpvotedFailed'))
     }
   } catch (e) {
-    console.error('[UserDetail] 获取用户点赞失败:', e)
-    upvotedError.value = e.message || '获取用户点赞失败'
+    console.error('[UserDetail] fetch user upvoted failed:', e)
+    upvotedError.value = e.message || t('userDetail.fetchUpvotedFailed')
   } finally {
     upvotedLoading.value = false
   }
@@ -316,11 +307,11 @@ const fetchUserDownvoted = async (reset = false) => {
       hasMore.value = newItems.length >= pageSize
       currentPage.value++
     } else if (response.error) {
-      throw new Error(response.error.message || '获取用户点踩失败')
+      throw new Error(response.error.message || t('userDetail.fetchDownvotedFailed'))
     }
   } catch (e) {
-    console.error('[UserDetail] 获取用户点踩失败:', e)
-    downvotedError.value = e.message || '获取用户点踩失败'
+    console.error('[UserDetail] fetch user downvoted failed:', e)
+    downvotedError.value = e.message || t('userDetail.fetchDownvotedFailed')
   } finally {
     downvotedLoading.value = false
   }
@@ -476,7 +467,7 @@ onMounted(() => {
     <!-- 用户信息卡片 -->
     <div v-if="userLoading" class="loading-state">
       <div class="spinner"></div>
-      <p>加载中...</p>
+      <p>{{ t('common.loading') }}</p>
     </div>
 
     <div v-else-if="userError" class="error-state">
@@ -513,15 +504,15 @@ onMounted(() => {
         <div class="user-stats">
           <div class="stat-item">
             <span class="stat-value">{{ userInfo.karma || 0 }}</span>
-            <span class="stat-label">Karma</span>
+            <span class="stat-label">{{ t('userDetail.karma') }}</span>
           </div>
           <div class="stat-item">
             <span class="stat-value">{{ userInfo.post_count || 0 }}</span>
-            <span class="stat-label">帖子</span>
+            <span class="stat-label">{{ t('userDetail.posts') }}</span>
           </div>
           <div class="stat-item">
             <span class="stat-value">{{ userInfo.comment_count || 0 }}</span>
-            <span class="stat-label">评论</span>
+            <span class="stat-label">{{ t('userDetail.comments') }}</span>
           </div>
         </div>
 
@@ -550,17 +541,17 @@ onMounted(() => {
       <div v-if="activeTab === 'posts'">
         <div v-if="currentLoading && currentData.length === 0" class="loading-state">
           <div class="spinner"></div>
-          <p>加载中...</p>
+          <p>{{ t('common.loading') }}</p>
         </div>
 
         <div v-else-if="currentError" class="error-state">
           <p>{{ currentError }}</p>
-          <button class="retry-btn" @click="retryLoad">重试</button>
+          <button class="retry-btn" @click="retryLoad">{{ t('main.retry') }}</button>
         </div>
 
         <div v-else-if="currentData.length === 0" class="empty-state">
           <FileText :size="64" />
-          <h3>还没有发布任何帖子</h3>
+          <h3>{{ t('userDetail.noPosts') }}</h3>
         </div>
 
         <div v-else>
@@ -581,10 +572,10 @@ onMounted(() => {
                 <div v-else class="author-avatar">{{ getAvatarText(post) }}</div>
                 <span class="community-icon">👾</span>
                 <span class="community-name" @click.stop="goToCommunity(post.community?.id)">
-                  {{ post.community?.name || '未知社区' }}
+                  {{ post.community?.name || t('main.unknownCommunity') }}
                 </span>
                 <span class="meta-info">
-                  · 由 {{ post.author?.username || '匿名用户' }} 发布 · {{ formatTime(post.created_at) }}
+                  · {{ t('main.postedBy', { user: post.author?.username || t('common.anonymousUser') }) }} · {{ formatTime(post.created_at) }}
                 </span>
               </div>
 
@@ -618,7 +609,7 @@ onMounted(() => {
                 </div>
 
                 <div class="footer-right">
-                  <button class="action-btn" title="评论" @click.stop="goToPost(post.id)">
+                  <button class="action-btn" :title="t('postCard.comment')" @click.stop="goToPost(post.id)">
                     <MessageCircle :size="18" />
                     <span>{{ post.comment_count || 0 }}</span>
                   </button>
@@ -629,13 +620,13 @@ onMounted(() => {
 
           <div v-if="hasMore" class="load-more-container">
             <button class="load-more-btn" @click="loadMore" :disabled="currentLoading">
-              <span v-if="currentLoading">加载中...</span>
-              <span v-else>加载更多</span>
+              <span v-if="currentLoading">{{ t('common.loading') }}</span>
+              <span v-else>{{ t('main.loadMore') }}</span>
             </button>
           </div>
 
           <div v-else-if="currentData.length > 0" class="no-more">
-            <p>已经到底了</p>
+            <p>{{ t('main.noMore') }}</p>
           </div>
         </div>
       </div>
@@ -644,17 +635,17 @@ onMounted(() => {
       <div v-if="activeTab === 'comments'">
         <div v-if="currentLoading && currentData.length === 0" class="loading-state">
           <div class="spinner"></div>
-          <p>加载中...</p>
+          <p>{{ t('common.loading') }}</p>
         </div>
 
         <div v-else-if="currentError" class="error-state">
           <p>{{ currentError }}</p>
-          <button class="retry-btn" @click="retryLoad">重试</button>
+          <button class="retry-btn" @click="retryLoad">{{ t('main.retry') }}</button>
         </div>
 
         <div v-else-if="currentData.length === 0" class="empty-state">
           <MessageCircle :size="64" />
-          <h3>还没有发表任何评论</h3>
+          <h3>{{ t('userDetail.noComments') }}</h3>
         </div>
 
         <div v-else>
@@ -671,7 +662,7 @@ onMounted(() => {
                 @error="handleAvatarError"
               />
               <div v-else class="author-avatar">{{ getAvatarText({ author: comment.author }) }}</div>
-              <span class="author-name">{{ comment.author?.username || '匿名用户' }}</span>
+              <span class="author-name">{{ comment.author?.username || t('common.anonymousUser') }}</span>
               <span class="comment-time">{{ formatTime(comment.created_at) }}</span>
             </div>
 
@@ -681,7 +672,7 @@ onMounted(() => {
 
             <div class="comment-post-link" @click="goToPost(comment.post_id)">
               <FileText :size="14" />
-              <span>{{ comment.post?.title || '查看原帖' }}</span>
+              <span>{{ comment.post?.title || t('userDetail.viewOriginal') }}</span>
             </div>
 
             <div class="comment-footer">
@@ -696,13 +687,13 @@ onMounted(() => {
 
           <div v-if="hasMore" class="load-more-container">
             <button class="load-more-btn" @click="loadMore" :disabled="currentLoading">
-              <span v-if="currentLoading">加载中...</span>
-              <span v-else>加载更多</span>
+              <span v-if="currentLoading">{{ t('common.loading') }}</span>
+              <span v-else>{{ t('main.loadMore') }}</span>
             </button>
           </div>
 
           <div v-else-if="currentData.length > 0" class="no-more">
-            <p>已经到底了</p>
+            <p>{{ t('main.noMore') }}</p>
           </div>
         </div>
       </div>
@@ -711,17 +702,17 @@ onMounted(() => {
       <div v-if="activeTab === 'upvoted'">
         <div v-if="currentLoading && currentData.length === 0" class="loading-state">
           <div class="spinner"></div>
-          <p>加载中...</p>
+          <p>{{ t('common.loading') }}</p>
         </div>
 
         <div v-else-if="currentError" class="error-state">
           <p>{{ currentError }}</p>
-          <button class="retry-btn" @click="retryLoad">重试</button>
+          <button class="retry-btn" @click="retryLoad">{{ t('main.retry') }}</button>
         </div>
 
         <div v-else-if="currentData.length === 0" class="empty-state">
           <ThumbsUp :size="64" />
-          <h3>还没有点赞任何内容</h3>
+          <h3>{{ t('userDetail.noUpvoted') }}</h3>
         </div>
 
         <div v-else>
@@ -738,20 +729,20 @@ onMounted(() => {
               <div class="voted-title">{{ item.title || item.content?.substring(0, 100) }}</div>
               <div class="voted-meta">
                 <span>{{ formatTime(item.created_at) }}</span>
-                <span class="voted-type">{{ item.post_id ? '帖子' : '评论' }}</span>
+                <span class="voted-type">{{ item.post_id ? t('userDetail.post') : t('userDetail.comment') }}</span>
               </div>
             </div>
           </div>
 
           <div v-if="hasMore" class="load-more-container">
             <button class="load-more-btn" @click="loadMore" :disabled="currentLoading">
-              <span v-if="currentLoading">加载中...</span>
-              <span v-else>加载更多</span>
+              <span v-if="currentLoading">{{ t('common.loading') }}</span>
+              <span v-else>{{ t('main.loadMore') }}</span>
             </button>
           </div>
 
           <div v-else-if="currentData.length > 0" class="no-more">
-            <p>已经到底了</p>
+            <p>{{ t('main.noMore') }}</p>
           </div>
         </div>
       </div>
@@ -760,17 +751,17 @@ onMounted(() => {
       <div v-if="activeTab === 'downvoted'">
         <div v-if="currentLoading && currentData.length === 0" class="loading-state">
           <div class="spinner"></div>
-          <p>加载中...</p>
+          <p>{{ t('common.loading') }}</p>
         </div>
 
         <div v-else-if="currentError" class="error-state">
           <p>{{ currentError }}</p>
-          <button class="retry-btn" @click="retryLoad">重试</button>
+          <button class="retry-btn" @click="retryLoad">{{ t('main.retry') }}</button>
         </div>
 
         <div v-else-if="currentData.length === 0" class="empty-state">
           <ThumbsDown :size="64" />
-          <h3>还没有点踩任何内容</h3>
+          <h3>{{ t('userDetail.noDownvoted') }}</h3>
         </div>
 
         <div v-else>
@@ -787,20 +778,20 @@ onMounted(() => {
               <div class="voted-title">{{ item.title || item.content?.substring(0, 100) }}</div>
               <div class="voted-meta">
                 <span>{{ formatTime(item.created_at) }}</span>
-                <span class="voted-type">{{ item.post_id ? '帖子' : '评论' }}</span>
+                <span class="voted-type">{{ item.post_id ? t('userDetail.post') : t('userDetail.comment') }}</span>
               </div>
             </div>
           </div>
 
           <div v-if="hasMore" class="load-more-container">
             <button class="load-more-btn" @click="loadMore" :disabled="currentLoading">
-              <span v-if="currentLoading">加载中...</span>
-              <span v-else>加载更多</span>
+              <span v-if="currentLoading">{{ t('common.loading') }}</span>
+              <span v-else>{{ t('main.loadMore') }}</span>
             </button>
           </div>
 
           <div v-else-if="currentData.length > 0" class="no-more">
-            <p>已经到底了</p>
+            <p>{{ t('main.noMore') }}</p>
           </div>
         </div>
       </div>
@@ -824,7 +815,7 @@ onMounted(() => {
 
 /* 用户信息卡片 */
 .user-info-card {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   padding: 24px;
@@ -850,7 +841,7 @@ onMounted(() => {
   height: 120px;
   border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -877,7 +868,7 @@ onMounted(() => {
   height: 120px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.5);
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1001,7 +992,7 @@ onMounted(() => {
 .retry-btn {
   padding: 10px 24px;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   cursor: pointer;
@@ -1023,7 +1014,7 @@ onMounted(() => {
 
 /* 帖子卡片 */
 .post-card {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   margin-bottom: 16px;
@@ -1054,7 +1045,7 @@ onMounted(() => {
   height: 24px;
   border-radius: 50%;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1138,7 +1129,7 @@ onMounted(() => {
 
 /* 评论卡片 */
 .comment-card {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   padding: 16px;
@@ -1211,7 +1202,7 @@ onMounted(() => {
 
 /* 点赞/点踩项 */
 .voted-item {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   padding: 16px;
@@ -1231,7 +1222,7 @@ onMounted(() => {
   height: 32px;
   border-radius: 50%;
   background: #ff6b35;
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1278,7 +1269,7 @@ onMounted(() => {
 
 .load-more-btn {
   padding: 12px 32px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #0079d3;
   border-radius: 24px;
   color: #0079d3;
@@ -1290,7 +1281,7 @@ onMounted(() => {
 
 .load-more-btn:hover:not(:disabled) {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .load-more-btn:disabled {

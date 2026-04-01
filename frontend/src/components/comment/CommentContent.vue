@@ -15,27 +15,27 @@
       <div class="comment-body">
         <!-- 用户名和时间 -->
         <div class="comment-header">
-          <span class="comment-author">{{ comment.author_name || '匿名用户' }}</span>
+          <span class="comment-author">{{ comment.author_name || t('comment.anonymousUser') }}</span>
           <span class="comment-time">{{ formattedTime }}</span>
-          <span v-if="comment.is_edited" class="comment-edited">(已编辑)</span>
+          <span v-if="comment.is_edited" class="comment-edited">({{ t('comment.edited') }})</span>
         </div>
 
         <!-- 评论文本 -->
         <div v-if="isDeleted" class="comment-deleted">
-          <el-text type="info">此评论已被删除</el-text>
+          <el-text type="info">{{ t('comment.deleted') }}</el-text>
         </div>
         <div v-else-if="isEditing" class="comment-editing">
           <el-input
             v-model="editContent"
             type="textarea"
             :rows="3"
-            placeholder="编辑评论..."
+            :placeholder="t('comment.editPlaceholder')"
             @keydown.ctrl.enter="saveEdit"
           />
           <div class="edit-actions">
-            <el-button size="small" @click="$emit('cancel')">取消</el-button>
+            <el-button size="small" @click="$emit('cancel')">{{ t('comment.cancel') }}</el-button>
             <el-button type="primary" size="small" @click="saveEdit" :loading="saving">
-              保存 (Ctrl+Enter)
+              {{ t('comment.save') }}
             </el-button>
           </div>
         </div>
@@ -58,9 +58,12 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { marked } from 'marked'
 import { ElMessage } from 'element-plus'
 import VoteButton from './VoteButton.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   comment: {
@@ -112,18 +115,18 @@ const formattedTime = computed(() => {
   const now = new Date()
   const diff = (now - date) / 1000
 
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`
-  if (diff < 604800) return `${Math.floor(diff / 86400)} 天前`
+  if (diff < 60) return t('common.justNow')
+  if (diff < 3600) return t('common.minutesAgo', { n: Math.floor(diff / 60) })
+  if (diff < 86400) return t('common.hoursAgo', { n: Math.floor(diff / 3600) })
+  if (diff < 604800) return t('common.daysAgo', { n: Math.floor(diff / 86400) })
 
-  return date.toLocaleDateString('zh-CN')
+  return date.toLocaleDateString()
 })
 
 // 保存编辑
 const saveEdit = async () => {
   if (!editContent.value.trim()) {
-    ElMessage.warning('评论内容不能为空')
+    ElMessage.warning(t('comment.contentRequired'))
     return
   }
 
@@ -162,7 +165,7 @@ const handleAvatarError = (event) => {
   height: 32px;
   border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
