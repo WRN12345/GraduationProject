@@ -356,7 +356,7 @@ onMounted(() => {
 .retry-btn {
   padding: 10px 24px;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   cursor: pointer;

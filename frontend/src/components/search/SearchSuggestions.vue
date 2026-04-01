@@ -196,7 +196,7 @@ const getAvatarText = (user) => {
   top: 100%;
   left: 0;
   right: 0;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-top: none;
   border-bottom-left-radius: 24px;
@@ -403,7 +403,7 @@ const getAvatarText = (user) => {
   height: 100%;
   border-radius: 50%;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   align-items: center;
   justify-content: center;
   font-size: 14px;

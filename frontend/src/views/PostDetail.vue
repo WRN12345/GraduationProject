@@ -482,7 +482,7 @@ onMounted(() => {
 .post-detail-card {
   max-width: 800px;
   margin: 0 auto;
-  background: #ffffff;
+  background: var(--bg-card);
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
@@ -622,7 +622,7 @@ onMounted(() => {
   height: 36px;
   border-radius: 50%;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -965,7 +965,7 @@ onMounted(() => {
 
 .play-button:hover {
   transform: scale(1.1);
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .play-button :deep(svg) {
@@ -974,7 +974,7 @@ onMounted(() => {
 
 .file-attachment {
   padding: 14px;
-  background: white;
+  background: var(--bg-card);
   border-radius: 10px;
   border: 1px solid #eee;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -1007,7 +1007,7 @@ onMounted(() => {
 .download-btn {
   padding: 8px 16px;
   background: #0079d3;
-  color: white;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   font-size: 14px;
@@ -1022,7 +1022,7 @@ onMounted(() => {
 
 .comments-section {
   padding: 24px;
-  background: #ffffff;
+  background: var(--bg-card);
 }
 
 .comments-placeholder {

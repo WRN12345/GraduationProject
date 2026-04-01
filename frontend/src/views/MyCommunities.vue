@@ -203,7 +203,7 @@ onMounted(() => {
   gap: 8px;
   padding: 10px 20px;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   font-size: 14px;
@@ -246,7 +246,7 @@ onMounted(() => {
 .btn-explore {
   padding: 10px 24px;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   cursor: pointer;
@@ -284,7 +284,7 @@ onMounted(() => {
 }
 
 .community-card {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 12px;
   padding: 20px;
@@ -334,7 +334,7 @@ onMounted(() => {
   gap: 4px;
   padding: 4px 10px;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   font-size: 11px;

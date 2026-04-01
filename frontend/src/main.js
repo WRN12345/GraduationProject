@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import './assets/css/base.css'
 import 'element-plus/dist/index.css'
+import './assets/css/dark-mode.css'
 
 import router from './router'
 import i18n from './i18n'

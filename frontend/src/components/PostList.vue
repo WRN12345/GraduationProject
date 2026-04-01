@@ -380,7 +380,7 @@ defineExpose({
 .retry-btn {
   padding: 10px 24px;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   cursor: pointer;
@@ -408,7 +408,7 @@ defineExpose({
 
 /* 帖子卡片 - 统一灰色细边框 */
 .post-card {
-  background: #fff;
+  background: var(--bg-card);
   border: 0.5px solid #e0e0e0;
   border-radius: 8px;
   margin-bottom: 16px;
@@ -492,7 +492,7 @@ defineExpose({
   height: 24px;
   border-radius: 50%;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -616,7 +616,7 @@ defineExpose({
 }
 
 .comment-input:focus-within {
-  background: #fff;
+  background: var(--bg-card);
   border-color: #0079d3;
   box-shadow: 0 0 0 2px rgba(0, 121, 211, 0.1);
 }
@@ -667,7 +667,7 @@ defineExpose({
 
 .load-more-btn {
   padding: 12px 32px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #0079d3;
   border-radius: 24px;
   color: #0079d3;
@@ -679,7 +679,7 @@ defineExpose({
 
 .load-more-btn:hover:not(:disabled) {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .load-more-btn:disabled {

@@ -204,7 +204,7 @@ const goToPost = (postId) => {
 .retry-btn {
   padding: 10px 24px;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   cursor: pointer;
@@ -228,7 +228,7 @@ const goToPost = (postId) => {
 
 .load-more-btn {
   padding: 12px 32px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #0079d3;
   border-radius: 24px;
   color: #0079d3;
@@ -240,7 +240,7 @@ const goToPost = (postId) => {
 
 .load-more-btn:hover:not(:disabled) {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .load-more-btn:disabled {

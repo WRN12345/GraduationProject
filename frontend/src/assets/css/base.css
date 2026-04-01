@@ -1,10 +1,13 @@
-body.app{
-    max-width: 580.px;
-    margin: 0 auto;
-    font-family: Arial, sans-serif;
-    padding: 20.px;
-    background-color: #f9f9f9;
-    color: #333;
-    height: 100%;
+/* base.css — 通用基础样式 */
+/* 主题 CSS 变量统一在 App.vue 中定义，这里只保留 body.app 的特殊样式 */
 
+body.app {
+  max-width: 580px;
+  margin: 0 auto;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  height: 100%;
+  transition: background-color 0.3s, color 0.3s;
 }

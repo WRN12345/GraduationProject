@@ -167,7 +167,7 @@ const handleSubmit = async () => {
 .login-card {
   width: 100%;
   max-width: 400px;
-  background: #ffffff;
+  background: var(--bg-card);
   border-radius: 16px;
   padding: 40px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
@@ -233,7 +233,7 @@ input {
 }
 
 input:focus {
-  background-color: #fff;
+  background-color: var(--bg-card);
   box-shadow: 0 0 0 2px #e8eaf0;
 }
 
@@ -241,7 +241,7 @@ input:focus {
   width: 100%;
   padding: 14px;
   background-color: #1a1a1a;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   font-size: 16px;

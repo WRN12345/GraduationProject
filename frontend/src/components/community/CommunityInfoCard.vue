@@ -156,7 +156,7 @@ const handleJoin = async () => {
 
 <style scoped>
 .community-info-card {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 12px;
   padding: 24px;
@@ -248,7 +248,7 @@ const handleJoin = async () => {
 
 .btn-primary {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .btn-primary:hover {

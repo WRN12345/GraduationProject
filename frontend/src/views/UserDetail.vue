@@ -815,7 +815,7 @@ onMounted(() => {
 
 /* 用户信息卡片 */
 .user-info-card {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   padding: 24px;
@@ -841,7 +841,7 @@ onMounted(() => {
   height: 120px;
   border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -868,7 +868,7 @@ onMounted(() => {
   height: 120px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.5);
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -992,7 +992,7 @@ onMounted(() => {
 .retry-btn {
   padding: 10px 24px;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   cursor: pointer;
@@ -1014,7 +1014,7 @@ onMounted(() => {
 
 /* 帖子卡片 */
 .post-card {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   margin-bottom: 16px;
@@ -1045,7 +1045,7 @@ onMounted(() => {
   height: 24px;
   border-radius: 50%;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1129,7 +1129,7 @@ onMounted(() => {
 
 /* 评论卡片 */
 .comment-card {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   padding: 16px;
@@ -1202,7 +1202,7 @@ onMounted(() => {
 
 /* 点赞/点踩项 */
 .voted-item {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   padding: 16px;
@@ -1222,7 +1222,7 @@ onMounted(() => {
   height: 32px;
   border-radius: 50%;
   background: #ff6b35;
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1269,7 +1269,7 @@ onMounted(() => {
 
 .load-more-btn {
   padding: 12px 32px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #0079d3;
   border-radius: 24px;
   color: #0079d3;
@@ -1281,7 +1281,7 @@ onMounted(() => {
 
 .load-more-btn:hover:not(:disabled) {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .load-more-btn:disabled {

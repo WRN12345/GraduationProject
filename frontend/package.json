@@ -13,6 +13,7 @@
     "openapi": "npx openapi-typescript http://localhost:8000/openapi.json -o ./api/schema.d.ts"
   },
   "dependencies": {
+    "@vueuse/core": "^12.0.0",
     "axios": "^1.13.2",
     "element-plus": "^2.12.0",
     "lucide-vue-next": "^0.563.0",

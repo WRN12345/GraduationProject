@@ -163,7 +163,7 @@ onMounted(() => {
 .retry-btn {
   padding: 10px 24px;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   cursor: pointer;
@@ -200,7 +200,7 @@ onMounted(() => {
 }
 
 .community-card {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 12px;
   padding: 20px;

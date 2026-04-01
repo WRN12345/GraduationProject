@@ -258,7 +258,7 @@ defineExpose({
 
 .toolbar-btn.active {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .toolbar-divider {
@@ -271,7 +271,7 @@ defineExpose({
 .editor-container {
   display: flex;
   min-height: 300px;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .editor-container.preview-mode {
@@ -299,7 +299,7 @@ defineExpose({
   font-size: 14px;
   line-height: 1.6;
   color: #1c1c1c;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .editor-textarea::placeholder {
@@ -308,7 +308,7 @@ defineExpose({
 
 .editor-preview-wrapper {
   padding: 16px;
-  background: #fff;
+  background: var(--bg-card);
   overflow-y: auto;
 }
 

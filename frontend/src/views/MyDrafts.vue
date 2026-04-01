@@ -343,7 +343,7 @@ onMounted(() => {
 .btn-primary {
   padding: 10px 24px;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   font-size: 14px;
@@ -358,7 +358,7 @@ onMounted(() => {
 
 /* 草稿卡片 */
 .draft-card {
-  background: #ffffff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   padding: 16px;
@@ -467,7 +467,7 @@ onMounted(() => {
 
 .btn-publish {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .btn-publish:hover {
@@ -533,7 +533,7 @@ onMounted(() => {
 }
 
 .dialog-card {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 24px;
   width: 400px;
@@ -579,7 +579,7 @@ onMounted(() => {
 .btn-confirm-delete {
   padding: 8px 20px;
   background: #ea4335;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   font-size: 14px;

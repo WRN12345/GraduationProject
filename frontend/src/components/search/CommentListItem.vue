@@ -5,8 +5,6 @@ import { MessageCircle, ArrowRight } from 'lucide-vue-next'
 import { marked } from 'marked'
 import { useFormatTime } from '@/composables/useFormatTime'
 
-import { useFormatTime } from '@/composables/useFormatTime'
-
 const { formatTime } = useFormatTime()
 
 const props = defineProps({
@@ -135,7 +133,7 @@ const renderContent = (content) => {
 
 <style scoped>
 .comment-list-item {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   padding: 16px;
@@ -178,7 +176,7 @@ const renderContent = (content) => {
   height: 100%;
   border-radius: 50%;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   align-items: center;
   justify-content: center;
   font-size: 12px;

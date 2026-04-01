@@ -155,7 +155,7 @@ watch(searchQuery, (newVal) => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: #fff;
+  background: var(--bg-card);
   border: 2px solid #edeff1;
   border-radius: 8px;
   cursor: pointer;
@@ -209,7 +209,7 @@ watch(searchQuery, (newVal) => {
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);

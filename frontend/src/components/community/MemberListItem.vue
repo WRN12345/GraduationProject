@@ -112,7 +112,7 @@ const getRoleClass = (role) => {
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   cursor: pointer;
@@ -146,7 +146,7 @@ const getRoleClass = (role) => {
   height: 100%;
   border-radius: 50%;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   align-items: center;
   justify-content: center;
   font-size: 18px;

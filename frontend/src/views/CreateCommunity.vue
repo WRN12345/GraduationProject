@@ -66,7 +66,7 @@ const handleSubmit = (community) => {
 .create-community-card {
   width: 100%;
   max-width: 600px;
-  background: #ffffff;
+  background: var(--bg-card);
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }

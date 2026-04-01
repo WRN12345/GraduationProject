@@ -138,14 +138,14 @@ const switchLanguage = (lang) => {
           <!-- 主题切换 -->
           <div class="setting-item">
             <div class="setting-label">
-              <Sun v-if="!themeStore.isDark()" :size="16" class="setting-icon" />
+              <Sun v-if="!themeStore.isDark" :size="16" class="setting-icon" />
               <Moon v-else :size="16" class="setting-icon" />
               <span>{{ t('aside.theme') }}</span>
             </div>
             <div class="theme-switch" @click="themeStore.toggleTheme()">
-              <div class="theme-switch-track" :class="{ dark: themeStore.isDark() }">
+              <div class="theme-switch-track" :class="{ dark: themeStore.isDark }">
                 <div class="theme-switch-thumb">
-                  <Sun v-if="!themeStore.isDark()" :size="12" />
+                  <Sun v-if="!themeStore.isDark" :size="12" />
                   <Moon v-else :size="12" />
                 </div>
               </div>
@@ -387,7 +387,7 @@ const switchLanguage = (lang) => {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--bg-card);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -425,7 +425,7 @@ const switchLanguage = (lang) => {
 
 .lang-btn.active {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .lang-btn:hover:not(.active) {
@@ -434,19 +434,34 @@ const switchLanguage = (lang) => {
 }
 
 /* === 展开/收起动画 === */
-.slide-enter-active,
+.slide-enter-active {
+  transition: all 0.3s ease;
+}
+
 .slide-leave-active {
   transition: all 0.3s ease;
+}
+
+.slide-enter-from {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.slide-enter-to {
   max-height: 200px;
   opacity: 1;
 }
 
-.slide-enter-from,
+.slide-leave-from {
+  max-height: 200px;
+  opacity: 1;
+}
+
 .slide-leave-to {
   max-height: 0;
   opacity: 0;
-  padding-top: 0;
-  padding-bottom: 0;
+  overflow: hidden;
 }
 
 /* === 响应式断点 === */

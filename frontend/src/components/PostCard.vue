@@ -200,7 +200,7 @@ const hasAttachments = computed(() => {
 
 <style scoped>
 .post-card {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #f0f0f0;
   border-radius: 8px;
   margin-bottom: 12px;
@@ -316,7 +316,7 @@ const hasAttachments = computed(() => {
   height: 100%;
   border-radius: 50%;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   align-items: center;
   justify-content: center;
   font-size: 12px;
@@ -408,7 +408,7 @@ const hasAttachments = computed(() => {
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.5);
-  color: #fff;
+  color: var(--text-inverse);
   font-size: 20px;
   font-weight: 600;
 }
@@ -436,7 +436,7 @@ const hasAttachments = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
   font-size: 18px;
   transition: all 0.2s ease;
 }

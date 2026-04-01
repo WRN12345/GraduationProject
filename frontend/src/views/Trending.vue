@@ -140,7 +140,7 @@ const handleRefresh = async () => {
 }
 
 .tab-button.active {
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   color: #1c1c1c;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   font-weight: 600;
@@ -153,7 +153,7 @@ const handleRefresh = async () => {
   gap: 6px;
   padding: 8px 14px;
   background-color: #0079d3;
-  color: #ffffff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   font-size: 13px;
@@ -193,7 +193,7 @@ const handleRefresh = async () => {
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   padding: 40px 20px;
@@ -212,7 +212,7 @@ const handleRefresh = async () => {
 .retry-button {
   padding: 10px 24px;
   background-color: #0079d3;
-  color: #ffffff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   font-size: 14px;
@@ -229,7 +229,7 @@ const handleRefresh = async () => {
 
 /* 内容区域 */
 .content {
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   padding: 16px;

@@ -264,7 +264,7 @@ const getTooltipData = (community: HotCommunity) => {
   align-items: center;
   gap: 16px;
   padding: 12px 16px;
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 10px;
   cursor: pointer;
@@ -294,7 +294,7 @@ const getTooltipData = (community: HotCommunity) => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  color: #ffffff;
+  color: var(--text-inverse);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
@@ -393,7 +393,7 @@ const getTooltipData = (community: HotCommunity) => {
   position: fixed;
   transform: translate(-50%, -100%);
   background-color: #1c1c1c;
-  color: #ffffff;
+  color: var(--text-inverse);
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 12px;

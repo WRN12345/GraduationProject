@@ -115,7 +115,7 @@ onMounted(() => {
 .edit-post-card {
   width: 100%;
   max-width: 800px;
-  background: #ffffff;
+  background: var(--bg-card);
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
@@ -190,7 +190,7 @@ onMounted(() => {
 
 .btn-primary {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .btn-primary:hover {

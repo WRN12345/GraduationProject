@@ -531,7 +531,7 @@ onUnmounted(() => {
 .draft-btn {
   padding: 4px 12px;
   background: #f57c00;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -583,7 +583,7 @@ onUnmounted(() => {
 
 .form-input:focus {
   border-color: #0079d3;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .form-input::placeholder {
@@ -657,7 +657,7 @@ onUnmounted(() => {
 
 .btn-primary {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .btn-primary:hover:not(:disabled) {

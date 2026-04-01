@@ -242,7 +242,7 @@ onMounted(() => {
 }
 
 .post-card {
-  background: white;
+  background: var(--bg-card);
   border: 1px solid #edf1f5;
   border-radius: 8px;
   padding: 16px;

@@ -115,7 +115,7 @@ const hasCount = (tabValue) => {
 
 .tab-item.active {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .tab-label {
@@ -143,7 +143,7 @@ const hasCount = (tabValue) => {
 
 .tab-item.active .tab-count {
   background: rgba(255, 255, 255, 0.25);
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 /* 响应式 */

@@ -321,7 +321,7 @@ const displayPosts = computed(() => posts.value)
 .retry-btn {
   padding: 10px 24px;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   cursor: pointer;
@@ -349,7 +349,7 @@ const displayPosts = computed(() => posts.value)
 
 /* 帖子卡片 */
 .post-card {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   margin-bottom: 16px;
@@ -466,7 +466,7 @@ const displayPosts = computed(() => posts.value)
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
   font-size: 14px;
 }
 
@@ -558,7 +558,7 @@ const displayPosts = computed(() => posts.value)
 }
 
 .comment-input:focus-within {
-  background: #fff;
+  background: var(--bg-card);
   border-color: #0079d3;
   box-shadow: 0 0 0 2px rgba(0, 121, 211, 0.1);
 }
@@ -609,7 +609,7 @@ const displayPosts = computed(() => posts.value)
 
 .load-more-btn {
   padding: 12px 32px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #0079d3;
   border-radius: 24px;
   color: #0079d3;
@@ -621,7 +621,7 @@ const displayPosts = computed(() => posts.value)
 
 .load-more-btn:hover:not(:disabled) {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .load-more-btn:disabled {

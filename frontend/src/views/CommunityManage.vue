@@ -178,7 +178,7 @@ onMounted(() => {
 }
 
 .communities-section {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
@@ -293,7 +293,7 @@ onMounted(() => {
 
 .community-card:hover {
   border-color: #0079d3;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .community-icon {
@@ -338,7 +338,7 @@ onMounted(() => {
 
 /* 左侧表单区域 */
 .form-section {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);

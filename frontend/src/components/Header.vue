@@ -382,11 +382,11 @@ const handlePasswordUpdate = async () => {
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  background: #fff;
+  background: var(--bg-primary);
   position: sticky;
   top: 0;
   z-index: 2000;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-color-light);
   gap: 12px;
 }
 
@@ -435,7 +435,7 @@ const handlePasswordUpdate = async () => {
 .logo-text {
   font-size: 18px;
   font-weight: 700;
-  color: #1c1c1c;
+  color: var(--text-primary);
   letter-spacing: -0.5px;
 }
 
@@ -450,13 +450,13 @@ const handlePasswordUpdate = async () => {
 .search-wrapper.is-active .search-bar {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px var(--shadow-color);
   border-color: #0079d3;
-  background: #fff;
+  background: var(--input-bg);
 }
 
 .search-bar {
-  background: #f5f5f5;
+  background: var(--bg-tertiary);
   border-radius: 20px;
   padding: 0 14px;
   height: 36px;
@@ -469,9 +469,9 @@ const handlePasswordUpdate = async () => {
 }
 
 .search-bar:hover {
-  background: #fff;
-  border-color: #e0e0e0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: var(--input-bg);
+  border-color: var(--border-color);
+  box-shadow: 0 2px 8px var(--shadow-color);
 }
 
 .search-icon {
@@ -507,7 +507,7 @@ const handlePasswordUpdate = async () => {
   top: 100%;
   left: 0;
   right: 0;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-top: none;
   border-bottom-left-radius: 24px;
@@ -550,7 +550,7 @@ const handlePasswordUpdate = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
   flex-shrink: 0;
 }
 
@@ -621,7 +621,7 @@ const handlePasswordUpdate = async () => {
   top: calc(100% + 8px);
   left: 0;
   width: 200px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -709,7 +709,7 @@ const handlePasswordUpdate = async () => {
   height: 100%;
   border-radius: 50%;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -735,7 +735,7 @@ const handlePasswordUpdate = async () => {
   width: 10px;
   height: 10px;
   background: #46d160;
-  border: 2px solid #fff;
+  border: 2px solid var(--bg-card);
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
@@ -752,7 +752,7 @@ const handlePasswordUpdate = async () => {
   top: calc(100% + 8px);
   right: 0;
   width: 320px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid #edeff1;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -804,7 +804,7 @@ const handlePasswordUpdate = async () => {
   height: 100%;
   border-radius: 50%;
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -817,7 +817,7 @@ const handlePasswordUpdate = async () => {
   height: 12px;
   right: 0;
   bottom: 0;
-  border: 2.5px solid #fff;
+  border: 2.5px solid var(--bg-card);
 }
 
 .user-text-info {
@@ -922,7 +922,7 @@ const handlePasswordUpdate = async () => {
 .toggle-circle {
   width: 20px;
   height: 20px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 50%;
   position: absolute;
   top: 2px;

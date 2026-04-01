@@ -212,7 +212,7 @@ const handleCancel = () => {
 }
 
 .form-body {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
@@ -249,7 +249,7 @@ const handleCancel = () => {
 .form-input:focus,
 .form-textarea:focus {
   border-color: #0079d3;
-  background: #fff;
+  background: var(--bg-card);
 }
 
 .form-input::placeholder,
@@ -318,7 +318,7 @@ const handleCancel = () => {
 
 .btn-primary {
   background: #0079d3;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .btn-primary:hover:not(:disabled) {

@@ -222,12 +222,12 @@ defineExpose({
 /* 激活状态 - 输入时变蓝 */
 .send-btn-active {
   background: #0088fe;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .send-btn-active:hover:not(:disabled) {
   background: #0077ee;
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .send-btn-active:disabled {
