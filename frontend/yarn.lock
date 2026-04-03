@@ -1153,6 +1153,11 @@ magic-string@^0.30.19, magic-string@^0.30.21, magic-string@^0.30.4:
   dependencies:
     "@jridgewell/sourcemap-codec" "^1.5.5"
 
+marked@^17.0.5:
+  version "17.0.5"
+  resolved "https://registry.npmjs.org/marked/-/marked-17.0.5.tgz"
+  integrity sha512-6hLvc0/JEbRjRgzI6wnT2P1XuM1/RrrDEX0kPt0N7jGm1133g6X7DlxFasUIx+72aKAr904GTxhSLDrd5DIlZg==
+
 math-intrinsics@^1.1.0:
   version "1.1.0"
   resolved "https://registry.npmjs.org/math-intrinsics/-/math-intrinsics-1.1.0.tgz"
