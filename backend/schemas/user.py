@@ -18,6 +18,7 @@ class UserCreate(BaseModel):
     password: str = Field(..., description="密码", min_length=6, max_length=30)
     nickname: Optional[str] = Field(default=None, description="昵称")
     email: Optional[EmailStr] = Field(default=None, description="邮箱")
+    admin_register_key: Optional[str] = Field(default=None, description="管理员注册密钥（可选）")
 
 # --- 2. 更新用户模型 (Request Body) ---
 class UserUpdate(BaseModel):

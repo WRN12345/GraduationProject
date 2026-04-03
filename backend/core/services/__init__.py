@@ -28,26 +28,6 @@ from .infrastructure import (
     upload_service,
     attachment_service,
 )
-
-__all__ = [
-    # Auth
-    "auth_service",
-    "user_service",
-    # Content
-    "post_service",
-    "comment_service",
-    "vote_service",
-    "bookmark_service",
-    "community_service",
-    "membership_service",
-    "search_service",
-    "hot_content_service",
-    "draft_service",
-    # Infrastructure
-    "hot_rank_service",
-    "post_cache_service",
-    "comment_cache_service",
-    "rustfs_service",
-    "upload_service",
-    "attachment_service",
-]
+from .admin import (
+    admin_service,
+)
