@@ -5,7 +5,8 @@
       <p>{{ $t('postDetail.loading') }}</p>
     </div>
 
-    <div v-else-if="post" class="post-detail-card">
+    <div v-else-if="post" class="post-detail-layout">
+      <div class="post-detail-card">
       <!-- 帖子内容 -->
       <div class="post-content">
         <!-- 社区信息 -->
@@ -164,6 +165,12 @@
       <div class="comments-section">
         <CommentTree v-if="post" :post-id="post.id" />
       </div>
+      </div>
+
+      <!-- 目录侧边栏 -->
+      <div class="toc-sidebar">
+        <TableOfContents :headings="tocHeadings" />
+      </div>
     </div>
 
     <div v-else class="error-state">
@@ -184,6 +191,7 @@ import { useUserStore } from '@/stores/user'
 import CommentTree from '@/components/comment/CommentTree.vue'
 import VoteButtons from '@/components/VoteButtons.vue'
 import BookmarkButton from '@/components/BookmarkButton.vue'
+import TableOfContents from '@/components/TableOfContents.vue'
 import { useFormatTime } from '@/composables/useFormatTime'
 
 const { t } = useI18n()
@@ -206,9 +214,40 @@ marked.setOptions({
   gfm: true,
 })
 
+// 自定义 renderer，为标题添加 id 属性
+let headingIndex = 0
+const renderer = {
+  heading({ text, depth }) {
+    const id = `heading-${headingIndex++}`
+    return `<h${depth} id="${id}">${text}</h${depth}>`
+  }
+}
+marked.use({ renderer })
+
+// 从 markdown 内容中提取标题信息
+const tocHeadings = computed(() => {
+  if (!post.value?.content) return []
+  const content = post.value.content
+  const headings = []
+  const regex = /^(#{1,6})\s+(.+)$/gm
+  let match
+  let index = 0
+  while ((match = regex.exec(content)) !== null) {
+    headings.push({
+      id: `heading-${index}`,
+      text: match[2].replace(/[*_`~\[\]()#]/g, '').trim(),
+      level: match[1].length
+    })
+    index++
+  }
+  return headings
+})
+
 // 渲染 Markdown
 const renderedContent = computed(() => {
   if (!post.value?.content) return ''
+  // 每次渲染时重置 headingIndex，确保与 tocHeadings 的 id 一致
+  headingIndex = 0
   try {
     return marked(post.value.content)
   } catch (error) {
@@ -479,9 +518,18 @@ onMounted(() => {
   to { transform: rotate(360deg); }
 }
 
-.post-detail-card {
-  max-width: 800px;
+.post-detail-layout {
+  display: flex;
+  gap: 24px;
+  max-width: 1100px;
   margin: 0 auto;
+  align-items: flex-start;
+}
+
+.post-detail-card {
+  flex: 1;
+  min-width: 0;
+  max-width: 800px;
   background: var(--bg-card);
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
@@ -774,10 +822,14 @@ onMounted(() => {
 /* Markdown 样式 */
 .markdown-content :deep(h1),
 .markdown-content :deep(h2),
-.markdown-content :deep(h3) {
+.markdown-content :deep(h3),
+.markdown-content :deep(h4),
+.markdown-content :deep(h5),
+.markdown-content :deep(h6) {
   margin-top: 24px;
   margin-bottom: 16px;
   font-weight: 600;
+  scroll-margin-top: 72px;
 }
 
 .markdown-content :deep(h1) {
@@ -1043,6 +1095,22 @@ onMounted(() => {
 }
 
 /* 响应式 */
+@media (max-width: 1199px) {
+  .post-detail-layout {
+    flex-direction: column;
+  }
+
+  .post-detail-card {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  /* 在中等屏幕隐藏 TOC */
+  .toc-sidebar {
+    display: none;
+  }
+}
+
 @media (max-width: 639px) {
   .post-detail-container {
     padding: 16px 8px;
