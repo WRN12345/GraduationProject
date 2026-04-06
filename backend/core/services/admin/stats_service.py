@@ -11,7 +11,7 @@ from models.user import User
 from models.post import Post
 from models.comment import Comment
 from models.community import Community
-from models.audit_log import ActionType, TargetType
+from models.audit_log import AuditLog, ActionType, TargetType
 from core.audit import create_audit_log
 from core.services.admin.content_management_service import AdminErrorCode
 import logging
@@ -46,6 +46,13 @@ class StatsService:
         # 管理统计
         deleted_posts = await Post.filter(deleted_at__isnull=False).count()
         deleted_comments = await Comment.filter(deleted_at__isnull=False).count()
+        # 硬删除数从审计日志统计（硬删除后记录已从主表移除）
+        hard_deleted_posts = await AuditLog.filter(
+            action_type__in=[ActionType.HARD_DELETE_POST, ActionType.ADMIN_HARD_DELETE_POST]
+        ).count()
+        hard_deleted_comments = await AuditLog.filter(
+            action_type__in=[ActionType.HARD_DELETE_COMMENT, ActionType.ADMIN_HARD_DELETE_COMMENT]
+        ).count()
         admin_users = await User.filter(is_superuser=True).count()
         banned_users = await User.filter(is_active=False).count()
 
@@ -59,6 +66,8 @@ class StatsService:
             "today_new_comments": today_new_comments,
             "deleted_posts": deleted_posts,
             "deleted_comments": deleted_comments,
+            "hard_deleted_posts": hard_deleted_posts,
+            "hard_deleted_comments": hard_deleted_comments,
             "admin_users": admin_users,
             "banned_users": banned_users,
         }
@@ -84,19 +93,104 @@ class StatsService:
         Returns:
             dict: 分页用户列表
         """
-        from tortoise.expressions import Q
+        from tortoise import connections
 
-        query = User.all().order_by("-created_at")
+        skip = (page - 1) * page_size
 
-        # 可选筛选条件
-        if is_active is not None:
-            query = query.filter(is_active=is_active)
-        if is_superuser is not None:
-            query = query.filter(is_superuser=is_superuser)
-        if search:
-            query = query.filter(
-                Q(username__icontains=search) | Q(nickname__icontains=search)
-            )
+        # 使用 PostgreSQL 全文搜索（zhparser 中文分词，使用预计算的 search_vector 列）
+        if search and len(search.strip()) > 0:
+            # 全文搜索模式 - 使用 search_vector 列和 GIN 索引
+            sql = """
+            SELECT
+                u.id,
+                u.username,
+                u.nickname,
+                u.email,
+                u.avatar,
+                u.is_active,
+                u.is_superuser,
+                u.karma,
+                u.post_count,
+                u.comment_count,
+                u.created_at,
+                u.last_login,
+                ts_rank(u.search_vector, plainto_tsquery('zhcfg', $1)) as rank
+            FROM users u
+            WHERE u.search_vector @@ plainto_tsquery('zhcfg', $1)
+            """
+
+            params = [search.strip()]
+
+            if is_active is not None:
+                sql += " AND u.is_active = $2"
+                params.append(is_active)
+
+            if is_superuser is not None:
+                param_idx = len(params) + 1
+                sql += f" AND u.is_superuser = ${param_idx}"
+                params.append(is_superuser)
+
+            sql += " ORDER BY rank DESC, u.created_at DESC"
+            sql += f" LIMIT {page_size} OFFSET {skip}"
+
+            # 获取总数
+            count_sql = """
+            SELECT COUNT(*) as total
+            FROM users u
+            WHERE u.search_vector @@ plainto_tsquery('zhcfg', $1)
+            """
+            count_params = [search.strip()]
+
+            if is_active is not None:
+                count_sql += " AND u.is_active = $2"
+                count_params.append(is_active)
+
+            if is_superuser is not None:
+                param_idx = len(count_params) + 1
+                count_sql += f" AND u.is_superuser = ${param_idx}"
+                count_params.append(is_superuser)
+
+            results = await connections.get("default").execute_query_dict(sql, params)
+            count_result = await connections.get("default").execute_query_dict(count_sql, count_params)
+            total = count_result[0]['total'] if count_result else 0
+
+            items = []
+            for r in results:
+                items.append({
+                    "id": r.get("id"),
+                    "username": r.get("username"),
+                    "nickname": r.get("nickname"),
+                    "email": r.get("email"),
+                    "avatar": r.get("avatar"),
+                    "is_active": r.get("is_active"),
+                    "is_superuser": r.get("is_superuser"),
+                    "karma": r.get("karma"),
+                    "post_count": r.get("post_count"),
+                    "comment_count": r.get("comment_count"),
+                    "created_at": r.get("created_at"),
+                    "last_login": r.get("last_login"),
+                })
+
+            has_more = skip + page_size < total
+
+            return {
+                "items": items,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+                "has_more": has_more,
+            }
+        else:
+            # 普通查询模式（无搜索）
+            from tortoise.expressions import Q
+
+            query = User.all().order_by("-created_at")
+
+            # 可选筛选条件
+            if is_active is not None:
+                query = query.filter(is_active=is_active)
+            if is_superuser is not None:
+                query = query.filter(is_superuser=is_superuser)
 
         total = await query.count()
         skip = (page - 1) * page_size

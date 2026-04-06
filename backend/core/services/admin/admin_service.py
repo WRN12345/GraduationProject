@@ -78,14 +78,20 @@ class AdminService:
         self,
         page: int = 1,
         page_size: int = 20,
-        include_deleted: bool = False
+        include_deleted: bool = False,
+        search: Optional[str] = None
     ) -> dict:
         """获取所有帖子列表（含已删除）"""
         return await content_management_service.get_all_posts(
             page=page,
             page_size=page_size,
-            include_deleted=include_deleted
+            include_deleted=include_deleted,
+            search=search
         )
+
+    async def get_post_detail(self, post_id: int) -> dict:
+        """获取帖子详情（管理员视角，可查看已删除帖子）"""
+        return await content_management_service.get_post_detail(post_id)
 
     async def delete_post(
         self,
@@ -120,13 +126,15 @@ class AdminService:
         self,
         page: int = 1,
         page_size: int = 20,
-        include_deleted: bool = False
+        include_deleted: bool = False,
+        search: Optional[str] = None
     ) -> dict:
         """获取所有评论列表（含已删除）"""
         return await content_management_service.get_all_comments(
             page=page,
             page_size=page_size,
-            include_deleted=include_deleted
+            include_deleted=include_deleted,
+            search=search
         )
 
     async def delete_comment(

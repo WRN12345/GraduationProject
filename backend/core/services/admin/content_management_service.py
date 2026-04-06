@@ -44,24 +44,202 @@ class ContentManagementService:
         self,
         page: int = 1,
         page_size: int = 20,
-        include_deleted: bool = False
+        include_deleted: bool = False,
+        search: Optional[str] = None
     ) -> dict:
-        """获取所有帖子列表（含已删除）"""
-        query = Post.all().order_by("-created_at")
-        query = query.prefetch_related('author', 'community')
+        """获取所有帖子列表（含已删除，支持中文全文搜索）"""
+        from tortoise import connections
 
-        if not include_deleted:
-            query = query.filter(deleted_at__isnull=True)
-
-        total = await query.count()
         skip = (page - 1) * page_size
-        # 使用 annotate 批量获取评论数，避免 N+1 查询
-        posts = await query.annotate(
-            comment_count_db=Count('comments')
-        ).offset(skip).limit(page_size)
 
-        items = []
-        for post in posts:
+        # 使用 PostgreSQL 全文搜索（zhparser 中文分词）
+        if search and len(search.strip()) > 0:
+            # 全文搜索模式
+            sql = """
+            SELECT
+                p.id,
+                p.title,
+                p.content,
+                p.community_id,
+                p.author_id,
+                p.upvotes,
+                p.downvotes,
+                p.score,
+                p.hot_rank,
+                p.is_locked,
+                p.is_highlighted,
+                p.is_pinned,
+                p.is_edited,
+                p.deleted_at,
+                p.deleted_by_id,
+                p.created_at,
+                p.updated_at,
+                ts_rank(p.search_vector, plainto_tsquery('zhcfg', $1)) as rank,
+                u.id as author_id,
+                u.username as author_username,
+                u.avatar as author_avatar,
+                c.id as community_id_fk,
+                c.name as community_name,
+                COALESCE(pc.comment_count, 0) as comment_count
+            FROM posts p
+            LEFT JOIN users u ON p.author_id = u.id
+            LEFT JOIN communities c ON p.community_id = c.id
+            LEFT JOIN (
+                SELECT post_id, COUNT(*) as comment_count
+                FROM comments
+                GROUP BY post_id
+            ) pc ON p.id = pc.post_id
+            WHERE p.search_vector @@ plainto_tsquery('zhcfg', $1)
+            """
+
+            params = [search.strip()]
+
+            if not include_deleted:
+                sql += " AND p.deleted_at IS NULL"
+
+            sql += " ORDER BY rank DESC, p.created_at DESC"
+            sql += f" LIMIT {page_size} OFFSET {skip}"
+
+            # 获取总数
+            count_sql = """
+            SELECT COUNT(*) as total
+            FROM posts p
+            WHERE p.search_vector @@ plainto_tsquery('zhcfg', $1)
+            """
+            if not include_deleted:
+                count_sql += " AND p.deleted_at IS NULL"
+
+            results = await connections.get("default").execute_query_dict(sql, params)
+            count_result = await connections.get("default").execute_query_dict(count_sql, params)
+            total = count_result[0]['total'] if count_result else 0
+
+            items = []
+            for r in results:
+                items.append({
+                    "id": r.get("id"),
+                    "title": r.get("title"),
+                    "content": r.get("content"),
+                    "community_id": r.get("community_id"),
+                    "author_id": r.get("author_id"),
+                    "author": {
+                        "id": r.get("author_id"),
+                        "username": r.get("author_username") or "",
+                        "avatar": r.get("author_avatar")
+                    } if r.get("author_id") else None,
+                    "community": {
+                        "id": r.get("community_id_fk"),
+                        "name": r.get("community_name") or ""
+                    } if r.get("community_id_fk") else None,
+                    "upvotes": r.get("upvotes"),
+                    "downvotes": r.get("downvotes"),
+                    "score": r.get("score"),
+                    "hot_rank": r.get("hot_rank"),
+                    "is_locked": r.get("is_locked"),
+                    "is_highlighted": r.get("is_highlighted"),
+                    "is_pinned": r.get("is_pinned"),
+                    "is_edited": r.get("is_edited"),
+                    "deleted_at": r.get("deleted_at"),
+                    "deleted_by_id": r.get("deleted_by_id"),
+                    "created_at": r.get("created_at"),
+                    "updated_at": r.get("updated_at"),
+                    "comment_count": r.get("comment_count") or 0,
+                })
+
+            has_more = skip + page_size < total
+
+            return {
+                "items": items,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+                "has_more": has_more,
+            }
+        else:
+            # 普通查询模式（无搜索）
+            query = Post.all().order_by("-created_at")
+            query = query.prefetch_related('author', 'community')
+
+            if not include_deleted:
+                query = query.filter(deleted_at__isnull=True)
+
+            total = await query.count()
+            # 使用 annotate 批量获取评论数，避免 N+1 查询
+            posts = await query.annotate(
+                comment_count_db=Count('comments')
+            ).offset(skip).limit(page_size)
+
+            items = []
+            for post in posts:
+                author_data = None
+                if post.author:
+                    author_data = {
+                        "id": post.author.id,
+                        "username": post.author.username,
+                        "avatar": post.author.avatar,
+                    }
+
+                community_data = None
+                if post.community:
+                    community_data = {
+                        "id": post.community.id,
+                        "name": post.community.name,
+                    }
+
+                post_dict = {
+                    "id": post.id,
+                    "title": post.title,
+                    "content": post.content,
+                    "community_id": post.community_id,
+                    "author_id": post.author_id,
+                    "author": author_data,
+                    "community": community_data,
+                    "upvotes": post.upvotes,
+                    "downvotes": post.downvotes,
+                    "score": post.score,
+                    "hot_rank": post.hot_rank,
+                    "is_locked": post.is_locked,
+                    "is_highlighted": post.is_highlighted,
+                    "is_pinned": post.is_pinned,
+                    "is_edited": post.is_edited,
+                    "deleted_at": post.deleted_at,
+                    "deleted_by_id": post.deleted_by_id,
+                    "created_at": post.created_at,
+                    "updated_at": post.updated_at,
+                    "comment_count": post.comment_count_db,
+                }
+                items.append(post_dict)
+
+            has_more = skip + page_size < total
+
+            return {
+                "items": items,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+                "has_more": has_more,
+            }
+
+    async def get_post_detail(self, post_id: int) -> dict:
+        """获取帖子详情（管理员视角，可查看已删除帖子）"""
+        try:
+            post = await Post.get_or_none(id=post_id).select_related('author', 'community').first()
+
+            if not post:
+                return {"error": "帖子不存在", "code": AdminErrorCode.NOT_FOUND}
+
+            # 获取附件
+            attachments = []
+            if hasattr(post, 'attachments'):
+                post_attachments = await post.attachments.all()
+                for att in post_attachments:
+                    attachments.append({
+                        "id": att.id,
+                        "file_name": att.file_name,
+                        "file_url": att.file_url,
+                        "attachment_type": att.attachment_type,
+                        "file_size": att.file_size
+                    })
+
             author_data = None
             if post.author:
                 author_data = {
@@ -77,7 +255,10 @@ class ContentManagementService:
                     "name": post.community.name,
                 }
 
-            post_dict = {
+            # 计算评论数
+            comment_count = await Comment.filter(post_id=post.id).count()
+
+            return {
                 "id": post.id,
                 "title": post.title,
                 "content": post.content,
@@ -97,73 +278,150 @@ class ContentManagementService:
                 "deleted_by_id": post.deleted_by_id,
                 "created_at": post.created_at,
                 "updated_at": post.updated_at,
-                "comment_count": post.comment_count_db,
+                "comment_count": comment_count,
+                "attachments": attachments,
             }
-            items.append(post_dict)
-
-        has_more = skip + page_size < total
-
-        return {
-            "items": items,
-            "total": total,
-            "page": page,
-            "page_size": page_size,
-            "has_more": has_more,
-        }
+        except Exception as e:
+            logger.error(f"获取帖子详情失败: {e}")
+            return {"error": f"获取帖子详情失败: {str(e)}", "code": AdminErrorCode.NOT_FOUND}
 
     async def get_all_comments(
         self,
         page: int = 1,
         page_size: int = 20,
-        include_deleted: bool = False
+        include_deleted: bool = False,
+        search: Optional[str] = None
     ) -> dict:
-        """获取所有评论列表（含已删除）"""
-        query = Comment.all().order_by("-created_at")
-        query = query.select_related('author')
+        """获取所有评论列表（含已删除，支持中文搜索）"""
+        from tortoise import connections
 
-        if not include_deleted:
-            query = query.filter(deleted_at__isnull=True)
-
-        total = await query.count()
         skip = (page - 1) * page_size
-        comments = await query.offset(skip).limit(page_size)
 
-        items = []
-        for comment in comments:
-            author_data = None
-            if comment.author:
-                author_data = {
-                    "id": comment.author.id,
-                    "username": comment.author.username,
-                    "avatar": comment.author.avatar,
-                }
+        # 使用 PostgreSQL 全文搜索（zhparser 中文分词）
+        if search and len(search.strip()) > 0:
+            # 全文搜索模式
+            sql = """
+            SELECT
+                c.id,
+                c.content,
+                c.post_id,
+                c.author_id,
+                c.parent_id,
+                c.upvotes,
+                c.downvotes,
+                c.score,
+                c.is_edited,
+                c.deleted_at,
+                c.created_at,
+                c.updated_at,
+                ts_rank(to_tsvector('zhcfg', c.content), plainto_tsquery('zhcfg', $1)) as rank,
+                u.id as author_id_fk,
+                u.username as author_username,
+                u.avatar as author_avatar
+            FROM comments c
+            LEFT JOIN users u ON c.author_id = u.id
+            WHERE to_tsvector('zhcfg', c.content) @@ plainto_tsquery('zhcfg', $1)
+            """
 
-            comment_dict = {
-                "id": comment.id,
-                "content": comment.content,
-                "post_id": comment.post_id,
-                "author_id": comment.author_id,
-                "author": author_data,
-                "parent_id": comment.parent_id,
-                "upvotes": comment.upvotes,
-                "downvotes": comment.downvotes,
-                "score": comment.score,
-                "is_edited": comment.is_edited,
-                "deleted_at": comment.deleted_at,
-                "created_at": comment.created_at,
-                "updated_at": comment.updated_at,
+            params = [search.strip()]
+
+            if not include_deleted:
+                sql += " AND c.deleted_at IS NULL"
+
+            sql += " ORDER BY rank DESC, c.created_at DESC"
+            sql += f" LIMIT {page_size} OFFSET {skip}"
+
+            # 获取总数
+            count_sql = """
+            SELECT COUNT(*) as total
+            FROM comments c
+            WHERE to_tsvector('zhcfg', c.content) @@ plainto_tsquery('zhcfg', $1)
+            """
+            if not include_deleted:
+                count_sql += " AND c.deleted_at IS NULL"
+
+            results = await connections.get("default").execute_query_dict(sql, params)
+            count_result = await connections.get("default").execute_query_dict(count_sql, params)
+            total = count_result[0]['total'] if count_result else 0
+
+            items = []
+            for r in results:
+                items.append({
+                    "id": r.get("id"),
+                    "content": r.get("content"),
+                    "post_id": r.get("post_id"),
+                    "author_id": r.get("author_id"),
+                    "author": {
+                        "id": r.get("author_id_fk"),
+                        "username": r.get("author_username") or "",
+                        "avatar": r.get("author_avatar")
+                    } if r.get("author_id_fk") else None,
+                    "parent_id": r.get("parent_id"),
+                    "upvotes": r.get("upvotes"),
+                    "downvotes": r.get("downvotes"),
+                    "score": r.get("score"),
+                    "is_edited": r.get("is_edited"),
+                    "deleted_at": r.get("deleted_at"),
+                    "created_at": r.get("created_at"),
+                    "updated_at": r.get("updated_at"),
+                })
+
+            has_more = skip + page_size < total
+
+            return {
+                "items": items,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+                "has_more": has_more,
             }
-            items.append(comment_dict)
+        else:
+            # 普通查询模式（无搜索）
+            query = Comment.all().order_by("-created_at")
+            query = query.select_related('author')
 
-        has_more = skip + page_size < total
+            if not include_deleted:
+                query = query.filter(deleted_at__isnull=True)
 
-        return {
-            "items": items,
-            "total": total,
-            "page": page,
-            "page_size": page_size,
-            "has_more": has_more,
-        }
+            total = await query.count()
+            comments = await query.offset(skip).limit(page_size)
+
+            items = []
+            for comment in comments:
+                author_data = None
+                if comment.author:
+                    author_data = {
+                        "id": comment.author.id,
+                        "username": comment.author.username,
+                        "avatar": comment.author.avatar,
+                    }
+
+                comment_dict = {
+                    "id": comment.id,
+                    "content": comment.content,
+                    "post_id": comment.post_id,
+                    "author_id": comment.author_id,
+                    "author": author_data,
+                    "parent_id": comment.parent_id,
+                    "upvotes": comment.upvotes,
+                    "downvotes": comment.downvotes,
+                    "score": comment.score,
+                    "is_edited": comment.is_edited,
+                    "deleted_at": comment.deleted_at,
+                    "created_at": comment.created_at,
+                    "updated_at": comment.updated_at,
+                }
+                items.append(comment_dict)
+
+            has_more = skip + page_size < total
+
+            return {
+                "items": items,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+                "has_more": has_more,
+            }
 
     async def delete_post(
         self,

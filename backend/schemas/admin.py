@@ -23,8 +23,10 @@ class DashboardStats(BaseModel):
     today_new_comments: int = Field(default=0, description="今日新增评论数")
 
     # 管理统计
-    deleted_posts: int = Field(default=0, description="已删除帖子数")
-    deleted_comments: int = Field(default=0, description="已删除评论数")
+    deleted_posts: int = Field(default=0, description="已软删除帖子数")
+    deleted_comments: int = Field(default=0, description="已软删除评论数")
+    hard_deleted_posts: int = Field(default=0, description="已硬删除帖子数")
+    hard_deleted_comments: int = Field(default=0, description="已硬删除评论数")
     admin_users: int = Field(default=0, description="管理员用户数")
     banned_users: int = Field(default=0, description="已冻结用户数")
 
@@ -87,6 +89,14 @@ class AdminPostOut(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime] = None
     comment_count: int = 0
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# --- 管理员视角帖子详情（用于单个帖子）---
+class AdminPostDetailOut(AdminPostOut):
+    """管理员视角帖子详情（包含更多详情字段如附件等）"""
+    attachments: Optional[List[dict]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -210,3 +220,30 @@ class PaginatedAdminUserResponse(BaseModel):
     page: int
     page_size: int
     has_more: bool
+
+
+# --- 图表数据 ---
+
+class ActionStatsItem(BaseModel):
+    """操作类型统计项"""
+    action_type: int = Field(description="操作类型")
+    action_name: str = Field(description="操作名称")
+    count: int = Field(description="次数")
+
+
+class ActionStatsResponse(BaseModel):
+    """操作统计响应"""
+    items: List[ActionStatsItem]
+    total: int
+
+
+class TrendItem(BaseModel):
+    """趋势数据项"""
+    date: str = Field(description="日期")
+    count: int = Field(description="操作数")
+
+
+class TrendResponse(BaseModel):
+    """趋势响应"""
+    items: List[TrendItem]
+    days: int = Field(description="统计天数")
