@@ -170,8 +170,8 @@ onMounted(() => {
       </el-table-column>
       <el-table-column :label="t('admin.comments.columnStatus')" width="100" align="center">
         <template #default="{ row }">
-          <el-tag :type="row.is_deleted ? 'danger' : 'success'" size="small">
-            {{ row.is_deleted ? t('admin.comments.statusDeleted') : t('admin.comments.statusNormal') }}
+          <el-tag :type="row.deleted_at ? 'danger' : 'success'" size="small">
+            {{ row.deleted_at ? t('admin.comments.statusDeleted') : t('admin.comments.statusNormal') }}
           </el-tag>
         </template>
       </el-table-column>
@@ -184,13 +184,13 @@ onMounted(() => {
         <template #default="{ row }">
           <div class="action-btns">
             <el-button
-              v-if="!row.is_deleted"
+              v-if="!row.deleted_at"
               size="small"
               type="warning"
               @click="handleSoftDelete(row)"
             >{{ t('admin.comments.deleteBtn') }}</el-button>
             <el-button
-              v-if="row.is_deleted"
+              v-if="row.deleted_at"
               size="small"
               type="success"
               @click="handleRestore(row)"
@@ -259,6 +259,10 @@ onMounted(() => {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+}
+
+.action-btns :deep(.el-button) {
+  width: 72px;
 }
 
 .pagination-bar {
