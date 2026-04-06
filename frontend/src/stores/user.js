@@ -66,6 +66,25 @@ export const useUserStore = defineStore('user', {
       return response.data
     },
 
+    // 管理员注册
+    async registerAdmin(username, password, nickname, email, adminRegisterKey) {
+      console.log('[DEBUG] 开始管理员注册:', { username, nickname, email, passwordLength: password?.length })
+
+      const body = { username, password, admin_register_key: adminRegisterKey }
+      if (nickname) body.nickname = nickname
+      if (email) body.email = email
+
+      const response = await client.POST('/v1/user', {
+        body: body
+      })
+
+      console.log('[DEBUG] 管理员注册响应:', response)
+      console.log('[DEBUG] 响应状态:', response.response?.status)
+      console.log('[DEBUG] 响应数据:', response.data)
+
+      return response.data
+    },
+
     // 刷新Token
     async refreshAccessToken() {
       console.log('[DEBUG] 开始刷新 Token')
@@ -113,12 +132,17 @@ export const useUserStore = defineStore('user', {
         hasToken: !!data.access_token,
         hasRefreshToken: !!data.refresh_token,
         userId: data.user_id,
-        isSuperuser: data.is_superuser
+        isSuperuser: data.is_superuser,
+        isSuperuserType: typeof data.is_superuser
       })
       this.token = data.access_token
       this.refreshToken = data.refresh_token
       this.userId = data.user_id
-      this.isSuperuser = data.is_superuser
+      
+      // 确保 is_superuser 为布尔值 true
+      const isSuperuserValue = data.is_superuser === true || data.is_superuser === 'true';
+      this.isSuperuser = isSuperuserValue;
+      console.log('[DEBUG] isSuperuser 设置为:', this.isSuperuser)
 
       // 同时也保存到 localStorage（兼容现有的请求拦截器）
       localStorage.setItem('token', JSON.stringify(data.access_token))

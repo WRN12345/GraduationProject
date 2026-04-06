@@ -13,3 +13,4 @@ from .votes import router as votes
 from .search import router as search
 from .bookmarks import router as bookmarks
 from .drafts import router as drafts
+from .admin import router as admin

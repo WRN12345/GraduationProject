@@ -95,8 +95,7 @@ const handleRefresh = async () => {
 
 <style scoped>
 .trending-page {
-  max-width: 960px;
-  margin: 0 auto;
+  width: 100%;
   padding: 20px;
 }
 

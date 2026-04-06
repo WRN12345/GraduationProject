@@ -1,8 +1,14 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import Header from './Header.vue'
 import Aside from './Aside.vue'
+import AdminSidebar from './admin/AdminSidebar.vue'
+import AdminHeader from './admin/AdminHeader.vue'
+
+const route = useRoute()
+const isAdminPage = computed(() => route.path.startsWith('/admin'))
 
 const isSidebarCollapsed = ref(false)
 const isMobileSidebarOpen = ref(false)
@@ -22,8 +28,8 @@ const closeMobileSidebar = () => {
 
 <template>
   <div class="app-layout">
-    <div class="layout-header">
-      <Header @open-mobile-sidebar="openMobileSidebar" />
+    <div v-if="!isAdminPage" class="layout-header">
+      <Header @open-mobile-sidebar="openMobile-sidebar" />
     </div>
 
     <div class="layout-body">
@@ -35,6 +41,7 @@ const closeMobileSidebar = () => {
       ></div>
 
       <div
+        v-if="!isAdminPage"
         class="layout-aside"
         :class="{
           collapsed: isSidebarCollapsed,
@@ -50,7 +57,12 @@ const closeMobileSidebar = () => {
         </div>
       </div>
 
+      <div v-if="isAdminPage" class="layout-aside admin-aside">
+        <AdminSidebar />
+      </div>
+
       <button
+        v-if="!isAdminPage"
         class="sidebar-toggle"
         :class="{ 'is-collapsed': isSidebarCollapsed }"
         @click="toggleSidebar"
@@ -61,6 +73,7 @@ const closeMobileSidebar = () => {
       </button>
 
       <div class="layout-main">
+        <AdminHeader v-if="isAdminPage" />
         <router-view />
       </div>
     </div>
@@ -111,6 +124,18 @@ const closeMobileSidebar = () => {
 }
 
 /* --- 侧边栏 --- */
+.admin-aside {
+  width: 220px;
+  min-width: 220px;
+  display: block !important;
+  position: sticky;
+  top: 0;
+  height: calc(100vh - 56px);
+  overflow: hidden;
+  flex-shrink: 0;
+  z-index: 999;
+}
+
 .layout-aside {
   width: 270px;
   display: none;
@@ -180,6 +205,8 @@ const closeMobileSidebar = () => {
   height: calc(100vh - 56px);
   overflow-y: auto;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .layout-main::-webkit-scrollbar {

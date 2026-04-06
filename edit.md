@@ -168,3 +168,109 @@ Hash (哈希表)：用 Hash 结构缓存帖子的详情 (HSET)，避免了频繁
 话术：“在添加/取消收藏时，涉及多个 Redis 命令（如 ZADD, INCR, HSET, EXPIRE）。我使用了 redis.pipeline() 将多条指令打包，一次性发送给 Redis 服务器执行，省去了多次网络往返时间 (RTT - Round Trip Time)，显著降低了响应延迟。”
 缓存穿透/缺失处理 (Cache-Aside Pattern)
 代码中的 get_user_bookmarks 实现了优雅的缓存回源逻辑：先查缓存 -> 找出 missing_ids -> 从 DB 批量查询 -> 写回 Redis -> 返回给前端。
+
+
+问题 1：硬删除帖子未使用事务，审计日志与数据删除不具备原子性
+所在文件: hard_delete_post()
+问题描述: 该方法先创建审计日志（第 230-242 行），再删除评论和帖子（第 249-250 行），但没有包裹在事务中。如果评论删除成功但帖子删除失败，会导致：(1) 评论数据丢失但帖子仍在；(2) 审计日志记录了一个未完成的删除操作。对比 delete_post() 和 restore_post() 都正确使用了 transactions.in_transaction()。
+严重程度: 🔴 高
+修复方案: 将整个操作包裹在事务中，并确保审计日志与数据操作在同事务内：
+async with transactions.in_transaction():
+    if not post.deleted_at:
+        await Community.filter(id=post.community_id).update(
+            post_count=F('post_count') - 1
+        )
+    await Comment.filter(post_id=post_id).delete()
+    await Post.filter(id=post_id).delete()
+    await create_audit_log(...)
+
+问题 2：硬删除评论只删除一级回复，嵌套子评论成为孤儿数据
+所在文件: hard_delete_comment()
+问题描述: 第 345 行 await Comment.filter(parent_id=comment_id).delete() 只删除了直接子评论（一级回复）。如果存在多层嵌套回复（回复的回复），更深层级的评论不会被删除，成为 parent_id 指向已删除评论的孤儿数据。
+严重程度: 🔴 高
+修复方案: 使用递归收集所有后代评论 ID 后批量删除：
+async def _get_all_descendant_ids(self, comment_id: int) -> list:
+    all_ids = []
+    queue = [comment_id]
+    while queue:
+        cid = queue.pop(0)
+        children = await Comment.filter(parent_id=cid).values_list('id', flat=True)
+        all_ids.extend(children)
+        queue.extend(children)
+    return all_ids
+
+descendant_ids = await self._get_all_descendant_ids(comment_id)
+if descendant_ids:
+    await Comment.filter(id__in=descendant_ids).delete()
+await Comment.filter(id=comment_id).delete()
+
+问题 3：冻结/解冻用户操作未使用事务
+所在文件: ban_user()、unban_user()
+问题描述: 用户状态更新（第 197/239 行）和审计日志创建（第 200-210/242-252 行）是两个独立的数据库操作，没有事务保护。如果审计日志创建失败，用户状态已被修改但无审计记录；反之如果用户更新失败但审计日志已创建，会产生虚假的审计记录。
+严重程度: 🔴 高
+修复方案:
+from tortoise import transactions
+
+async with transactions.in_transaction():
+    await User.filter(id=user_id).update(is_active=False)
+    await create_audit_log(
+        actor=admin_user,
+        target_type=TargetType.USER,
+        target_id=user_id,
+        action_type=ActionType.BAN_USER,
+        reason=reason,
+        metadata={"username": target_user.username, "nickname": target_user.nickname}
+    )
+
+问题 4：帖子列表查询存在 N+1 查询性能问题
+所在文件: get_all_posts()
+问题描述: 第 78 行 comment_count = await Comment.filter(post_id=post.id).count() 在 for post in posts 循环内执行。每页 20 条帖子就会产生 20 次额外的数据库查询。当帖子数量多时严重影响性能。
+严重程度: 🔴 高
+修复方案: 使用 annotate 批量聚合替代循环内单条查询：
+from tortoise.functions import Count
+
+query = Post.all().annotate(
+    comment_count_db=Count('comments')
+).order_by("-created_at")
+# 在序列化时使用 post.comment_count_db
+P0 #1 — hard_delete_post()：
+
+将社区计数更新、评论删除、帖子删除、审计日志创建全部包裹在 async with transactions.in_transaction() 中，保证原子性
+在事务外预先提取审计元数据（audit_metadata），避免删除后无法读取
+添加 logger.warning() 应用级日志
+P0 #2 — hard_delete_comment()：
+
+新增 _get_all_descendant_comment_ids() 辅助方法，使用 BFS 广度优先遍历递归收集所有层级的后代评论 ID
+将后代评论批量删除（id__in=descendant_ids）替代原来的只删一级回复
+全部操作包裹在事务中
+添加 logger.warning() 应用级日志
+额外改进 — delete_comment() 和 restore_comment()：
+
+同步包裹在事务中，保持与 delete_post()/restore_post() 一致的事务使用规范
+stats_service.py
+P0 #3 — ban_user() 和 unban_user()：
+
+添加 from tortoise import transactions 导入
+将用户状态更新和审计日志创建包裹在 async with transactions.in_transaction() 中
+ban_user 添加 logger.warning() 日志（敏感操作）
+unban_user 添加 logger.info() 日志
+
+已完成 P0（硬删除帖子/评论未使用事务）、 無帖子/评论的软删除和恢复）、已使用事务务包裹）、原子性保证）、审计日志与数据操作在同一事务内记录。 硬删除评论只删除一级回复的递归问题已通过 BFS递归收集所有后代ID并批量删除修复。 确保审计日志在删除后记录操作者用户名， 确保删除了评论和帖子数量， 硬删除帖子时未清理关联的投票、收藏等数据。
+
+硬删除评论时未清理关联的投票和收藏记录， 确保审计日志在删除后记录操作者用户名。 硬删除评论时记录了操作者用户名和后代数量)。
+
+确保审计日志在删除后记录操作者用户名。 硬删除评论只删除一级回复的递归问题已修复。 猖选帖子列表查询的 N+1问题通过使用annotate批量聚合替代循环内单条查询。
+
+确保审计日志在删除后记录操作者用户名。
+
+然后硬删除帖子时，社区区的post_count 需要更新，因此硬删除帖子不会遗漏关联数据。 硬删除帖子时，社区post_count 可能已经被重复减少，因此需要额外处理。
+
+只有软删除帖子时才更新社区post_count， 如果恢复帖子时，社区的post_count +1， 硬删除帖子不会遗漏关联数据。 确保审计日志查询未限定管理员操作范围（audit_service.py 新增 BAN_USERUNBAN_USER到ADMIN_ACTION_TYPES` 列表。
+
+get_all_audit_logs 查询所有审计日志（限定管理员操作范围，audit_service.py 新增过滤条件，只返回管理员操作
+确保审计日志页面只显示管理员操作相关的记录。
+
+admin.py - 使用结构化错误码替代字符串匹配，判断HTTP状态码， 端点层使用错误码枚举映射到对应状态码
+修复方案: 在端点层统一使用错误码枚举， 服务层返回错误时附带 code 字段， 端点层根据 code 确定正确的 HTTP 状态码。
+
+猜你喜欢你的方案 | 服务层统一使用结构化错误码， 献给错误码枚举。

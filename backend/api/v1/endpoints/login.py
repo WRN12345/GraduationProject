@@ -47,18 +47,18 @@ async def user_login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 # --- 注册接口 ---
 @login.post("/user", summary="用户新增", status_code=status.HTTP_201_CREATED)
-async def user_create(user_in: UserCreate, admin_key: str = None):
+async def user_create(user_in: UserCreate):
     """
     用户注册接口
-    - 普通用户注册：无需提供 admin_key
-    - 管理员注册：必须提供正确的 admin_key（在 .env 中配置）
+    - 普通用户注册：无需提供 admin_register_key
+    - 管理员注册：必须提供正确的 admin_register_key（在 .env 中配置）
     """
     result = await auth_service.register(
         username=user_in.username,
         password=user_in.password,
         nickname=user_in.nickname,
         email=user_in.email,
-        admin_key=admin_key
+        admin_key=user_in.admin_register_key
     )
 
     if "error" in result:

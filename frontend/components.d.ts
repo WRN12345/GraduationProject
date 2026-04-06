@@ -11,6 +11,8 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AdminHeader: typeof import('./src/components/admin/AdminHeader.vue')['default']
+    AdminSidebar: typeof import('./src/components/admin/AdminSidebar.vue')['default']
     Aside: typeof import('./src/components/Aside.vue')['default']
     BookmarkButton: typeof import('./src/components/BookmarkButton.vue')['default']
     CommentActions: typeof import('./src/components/comment/CommentActions.vue')['default']
@@ -26,13 +28,26 @@ declare module 'vue' {
     CommunityInfoCard: typeof import('./src/components/community/CommunityInfoCard.vue')['default']
     CommunitySelector: typeof import('./src/components/post/CommunitySelector.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
+    ElBreadcrumb: typeof import('element-plus/es')['ElBreadcrumb']
+    ElBreadcrumbItem: typeof import('element-plus/es')['ElBreadcrumbItem']
     ElButton: typeof import('element-plus/es')['ElButton']
+    ElDatePicker: typeof import('element-plus/es')['ElDatePicker']
     ElDialog: typeof import('element-plus/es')['ElDialog']
+    ElDropdown: typeof import('element-plus/es')['ElDropdown']
+    ElDropdownItem: typeof import('element-plus/es')['ElDropdownItem']
+    ElDropdownMenu: typeof import('element-plus/es')['ElDropdownMenu']
     ElEmpty: typeof import('element-plus/es')['ElEmpty']
     ElForm: typeof import('element-plus/es')['ElForm']
     ElFormItem: typeof import('element-plus/es')['ElFormItem']
     ElIcon: typeof import('element-plus/es')['ElIcon']
     ElInput: typeof import('element-plus/es')['ElInput']
+    ElOption: typeof import('element-plus/es')['ElOption']
+    ElPagination: typeof import('element-plus/es')['ElPagination']
+    ElSelect: typeof import('element-plus/es')['ElSelect']
+    ElSwitch: typeof import('element-plus/es')['ElSwitch']
+    ElTable: typeof import('element-plus/es')['ElTable']
+    ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
+    ElTag: typeof import('element-plus/es')['ElTag']
     ElText: typeof import('element-plus/es')['ElText']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     FileUploader: typeof import('./src/components/upload/FileUploader.vue')['default']
@@ -56,10 +71,14 @@ declare module 'vue' {
     SearchResultsList: typeof import('./src/components/search/SearchResultsList.vue')['default']
     SearchSuggestions: typeof import('./src/components/search/SearchSuggestions.vue')['default']
     SearchTabs: typeof import('./src/components/search/SearchTabs.vue')['default']
+    StatsCard: typeof import('./src/components/admin/StatsCard.vue')['default']
     TableOfContents: typeof import('./src/components/TableOfContents.vue')['default']
     UserListItem: typeof import('./src/components/search/UserListItem.vue')['default']
     UserTabs: typeof import('./src/components/user/UserTabs.vue')['default']
     VoteButton: typeof import('./src/components/comment/VoteButton.vue')['default']
     VoteButtons: typeof import('./src/components/VoteButtons.vue')['default']
+  }
+  export interface GlobalDirectives {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }

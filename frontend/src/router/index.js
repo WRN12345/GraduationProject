@@ -10,6 +10,49 @@ const routes = [
     meta: { title: '登录', requiresAuth: false }
   },
   {
+    path: '/admin',
+    component: Layout, // 复用主布局，内部条件渲染 AdminSidebar
+    meta: { requiresAuth: true, requiresAdmin: true },
+    children: [
+      {
+        path: '',
+        name: 'AdminDashboard',
+        component: () => import('../views/AdminDashboard.vue'),
+        meta: { title: 'Admin Dashboard' }
+      },
+      {
+        path: 'posts',
+        name: 'AdminPosts',
+        component: () => import('../views/AdminPosts.vue'),
+        meta: { title: 'Admin Posts' }
+      },
+      {
+        path: 'post/:id',
+        name: 'AdminPostDetail',
+        component: () => import('../views/AdminPostDetail.vue'),
+        meta: { title: 'Admin Post Detail' }
+      },
+      {
+        path: 'comments',
+        name: 'AdminComments',
+        component: () => import('../views/AdminComments.vue'),
+        meta: { title: 'Admin Comments' }
+      },
+      {
+        path: 'users',
+        name: 'AdminUsers',
+        component: () => import('../views/AdminUsers.vue'),
+        meta: { title: 'Admin Users' }
+      },
+      {
+        path: 'activity',
+        name: 'AdminActivity',
+        component: () => import('../views/AdminActivity.vue'),
+        meta: { title: 'Admin Activity' }
+      }
+    ]
+  },
+  {
     path: '/',
     component: Layout, // 主布局包裹所有需要认证的页面
     meta: { requiresAuth: true },
@@ -141,6 +184,10 @@ router.beforeEach((to, from, next) => {
     // 需要认证但未登录，跳转到登录页
     console.log('[Router] 未登录，跳转到登录页')
     next('/login')
+  } else if (to.meta.requiresAdmin && !userStore.isAdmin) {
+    // 需要管理员权限但非管理员，跳转到首页
+    console.log('[Router] 非管理员，拒绝访问')
+    next('/')
   } else if (to.path === '/login' && userStore.isLoggedIn) {
     // 已登录用户访问登录页，跳转到首页
     console.log('[Router] 已登录访问登录页，跳转到首页')
