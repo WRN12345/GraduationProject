@@ -5,7 +5,7 @@
 
       <div class="card-header">
         <Shield :size="40" class="header-icon" />
-        <h2 class="title">{{ isLogin ? t('login.welcomeBack') : t('login.createAccount') }}</h2>
+        <h2 class="title">{{ pageTitle }}</h2>
         <p class="subtitle">SUPER</p>
       </div>
 
@@ -32,7 +32,7 @@
           />
         </div>
 
-        <div class="input-wrapper" v-if="!isLogin">
+        <div class="input-wrapper" v-if="mode !== 'login'">
           <Lock :size="20" class="input-icon" />
           <input
             type="password"
@@ -41,21 +41,59 @@
           />
         </div>
 
+        <!-- 管理员注册额外字段 -->
+        <template v-if="mode === 'adminRegister'">
+          <div class="input-wrapper">
+            <User :size="20" class="input-icon" />
+            <input
+              type="text"
+              v-model="form.nickname"
+              :placeholder="t('login.nicknamePlaceholder')"
+            />
+          </div>
+
+          <div class="input-wrapper">
+            <Mail :size="20" class="input-icon" />
+            <input
+              type="email"
+              v-model="form.email"
+              :placeholder="t('login.emailPlaceholder')"
+            />
+          </div>
+
+          <div class="input-wrapper">
+            <Key :size="20" class="input-icon" />
+            <input
+              type="password"
+              v-model="form.adminRegisterKey"
+              :placeholder="t('login.adminKeyPlaceholder')"
+            />
+          </div>
+        </template>
+
 
         <button type="submit" class="submit-btn" :disabled="isLoading">
-          <component :is="isLogin ? LogIn : UserPlus" :size="18" class="btn-icon" />
-          {{ isLoading ? t('login.processing') : (isLogin ? t('login.login') : t('login.register')) }}
+          <component :is="mode === 'login' ? LogIn : UserPlus" :size="18" class="btn-icon" />
+          {{ isLoading ? t('login.processing') : submitButtonText }}
         </button>
       </form>
 
       <div class="card-footer">
-        <p v-if="isLogin">
+        <p v-if="mode === 'login'">
           {{ t('login.noAccount') }}
-          <span @click="toggleMode" class="link">{{ t('login.registerNow') }}</span>
+          <span @click="switchMode('register')" class="link">{{ t('login.registerNow') }}</span>
+        </p>
+        <p v-else-if="mode === 'register'">
+          {{ t('login.hasAccount') }}
+          <span @click="switchMode('login')" class="link">{{ t('login.loginDirectly') }}</span>
+          <span class="separator">|</span>
+          <span @click="switchMode('adminRegister')" class="link">{{ t('login.registerAdminNow') }}</span>
         </p>
         <p v-else>
           {{ t('login.hasAccount') }}
-          <span @click="toggleMode" class="link">{{ t('login.loginDirectly') }}</span>
+          <span @click="switchMode('login')" class="link">{{ t('login.loginDirectly') }}</span>
+          <span class="separator">|</span>
+          <span @click="switchMode('register')" class="link">{{ t('login.backToRegister') }}</span>
         </p>
       </div>
     </div>
@@ -63,9 +101,9 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { User, Lock, LogIn, UserPlus, Shield } from 'lucide-vue-next';
+import { User, Lock, LogIn, UserPlus, Shield, Key, Mail } from 'lucide-vue-next';
 import { ElMessage } from 'element-plus';
 import { useUserStore } from '@/stores/user';
 import { useI18n } from 'vue-i18n';
@@ -75,8 +113,8 @@ const { t } = useI18n();
 const router = useRouter();
 const userStore = useUserStore();
 
-// 状态控制：true为登录，false为注册
-const isLogin = ref(true);
+// 模式控制：'login' | 'register' | 'adminRegister'
+const mode = ref('login');
 // 加载状态
 const isLoading = ref(false);
 
@@ -84,12 +122,29 @@ const isLoading = ref(false);
 const form = reactive({
   username: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  nickname: '',
+  email: '',
+  adminRegisterKey: ''
+});
+
+// 页面标题
+const pageTitle = computed(() => {
+  if (mode.value === 'login') return t('login.welcomeBack');
+  if (mode.value === 'register') return t('login.createAccount');
+  return t('login.adminRegisterTitle');
+});
+
+// 提交按钮文字
+const submitButtonText = computed(() => {
+  if (mode.value === 'login') return t('login.login');
+  if (mode.value === 'register') return t('login.register');
+  return t('login.adminRegisterTitle');
 });
 
 // 切换模式
-const toggleMode = () => {
-  isLogin.value = !isLogin.value;
+const switchMode = (newMode) => {
+  mode.value = newMode;
   form.password = '';
   form.confirmPassword = '';
 };
@@ -97,14 +152,14 @@ const toggleMode = () => {
 // 提交处理
 const handleSubmit = async () => {
   console.log('[Login] 表单提交:', {
-    isLogin: isLogin.value,
+    mode: mode.value,
     username: form.username,
     passwordLength: form.password?.length
   })
 
   if (isLoading.value) return;
 
-  // 表单验证
+  // 基本验证
   if (!form.username.trim()) {
     ElMessage.error(t('login.enterUsername'));
     return;
@@ -115,8 +170,21 @@ const handleSubmit = async () => {
     return;
   }
 
-  // 注册模式下验证密码
-  if (!isLogin.value) {
+  // 注册和管理员注册模式下验证
+  if (mode.value !== 'login') {
+    // 用户名长度验证
+    const username = form.username.trim()
+    if (username.length < 3 || username.length > 20) {
+      ElMessage.error(t('login.usernameLengthError'));
+      return;
+    }
+
+    // 密码长度验证
+    if (form.password.length < 6 || form.password.length > 30) {
+      ElMessage.error(t('login.passwordLengthError'));
+      return;
+    }
+
     if (!form.confirmPassword) {
       ElMessage.error(t('login.confirmPassword'));
       return;
@@ -127,22 +195,58 @@ const handleSubmit = async () => {
     }
   }
 
+  // 管理员注册模式下验证密钥和邮箱
+  if (mode.value === 'adminRegister') {
+    if (!form.adminRegisterKey.trim()) {
+      ElMessage.error(t('login.enterAdminKey'));
+      return;
+    }
+    // 邮箱格式验证（如果填写了）
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      ElMessage.error(t('login.invalidEmail'));
+      return;
+    }
+  }
+
   isLoading.value = true;
   try {
-    if (isLogin.value) {
+    if (mode.value === 'login') {
       console.log('[Login] 开始登录流程')
       // 登录
       await userStore.login(form.username, form.password);
-      console.log('[Login] 登录成功，准备跳转到首页')
-      router.push('/');
-    } else {
+      console.log('[Login] 登录成功，当前用户信息:', {
+        isSuperuser: userStore.isSuperuser,
+        isAdmin: userStore.isAdmin,
+        isLoggedIn: userStore.isLoggedIn
+      })
+      // 根据用户角色跳转到对应主页（使用 store 中已保存的状态）
+      if (userStore.isSuperuser) {
+        console.log('[Login] 超级管理员，跳转到管理后台')
+        router.push('/admin');
+      } else {
+        console.log('[Login] 普通用户，跳转到首页')
+        router.push('/');
+      }
+    } else if (mode.value === 'register') {
       console.log('[Login] 开始注册流程')
-      // 注册
+      // 普通注册
       const result = await userStore.register(form.username, form.password, form.username);
       console.log('[Login] 注册成功:', result);
-      // 注册成功后切换到登录模式
       ElMessage.success(t('login.registerSuccess'));
-      toggleMode();
+      switchMode('login');
+    } else if (mode.value === 'adminRegister') {
+      console.log('[Login] 开始管理员注册流程')
+      // 管理员注册
+      const result = await userStore.registerAdmin(
+        form.username,
+        form.password,
+        form.nickname || undefined,
+        form.email || undefined,
+        form.adminRegisterKey
+      );
+      console.log('[Login] 管理员注册成功:', result);
+      ElMessage.success(t('login.adminRegisterSuccess'));
+      switchMode('login');
     }
   } catch (error) {
     // 错误已由 API 拦截器处理
@@ -279,6 +383,11 @@ input:focus {
 
 .link:hover {
   text-decoration: underline;
+}
+
+.separator {
+  margin: 0 8px;
+  color: #ccc;
 }
 
 .form-body {

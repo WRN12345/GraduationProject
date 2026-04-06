@@ -178,8 +178,7 @@ onMounted(() => {
 
 <style scoped>
 .my-communities {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
   padding: 24px 16px;
 }
 

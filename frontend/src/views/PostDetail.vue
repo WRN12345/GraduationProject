@@ -268,7 +268,7 @@ const canEdit = computed(() =>
 )
 
 const canDelete = computed(() =>
-  post.value && userStore.userId === post.value.author_id
+  post.value && (userStore.userId === post.value.author_id || userStore.isAdmin)
 )
 
 // 版主权限检查（owner或admin）
@@ -361,9 +361,14 @@ const handleDelete = () => {
     }
   ).then(async () => {
     try {
-      await client.DELETE('/v1/posts/{post_id}', {
-        params: { path: { post_id: post.value.id } }
-      })
+      if (userStore.isAdmin && userStore.userId !== post.value.author_id) {
+        const { deletePost } = await import('@/api/admin')
+        await deletePost(post.value.id)
+      } else {
+        await client.DELETE('/v1/posts/{post_id}', {
+          params: { path: { post_id: post.value.id } }
+        })
+      }
       ElMessage.success(t('postDetail.deleteSuccess'))
       router.push('/')
     } catch (error) {

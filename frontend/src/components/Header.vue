@@ -15,7 +15,8 @@ import {
   ChevronDown,
   Menu,
   Building2,
-  Lock
+  Lock,
+  LayoutDashboard
 } from 'lucide-vue-next'
 import { useUserStore } from '@/stores/user'
 import ProfileEditDialog from '@/components/user/ProfileEditDialog.vue'
@@ -217,6 +218,15 @@ const goToProfile = () => {
   router.push(`/user/${username}`)
 }
 
+// 判断是否为管理员
+const isAdmin = computed(() => userStore.isAdmin)
+
+// 跳转到管理控制台
+const goToAdmin = () => {
+  isProfileOpen.value = false
+  router.push('/admin')
+}
+
 // 资料更新成功回调
 const handleProfileUpdate = async () => {
   // 重新获取用户信息
@@ -349,6 +359,16 @@ const handlePasswordUpdate = async () => {
           </div>
 
           <div class="divider-line"></div>
+
+          <!-- 管理员入口（仅管理员可见） -->
+          <div class="menu-section" v-if="isAdmin">
+            <div class="menu-item" @click="goToAdmin">
+              <LayoutDashboard :size="20" class="menu-icon" />
+              <span class="menu-text">{{ t('header.adminConsole') }}</span>
+            </div>
+          </div>
+
+          <div class="divider-line" v-if="isAdmin"></div>
 
           <!-- 退出登录 -->
           <div class="menu-section">
