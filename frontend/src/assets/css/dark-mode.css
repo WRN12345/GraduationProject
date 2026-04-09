@@ -546,12 +546,7 @@
 }
 
 /* --- 登录页 --- */
-[data-theme="dark"] .login-container {
-  background: var(--bg-primary) !important;
-}
-[data-theme="dark"] .login-card {
-  background: var(--bg-card) !important;
-}
+/* 登录页不参与主题切换，始终保持白色 */
 [data-theme="dark"] .login-card input,
 [data-theme="dark"] .login-card .input-wrapper input {
   background: var(--bg-input) !important;
@@ -946,17 +941,7 @@
   color: var(--text-primary);
 }
 
-/* --- 强制：登录页面 --- */
-[data-theme="dark"] .login-container,
-[data-theme="dark"] .login-container * {
-  color: var(--text-primary);
-}
-
-[data-theme="dark"] .login-card .title,
-[data-theme="dark"] .login-card .subtitle,
-[data-theme="dark"] .login-card label {
-  color: var(--text-primary) !important;
-}
+/* --- 强制：登录页面（不参与主题切换，始终白色） --- */
 
 /* --- 强制：表单页面 --- */
 [data-theme="dark"] .create-post-container,

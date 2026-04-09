@@ -55,7 +55,7 @@ const hasCount = (tabValue) => {
   display: flex;
   gap: 8px;
   padding: 12px 0 16px 0;
-  border-bottom: 1px solid #edeff1;
+  border-bottom: 1px solid var(--border-color);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -75,13 +75,13 @@ const hasCount = (tabValue) => {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: #f6f7f8;
+  background: var(--bg-secondary);
   border: none;
   border-radius: 24px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  color: #878a8c;
+  color: var(--text-tertiary);
   transition: all 0.2s;
   white-space: nowrap;
   flex-shrink: 0;
@@ -91,12 +91,12 @@ const hasCount = (tabValue) => {
 }
 
 .tab-item:hover {
-  background: #edeff1;
-  color: #1c1c1c;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .tab-item.active {
-  background: #0079d3;
+  background: var(--color-primary);
   color: var(--text-inverse);
 }
 
@@ -114,7 +114,7 @@ const hasCount = (tabValue) => {
   border-radius: 10px;
   font-size: 12px;
   font-weight: 600;
-  color: #878a8c;
+  color: var(--text-tertiary);
   /* 始终保持固定宽度，防止数量变化时按钮移动 */
   flex-shrink: 0;
   /* 确保文字不会导致宽度变化 */
@@ -123,7 +123,7 @@ const hasCount = (tabValue) => {
 
 .tab-count.has-count {
   background: rgba(0, 0, 0, 0.1);
-  color: #1c1c1c;
+  color: var(--text-primary);
   width: 24px; /* 强制固定宽度 */
 }
 
