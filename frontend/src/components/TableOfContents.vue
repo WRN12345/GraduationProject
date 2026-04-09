@@ -118,15 +118,10 @@ watch(() => props.headings, () => {
 <style scoped>
 .toc-container {
   width: 250px;
-  position: sticky;
-  top: 72px;
-  max-height: calc(100vh - 88px);
-  overflow-y: auto;
   padding: 16px;
   background: var(--bg-card);
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  flex-shrink: 0;
 }
 
 .toc-container::-webkit-scrollbar {

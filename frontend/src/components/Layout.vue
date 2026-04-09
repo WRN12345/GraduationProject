@@ -207,6 +207,7 @@ const closeMobileSidebar = () => {
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  background: var(--bg-secondary);
 }
 
 .layout-main::-webkit-scrollbar {

@@ -56,7 +56,6 @@ const hasCount = (tabValue) => {
   gap: 8px;
   padding: 12px 0 16px 0;
   border-bottom: 1px solid #edeff1;
-  margin-bottom: 20px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -86,6 +85,9 @@ const hasCount = (tabValue) => {
   transition: all 0.2s;
   white-space: nowrap;
   flex-shrink: 0;
+  /* 固定按钮宽度，防止点击时移动 */
+  min-width: 90px;
+  justify-content: center;
 }
 
 .tab-item:hover {
@@ -106,19 +108,23 @@ const hasCount = (tabValue) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
+  width: 24px;
   height: 20px;
-  padding: 0 6px;
   background: rgba(0, 0, 0, 0.05);
   border-radius: 10px;
   font-size: 12px;
   font-weight: 600;
   color: #878a8c;
+  /* 始终保持固定宽度，防止数量变化时按钮移动 */
+  flex-shrink: 0;
+  /* 确保文字不会导致宽度变化 */
+  overflow: hidden;
 }
 
 .tab-count.has-count {
   background: rgba(0, 0, 0, 0.1);
   color: #1c1c1c;
+  width: 24px; /* 强制固定宽度 */
 }
 
 .tab-item.active .tab-count {
@@ -130,13 +136,13 @@ const hasCount = (tabValue) => {
 @media (max-width: 639px) {
   .search-tabs {
     padding: 12px 0;
-    margin-bottom: 16px;
     gap: 6px;
   }
 
   .tab-item {
     padding: 8px 12px;
     font-size: 13px;
+    min-width: 70px;
   }
 
   .tab-label {
@@ -144,10 +150,13 @@ const hasCount = (tabValue) => {
   }
 
   .tab-count {
-    min-width: 18px;
+    width: 22px;
     height: 18px;
     font-size: 11px;
-    padding: 0 5px;
+    /* 固定宽度，防止数量变化时按钮移动 */
+    flex-shrink: 0;
+    /* 确保文字不会导致宽度变化 */
+    overflow: hidden;
   }
 }
 </style>

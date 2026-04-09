@@ -84,15 +84,24 @@ const handleRetry = () => {
 
 // 监听路由参数变化
 watch(() => route.query, (newQuery) => {
-  if (newQuery.q !== searchQuery.value) {
+  // 搜索词或标签变化时，执行搜索
+  if (newQuery.q !== searchQuery.value || newQuery.tab !== activeTab.value) {
     searchQuery.value = newQuery.q || ''
-    activeTab.value = newQuery.tab || 'all'
+    activeTab.value = newQuery.tab || 'posts'
 
     if (searchQuery.value) {
       performSearch()
     }
   }
 }, { immediate: false })
+
+// 监听路由变化（处理从详情页返回的情况）
+watch(() => route.fullPath, () => {
+  // 当路由路径变化时（比如从帖子详情页返回），重新执行搜索
+  if (route.path === '/search' && searchQuery.value) {
+    performSearch()
+  }
+})
 
 // 初始化搜索
 onMounted(() => {
@@ -104,12 +113,14 @@ onMounted(() => {
 
 <template>
   <div class="search-results-page">
-    <!-- 搜索标签 -->
-    <SearchTabs
-      v-model="activeTab"
-      :counts="tabCounts"
-      @update:modelValue="handleTabChange"
-    />
+    <!-- 搜索标签 - 固定在顶部 -->
+    <div class="sticky-tabs">
+      <SearchTabs
+        v-model="activeTab"
+        :counts="tabCounts"
+        @update:modelValue="handleTabChange"
+      />
+    </div>
 
     <!-- 搜索结果列表 -->
     <SearchResultsList
@@ -139,6 +150,17 @@ onMounted(() => {
   max-width: 960px;
   margin: 0 auto;
   padding: 0 20px 20px 20px;
+}
+
+/* 固定搜索标签区域 - 在主内容区域内 sticky */
+.sticky-tabs {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
+  padding: 12px 20px 0 20px;
+  margin: 0 -20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* 页面头部 */
@@ -217,6 +239,12 @@ onMounted(() => {
 @media (max-width: 639px) {
   .search-results-page {
     padding: 0 16px 16px 16px;
+  }
+
+  /* 固定搜索标签区域 - 移动端 */
+  .sticky-tabs {
+    padding: 12px 16px 0 16px;
+    margin: 0 -16px;
   }
 
   .page-header {

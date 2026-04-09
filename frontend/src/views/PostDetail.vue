@@ -496,8 +496,10 @@ onMounted(() => {
 <style scoped>
 .post-detail-container {
   min-height: calc(100vh - 56px);
-  padding: 24px 16px;
-  background: #fafafa;
+  margin: 0 -24px;
+  padding: 24px 24px;
+  background: var(--bg-secondary);
+  flex: 1;
 }
 
 .loading {
@@ -512,8 +514,8 @@ onMounted(() => {
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid #edeff1;
-  border-top-color: #0079d3;
+  border: 3px solid var(--border-light);
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-bottom: 16px;
@@ -529,6 +531,28 @@ onMounted(() => {
   max-width: 1100px;
   margin: 0 auto;
   align-items: flex-start;
+}
+
+.toc-sidebar {
+  position: sticky;
+  top: 72px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  max-height: calc(100vh - 88px);
+  overflow-y: auto;
+}
+
+.toc-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.toc-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.toc-sidebar::-webkit-scrollbar-thumb {
+  background: var(--border-color, #ddd);
+  border-radius: 2px;
 }
 
 .post-detail-card {
@@ -602,8 +626,8 @@ onMounted(() => {
 }
 
 .author-action-btn:hover {
-  background: #f0f0f0;
-  color: #333;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .author-action-btn.delete {
@@ -674,7 +698,7 @@ onMounted(() => {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #0079d3;
+  background: var(--color-primary);
   color: var(--text-inverse);
   display: flex;
   align-items: center;
@@ -719,7 +743,7 @@ onMounted(() => {
 
 .divider {
   border: none;
-  border-top: 1px solid #edeff1;
+  border-top: 1px solid var(--border-light);
   margin: 16px 0;
 }
 
@@ -729,8 +753,8 @@ onMounted(() => {
   align-items: center;
   padding: 12px 0;
   margin: 20px 0;
-  border-top: 1px solid #f0f0f0;
-  border-bottom: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .actions-left {
@@ -757,8 +781,8 @@ onMounted(() => {
 }
 
 .actions-left .action-btn:hover {
-  background: #f5f5f5;
-  color: #555;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
 }
 
 /* 右侧操作区 */
@@ -778,7 +802,7 @@ onMounted(() => {
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
-  border: 0.5px solid #e0e0e0;
+  border: 0.5px solid var(--border-color);
   cursor: pointer;
   transition: all 0.2s;
   background: transparent;
@@ -786,8 +810,8 @@ onMounted(() => {
 }
 
 .moderator-dropdown-btn:hover:not(:disabled) {
-  background: #f5f5f5;
-  color: #555;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
 }
 
 .moderator-dropdown-btn:disabled {
@@ -810,8 +834,8 @@ onMounted(() => {
 }
 
 :deep(.el-dropdown-menu__item:hover) {
-  background: #f5f5f5;
-  color: #333;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 :deep(.el-dropdown-menu__item .lucide) {
@@ -840,13 +864,13 @@ onMounted(() => {
 .markdown-content :deep(h1) {
   font-size: 2em;
   padding-bottom: 0.3em;
-  border-bottom: 1px solid #edeff1;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .markdown-content :deep(h2) {
   font-size: 1.5em;
   padding-bottom: 0.3em;
-  border-bottom: 1px solid #edeff1;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .markdown-content :deep(p) {
@@ -854,7 +878,7 @@ onMounted(() => {
 }
 
 .markdown-content :deep(code) {
-  background: #f6f7f8;
+  background: var(--bg-secondary);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: 'Monaco', 'Menlo', monospace;
@@ -862,7 +886,7 @@ onMounted(() => {
 }
 
 .markdown-content :deep(pre) {
-  background: #f6f7f8;
+  background: var(--bg-secondary);
   padding: 12px;
   border-radius: 8px;
   overflow-x: auto;
@@ -875,7 +899,7 @@ onMounted(() => {
 }
 
 .markdown-content :deep(blockquote) {
-  border-left: 4px solid #0079d3;
+  border-left: 4px solid var(--color-primary);
   padding-left: 16px;
   margin: 0 0 16px 0;
   color: #878a8c;
@@ -892,7 +916,7 @@ onMounted(() => {
 }
 
 .markdown-content :deep(a) {
-  color: #0079d3;
+  color: var(--color-primary);
   text-decoration: none;
 }
 
@@ -911,9 +935,9 @@ onMounted(() => {
 .post-attachments-section {
   margin-top: 24px;
   padding: 16px;
-  background: #fafafa;
+  background: var(--bg-tertiary);
   border-radius: 8px;
-  border: 1px solid #eee;
+  border: 1px solid var(--border-light);
 }
 
 .post-attachments-section h4 {
@@ -943,7 +967,7 @@ onMounted(() => {
 .image-attachment img {
   max-width: 100%;
   max-height: 400px;
-  border: 1px solid #eee;
+  border: 1px solid var(--border-light);
   border-radius: 8px;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
@@ -1033,7 +1057,7 @@ onMounted(() => {
   padding: 14px;
   background: var(--bg-card);
   border-radius: 10px;
-  border: 1px solid #eee;
+  border: 1px solid var(--border-light);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
@@ -1063,7 +1087,7 @@ onMounted(() => {
 
 .download-btn {
   padding: 8px 16px;
-  background: #0079d3;
+  background: var(--color-primary);
   color: var(--text-inverse);
   border: none;
   border-radius: 20px;
@@ -1074,7 +1098,8 @@ onMounted(() => {
 }
 
 .download-btn:hover {
-  background: #0066b3;
+  background: var(--color-primary-light);
+  filter: brightness(0.9);
 }
 
 .comments-section {
@@ -1111,14 +1136,46 @@ onMounted(() => {
   }
 
   /* 在中等屏幕隐藏 TOC */
+  /* 目录侧边栏 - 使用固定定位确保不随内容滚动而消失 */
   .toc-sidebar {
-    display: none;
+    position: fixed;
+    right: 24px;
+    top: 72px;
+    width: 250px;
+    max-height: calc(100vh - 88px);
+    overflow-y: auto;
+    padding: 16px;
+    background: var(--bg-card);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+  }
+
+  .toc-sidebar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .toc-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .toc-sidebar::-webkit-scrollbar-thumb {
+    background: var(--border-color, #ddd);
+    border-radius: 2px;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .post-detail-container {
+    margin: 0 -20px;
+    padding: 24px 20px;
   }
 }
 
 @media (max-width: 639px) {
   .post-detail-container {
-    padding: 16px 8px;
+    margin: 0 -16px;
+    padding: 16px 16px;
   }
 
   .post-content {
