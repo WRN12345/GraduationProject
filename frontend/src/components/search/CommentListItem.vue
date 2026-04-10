@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { MessageCircle, ArrowRight } from 'lucide-vue-next'
 import { marked } from 'marked'
@@ -19,6 +19,9 @@ const props = defineProps({
 })
 
 const router = useRouter()
+
+// 头像加载失败标记
+const avatarFailed = ref(false)
 
 // 配置 marked
 marked.setOptions({
@@ -50,12 +53,8 @@ const hasAuthor = computed(() => {
 })
 
 // 头像加载失败处理
-const handleAvatarError = (event) => {
-  event.target.style.display = 'none'
-  const textElement = event.target.nextElementSibling
-  if (textElement) {
-    textElement.style.display = 'flex'
-  }
+const handleAvatarError = () => {
+  avatarFailed.value = true
 }
 
 
@@ -87,12 +86,12 @@ const renderContent = (content) => {
       <!-- 作者头像 -->
       <div class="author-avatar">
         <img
-          v-if="hasAuthor && comment.author.avatar"
+          v-if="hasAuthor && comment.author.avatar && !avatarFailed"
           :src="comment.author.avatar"
           class="avatar-img"
           @error="handleAvatarError"
         />
-        <div class="avatar-text">{{ getAvatarText() }}</div>
+        <div v-else class="avatar-text">{{ getAvatarText() }}</div>
       </div>
 
       <!-- 作者信息 -->
@@ -171,7 +170,7 @@ const renderContent = (content) => {
 }
 
 .avatar-text {
-  display: none;
+  display: flex;
   width: 100%;
   height: 100%;
   border-radius: 50%;
@@ -293,6 +292,10 @@ const renderContent = (content) => {
 @media (max-width: 639px) {
   .comment-list-item {
     padding: 12px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    margin-bottom: 0;
   }
 
   .comment-content {

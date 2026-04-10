@@ -136,7 +136,12 @@ async def search_all(
         "comments": comments_result.get("results", []),
         "users": users_result.get("results", []),
         "total": total,
-        "query": query
+        "query": query,
+        "totals": {
+            "posts": posts_result.get("total", 0),
+            "comments": comments_result.get("total", 0),
+            "users": users_result.get("total", 0)
+        }
     }
 
 

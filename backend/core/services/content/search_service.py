@@ -227,7 +227,7 @@ class SearchService:
             content__icontains=query_str
         ).filter(
             deleted_at__isnull=True
-        ).prefetch_related('author').offset(skip).limit(limit)
+        ).prefetch_related('author', 'post').offset(skip).limit(limit)
 
         total = await Comment.filter(
             content__icontains=query_str
@@ -235,15 +235,28 @@ class SearchService:
             deleted_at__isnull=True
         ).count()
 
-        # 转换为字典格式
+        # 转换为字典格式，包含完整的作者、帖子和投票信息
         results = []
         for comment in comments:
+            author = comment.author
+            post = comment.post
             results.append({
                 "id": comment.id,
                 "content": comment.content,
                 "author_id": comment.author_id,
-                "author_name": comment.author.username if comment.author else "",
+                "author": {
+                    "id": author.id if author else None,
+                    "username": author.username if author else "",
+                    "nickname": author.nickname if author else "",
+                    "avatar": author.avatar if author else None
+                } if author else None,
                 "post_id": comment.post_id,
+                "post": {
+                    "id": post.id if post else None,
+                    "title": post.title if post else ""
+                } if post else None,
+                "upvotes": comment.upvotes,
+                "downvotes": comment.downvotes,
                 "score": comment.score,
                 "created_at": comment.created_at
             })

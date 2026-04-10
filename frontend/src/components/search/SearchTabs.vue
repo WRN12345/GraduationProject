@@ -53,6 +53,7 @@ const hasCount = (tabValue) => {
 <style scoped>
 .search-tabs {
   display: flex;
+  justify-content: center;
   gap: 8px;
   padding: 12px 0 16px 0;
   border-bottom: 1px solid var(--border-color);

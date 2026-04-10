@@ -957,6 +957,14 @@ onMounted(() => {
 /* 标签页区域 */
 .tabs-section {
   margin-bottom: 20px;
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 10;
+  padding: 12px 0 0 0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .content-section {

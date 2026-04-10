@@ -83,6 +83,8 @@ const handleAvatarError = (event) => {
   cursor: pointer;
   transition: all 0.2s;
   margin-bottom: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .user-list-item:hover {
@@ -169,6 +171,10 @@ const handleAvatarError = (event) => {
   .user-list-item {
     padding: 12px;
     gap: 12px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    margin-bottom: 0;
   }
 
   .user-avatar {
