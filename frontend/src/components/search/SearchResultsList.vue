@@ -152,11 +152,18 @@ const goToPost = (postId) => {
 <style scoped>
 .search-results-list {
   min-height: 400px;
+  width: 100%;
 }
 
 .results-container {
   display: flex;
   flex-direction: column;
+  width: 100%;
+}
+
+/* 统一各类型结果section的宽度，与帖子列表保持一致 */
+.result-section {
+  width: 100%;
 }
 
 /* 加载状态 */

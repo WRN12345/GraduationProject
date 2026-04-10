@@ -79,6 +79,11 @@ export interface SearchAllData {
   users: SearchResultUser[]
   total: number
   query: string
+  totals?: {
+    posts: number
+    comments: number
+    users: number
+  }
 }
 
 export interface SearchData {
@@ -247,6 +252,10 @@ export function useSearch(options: UseSearchOptions = {}) {
             searchResults.value.comments.push(...data.comments)
             searchResults.value.users.push(...data.users)
             searchResults.value.total = data.total
+            // 保留 totals
+            if (data.totals) {
+              searchResults.value.totals = data.totals
+            }
           } else {
             searchResults.value = data
           }
@@ -616,6 +625,7 @@ export function useSearch(options: UseSearchOptions = {}) {
     totalResults,
     searchLoading,
     searchError,
+    searchAll,
     searchPosts,
     searchUsers,
     searchComments,

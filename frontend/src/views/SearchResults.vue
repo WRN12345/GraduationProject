@@ -24,19 +24,32 @@ const {
   searchLoading,
   searchError,
   searchByTab,
+  searchAll,
   loadMore,
   hasMore,
-  currentQuery
+  currentQuery,
+  searchResults
 } = useSearch()
 
-// 计算各类型的数量
-const tabCounts = computed(() => ({
-  posts: resultPosts.value.length,
-  users: resultUsers.value.length,
-  comments: resultComments.value.length
-}))
+// 计算各类型的数量 - 使用 totals（来自 searchAll）或当前加载的数据
+const tabCounts = computed(() => {
+  // 优先使用 totals（来自 /search/all 接口的精确计数）
+  if (searchResults.value?.totals) {
+    return {
+      posts: searchResults.value.totals.posts,
+      users: searchResults.value.totals.users,
+      comments: searchResults.value.totals.comments
+    }
+  }
+  // 后备：使用当前加载的列表长度
+  return {
+    posts: resultPosts.value.length,
+    users: resultUsers.value.length,
+    comments: resultComments.value.length
+  }
+})
 
-// 执行搜索
+// 执行搜索 - 使用 searchAll 一次性获取所有类型的数量
 const performSearch = async () => {
   if (!searchQuery.value || searchQuery.value.trim().length < 1) {
     return
@@ -51,11 +64,11 @@ const performSearch = async () => {
     }
   })
 
-  // 执行搜索
-  await searchByTab(searchQuery.value, activeTab.value, true)
+  // 使用 searchAll 一次性获取所有类型的结果和精确数量
+  await searchAll(searchQuery.value, true)
 }
 
-// 切换标签
+// 切换标签 - 不再需要单独搜索，直接切换显示
 const handleTabChange = async (tab) => {
   activeTab.value = tab
 
@@ -68,8 +81,8 @@ const handleTabChange = async (tab) => {
     }
   })
 
-  // 执行搜索
-  await searchByTab(searchQuery.value, tab, true)
+  // 如果当前 tab 还没有搜索结果，执行搜索
+  // 注意：searchAll 已经加载了所有数据，这里不需要再次搜索
 }
 
 // 加载更多
@@ -147,7 +160,7 @@ onMounted(() => {
 
 <style scoped>
 .search-results-page {
-  max-width: 960px;
+  max-width: 980px;
   margin: 0 auto;
   padding: 0 20px 20px 20px;
 }
@@ -156,11 +169,12 @@ onMounted(() => {
 .sticky-tabs {
   position: sticky;
   top: 0;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   z-index: 10;
-  padding: 12px 20px 0 20px;
-  margin: 0 -20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 /* 页面头部 */
@@ -243,8 +257,7 @@ onMounted(() => {
 
   /* 固定搜索标签区域 - 移动端 */
   .sticky-tabs {
-    padding: 12px 16px 0 16px;
-    margin: 0 -16px;
+    padding: 12px 0;
   }
 
   .page-header {
