@@ -101,14 +101,32 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { User, Lock, LogIn, UserPlus, Shield, Key, Mail } from 'lucide-vue-next';
 import { ElMessage } from 'element-plus';
 import { useUserStore } from '@/stores/user';
+import { useThemeStore } from '@/stores/theme';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
+
+// 登录页面强制使用浅色主题，离开时恢复
+const themeStore = useThemeStore();
+let wasDark = false;
+
+onMounted(() => {
+  wasDark = themeStore.isDark;
+  if (wasDark) {
+    themeStore.isDark = false;
+  }
+});
+
+onBeforeUnmount(() => {
+  if (wasDark) {
+    themeStore.isDark = true;
+  }
+});
 
 const router = useRouter();
 const userStore = useUserStore();
